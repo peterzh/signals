@@ -12,10 +12,10 @@ This is the goal of squeak.
 
 ## Hello, Grating!
 
-In squeak, this is how you might define a 3Hz drifting grating patch to be presented for half a second, with intervening 1 second blank periods:
+Here's how you could define a 3Hz drifting grating patch to be presented for half a second (with intervening 1 second blank periods), with squeak:
 
 ```matlab
-function gratingPresentation(events, stimuli, t)
+function flashedGrating(events, stimuli, t)
 stimuli.grating = vis.gabor();    % we want a gabor grating patch
 stimuli.grating.phase = 2*pi*t*3; % with it's phase cycling at 3Hz
 
@@ -28,8 +28,36 @@ end
 Now let's present our grating 15 times:
 
 ```matlab
->> log = exp.runTrials(@gratingPresentation, 15);
+log = exp.runTrials(@flashedGrating, 15);
 ```
+
+Note that we didn't specify a position for the grating, nor its spatial frequency, so it will always appear using some defaults (defined in `vis.gabor()`, e.g. positioned directly ahead with 1 cyc/&deg;). In fact, we would probably like all our stimulus attributes parameterised so they can be varied, by experiment, by trial, by whatever:
+
+```matlab
+function flashedGrating2(events, stimuli, t, pars) % take extra arg for parameters
+stimuli.grating = vis.gabor();
+% pars.(parameterName) refers to named (potentially changing) parameters
+stimuli.grating.azimuth = pars.azimuth;
+stimuli.grating.altitude = pars.altitude;
+stimuli.grating.spatialFreq = pars.spatialFreq;
+stimuli.grating.phase = 2*pi*t*pars.temporalFreq;
+
+stimOff = events.newTrial.delay(pars.stimDuration);
+events.nextTrial = stimOff.delay(pars.stimInterval);
+stimuli.show = newTrial.to(stimOff);
+end
+```
+
+Now, we're going to need some actual values for those parameters before we can actually run an experiment. One way is to pass in a MATLAB `struct` with fields corresponding to each named parameter. But a simple GUI for building the `struct` would be nice:
+
+```matlab
+paramValues = exp.promptForParams(@flashedGrating2);
+log = exp.runTrials(@flashedGrating2, paramValues);
+```
+
+The `exp.promptForParams` function actually calls your presentation definition just to infer what parameters it requires. It will then show a (blocking) GUI requesting those parameters, and return your final settings in a `struct`. Finally, we use them to run the experiment presentation all parameterised and stuff.
+
+
 
 ## Signals
 
