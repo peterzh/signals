@@ -10,7 +10,7 @@ Wouldn't it be nice if you could describe the presentation of stimuli in your ex
 
 This is the goal of *squeak*.
 
-## Hello, Grating!
+## Hello, grating!
 
 Here's how you could define a 3Hz drifting grating patch to be presented for half a second (with intervening 1 second blank periods), using *squeak*:
 
@@ -55,7 +55,7 @@ paramValues = exp.promptForParams(@flashedGrating2);
 log = exp.runTrials(@flashedGrating2, paramValues);
 ```
 
-The `exp.promptForParams` function actually calls your presentation definition just to infer what parameters it requires. It will then show a (blocking) GUI requesting those parameters, and return your final settings in an appropriate `struct`. Finally, we use them to run the experiment presentation, all parameterised and stuff.
+The `exp.promptForParams` function actually calls your presentation definition just to infer what parameters it requires. It will then show a (blocking) GUI requesting those parameters, and return your final choices in an appropriate `struct`. Finally, we use them to run the experiment presentation, all parameterised and stuff.
 
 ## Signals
 
@@ -71,7 +71,7 @@ posx = x > 0; % posx updates with x, true if x > 0, false otherwise
 ```
 In each case, these expressions return a new signal whose value will update as any of the source signals change.
 
-These operations actually use the signal mapping functions *TODO: make link to below*. E.g. `sig1 + sig2` is shorthand for `sig1.plus(sig2)` (or equivalently `plus(sig1, sig2)`), which ultimately evaluates to `sig1.map2(@plus, sig2)`. Thus, here MATLAB's standard `plus` function is being called on each signal's value.
+These operations actually use the signal mapping functions *TODO: make link to below*. E.g. `sig1 + sig2` is shorthand for `sig1.plus(sig2)` (or equivalently `plus(sig1, sig2)`), which ultimately evaluates to `sig1.map2(@plus, sig2)`. Thus, here the `plus` function is being called on each signal's value.
 
 ### Useful signal transformations
 
