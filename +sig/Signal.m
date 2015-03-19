@@ -1,381 +1,247 @@
-classdef Signal < sig.Signal & handle
-  % sig.node.Signal Summary of this class goes here
+classdef Signal < handle
+  % sig.Signal Summary of this class goes here
   %   Detailed explanation goes here
   
-  properties (Dependent)
-    Name
-  end
-  
-  properties (Hidden, SetAccess = immutable)
-    Node
-  end
-  
-  properties %(SetAccess = private, Transient)
-    OnValueCallbacks
-    NextCallbackId = 0
-    Listeners
+  methods (Abstract)
+    % New signal that samples the value from this signal when another updates
+    %
+    % [s] = what.at(when) returns a new signal s that takes the current
+    % value of signal 'what' at the moment signal 'when' gets a new value.
+    %
+    % Example:
+    %   x = sig.SimpleSignal;
+    %   t = sig.sampler(true, 0.010); % a new 'true' every 10ms
+    %   sx = x.at(t); % sc will sample x's value every 10ms
+    %
+    % See also keepWhen
+    s = at(this, when)
+    
+    % New signal that tracks another signal when a gating signal is true
+    %
+    % [s] = what.keepWhen(when) returns a new signal s that takes the
+    % values of what whenever the signal when is currently not false.
+    s = keepWhen(what, when)
+    
+    % Derive a signal by mapping the value from another
+    %
+    % [m] = s.MAP(f, [formatSpec]) returns a new signal m whose values
+    % result from mapping values in this signal s using the function f.
+    %
+    % [m] = s1.MAP(s2, [s3]..., f, [formatSpec]) returns a new signal m
+    % whose values result from mapping each new value in s1 or s2 using the
+    % function f.
+    %
+    % Example:
+    %   s = sig.SimpleSignal;
+    %   ms = s.map(@(v)2*v); % ms will always have twice the value of s
+    %
+    % See also map, mapn
+    m = map(this, f, varargin)
+    
+    % Derive a signal by 'scanning and accumulating' values from another
+    %
+    % [sc] = s.SCAN(f, initacc) returns a new signal sc whose values result
+    % from applying each new value from signal s together with the previous
+    % value in sc to function f.
+    %
+    % Example:
+    %   s = sig.SimpleSignal;
+    %   sc = s.scan(@plus, 0); % sc will contain a running total from s
+    %
+    % See also total
+    s = scan(this, f, seed)
+    
+    % New signal carrying the value associated with the first currently true predicate
+    %
+    % [c] = cond(pred1, value1, [pred2], [value2],...)
+    c = cond(pred1, value1, varargin)
+    
+    % todo: document
+    s = selectFrom(this, varargin)
+    
+    % todo: document
+    f = indexOfFirst(varargin)
+    
+    % todo: document
+    b = bufferUpTo(this, nSamples)
+    
+    % todo: document
+    b = buffer(this, nSamples)
+    
+    % New signal that gets all values from n signals
+    %
+    % Note: if multiple signals update during the same transaction, the
+    % merged signal will only get one signal's value (and which it will be
+    % is undefined).
+    m = merge(this, varargin)
+    
+    % New signal that's true when one signal is true until another is true
+    p = to(a, b)
+    
+    % todo: document
+    tr = setTrigger(arm, release)
+    
+    % todo: document
+    nr = skipRepeats(this)
+    
+    % New signal that follows another, but is always n samples behind
+    %
+    %
+    d = lag(this, n)
+    
+    % New signal with the difference between the last two source samples
+    d = delta(this)
+    
+    % New signal that follows another, but delayed in time
+    %
+    %
+    d = delay(this, period)
+    
+    % todo: document
+    id = identity(this)
+    
+    % todo: document
+    d = do(this, f)
+    
+    l = log(this)
+    
+    % todo: document
+    h = onValue(this, fun)
+    
+    % todo: document
+    h = output(this)
   end
   
   methods
-    function this = Signal(node)
-      this.Node = node;
-      this.OnValueCallbacks = containers.Map('KeyType', 'int32', 'ValueType', 'any');
+    function b = floor(a)
+      b = map(a, @floor, 'floor(%s)');
     end
     
-    function v = get.Name(this)
-      v = this.Node.Name;
+    function a = abs(x)
+      a = map(x, @abs, '|%s|');
     end
     
-    function set.Name(this, v)
-      this.Node.Name = v;
+    function a = sign(x)
+      a = map(x, @sign, 'sgn(%s)');
     end
     
-    function s = subscriptable(this)
-      node = sig.node.Node(this.Node, 'sig.transfer.identity');
-      s = sig.node.SubscriptableSignal(node);
-      node.FormatSpec = this.Node.FormatSpec;
-      node.DisplayInputs = this.Node.DisplayInputs;
+    function c = sin(a)
+      c = map(a, @sin, 'sin(%s)');
     end
     
-    function y = end(this, k, n)
-      warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this));
-      y = expr.End(k, n);
+    function c = cos(a)
+      c = map(a, @cos, 'cos(%s)');
     end
     
-    function s = at(what, when)
-      s = applyTransferFun(what, when, 'sig.transfer.at', [], '%s.at(%s)');
+    function c = uminus(a)
+      c = map(a, @uminus, '-%s');
     end
     
-    function s = then(when, what)
-      s = applyTransferFun(what, when, 'sig.transfer.at', [], '%s.then(%s)');
-      s.Node.DisplayInputs = fliplr(s.Node.DisplayInputs);
+    function c = not(a)
+      c = map(a, @not, '~%s');
     end
     
-    function f = keepWhen(what, when)
-      f = applyTransferFun(what, when, 'sig.transfer.keepWhen', [], '%s.keepWhen(%s)');
+    function c = plus(a, b)
+      c = map(a, b, @plus, '(%s + %s)');
     end
     
-    function m = map(this, f, varargin)
-      if numel(varargin) > 0
-        formatSpec = varargin{1};
+    function c = minus(a, b)
+      c = map(a, b, @minus, '(%s - %s)');
+    end
+    
+    function c = mtimes(a, b)
+      c = map(a, b, @mtimes, '%s*%s');
+    end
+    
+    function c = times(a, b)
+      c = map(a, b, @times, '%s.*%s');
+    end
+    
+    function c = mrdivide(a, b)
+      c = map(a, b, @mrdivide, '%s/%s');
+    end
+    
+    function c = rdivide(a, b)
+      c = map(a, b, @rdivide, '%s./%s');
+    end
+    
+    function c = mpower(a, b)
+      c = map(a, b, @mpower, '%s^%s');
+    end
+    
+    function c = power(a, b)
+      c = map(a, b, @power, '%s.^%s');
+    end
+    
+    function c = mod(a, b)
+      c = map(a, b, @mod, '%s %% %s');
+    end
+    
+    function y = vertcat(varargin)
+      formatSpec = ['[' strJoin(repmat({'%s'}, 1, nargin), '; ') ']'];
+      y = mapn(varargin{:}, @vertcat, formatSpec);
+    end
+    
+    function c = eq(a, b, handleComparison)
+      % New signal carrying the current equality (==) between signals
+      
+      if nargin < 3 || ~handleComparison
+        c = map(a, b, @eq, '%s == %s');
       else
-        formatSpec = sprintf('%%s.map(%s)', toStr(f));
+        c = eq@handle(a, b);
       end
-      if ~isa(f, 'function_handle') % always map to a value
-        f = fun.always(f);
-      end
-      m = applyTransferFun(this, 'sig.transfer.map', f, formatSpec);
     end
     
-    function m = map2(sig1, sig2, f, varargin)
-      m = mapn(sig1, sig2, f, varargin{:});
+    function c = ge(a, b)
+      % New signal carrying the current inequality (>=) between signals
+      
+      c = map(a, b, @ge, '%s >= %s');
     end
     
-    function m = mapn(varargin)
-      % destructure varargin
-      if isa(varargin{end}, 'function_handle')
-        [sigs{1:nargin-1}, f] = varargin{:};
-        formatSpec = sprintf(['mapn(' repmat('%%s, ', 1, numel(sigs)) '%s)'], toStr(f));
+    function c = gt(a, b)
+      % New signal carrying the current inequality (>) between signals
+      
+      c = map(a, b, @gt, '%s > %s');
+    end
+    
+    function c = le(a, b)
+      % New signal carrying the current inequality (<=) between signals
+      
+      c = map(a, b, @le, '%s <= %s');
+    end
+    
+    function c = lt(a, b)
+      % New signal carrying the current inequality (<) between signals
+      
+      c = map(a, b, @lt, '%s < %s');
+    end
+    
+    function c = ne(a, b, handleComparison)
+      % New signal carrying the current non-equality (~=) between signals
+      
+      if nargin < 3 || ~handleComparison
+        c = map(a, b, @ne, '%s ~= %s');
       else
-        [sigs{1:nargin-2}, f, formatSpec] = varargin{:};
-      end
-      m = applyTransferFun(sigs{:}, 'sig.transfer.mapn', f, formatSpec);
-    end
-    
-    function sc = scan(this, f, seed)
-      formatSpec = sprintf('%%s.scan(%s, %s)', toStr(f), toStr(seed));
-      sc = applyTransferFun(this, 'sig.transfer.scan', f, formatSpec);
-      sc.Node.CurrValue = seed; % need to initialise the current node value to seed
-    end
-    
-%     function sc = scanAsArgs(this, f, seed, formatSpec)
-%       if nargin < 4
-%         argsStr = strJoin(repmat({'%%s'}, 1, numel(sigs)), ', ');
-%         formatSpec = sprintf(['scanAsArgs({' argsStr  '}, %s, %s)'],...
-%           toStr(f), toStr(seed));
-%       end
-%       sNode = sig.node.Node(this.Node, 'sig.transfer.scanAsArgs', f);
-%       sNode.FormatSpec = formatSpec;
-%       sNode.CurrValue = seed;
-%       sc = sig.node.Signal(sNode);
-%     end
-    
-%     function sc = scanAsArgs(this, f, seed, formatSpec)
-%       if nargin < 4
-%         argsStr = strJoin(repmat({'%%s'}, 1, numel(sigs)), ', ');
-%         formatSpec = sprintf(['scanAsArgs({' argsStr  '}, %s, %s)'],...
-%           toStr(f), toStr(seed));
-%       end
-%       sNode = sig.node.Node(this.Node, 'sig.transfer.scanAsArgs', f);
-%       sNode.FormatSpec = formatSpec;
-%       sNode.CurrValue = seed;
-%       sc = sig.node.Signal(sNode);
-%     end
-    
-    function c = cond(pred1, value1, varargin)
-      preds = [{pred1} varargin(1:2:end)];
-      vals = [{value1} varargin(2:2:end)];
-      
-      assert(numel(preds) == numel(vals));
-      nc = numel(preds);
-      
-      firstTrue = indexOfFirst(preds{:});
-      c = firstTrue.selectFrom(vals{:});
-      
-      valuePredNodes = [c.Node.Inputs(2:end) ; firstTrue.Node.Inputs];
-      % 'display' inputs is a sequence of value,predicate pairs
-      c.Node.DisplayInputs = valuePredNodes(:);
-      c.Node.FormatSpec = [...
-        'cond( ' strJoin(repmat({'%s if %s'}, nc, 1), ' ; ') ' )'];
-    end
-    
-    function s = selectFrom(this, varargin)
-      formatSpec = [...
-        '%s.selectFrom([ ' strJoin(repmat({'%s'}, numel(varargin), 1), ' ; ') ' ])'];
-      s = applyTransferFun(this, varargin{:}, 'sig.transfer.selectFrom', [], formatSpec);
-    end
-    
-    function f = indexOfFirst(varargin)
-      formatSpec = [...
-        'indexOfFirst([ ' strJoin(repmat({'%s'}, nargin, 1), ' ; ') ' ])'];
-      f = applyTransferFun(varargin{:}, 'sig.transfer.indexOfFirst', [], formatSpec);
-    end
-    
-    function b = bufferUpTo(this, nSamples)
-      
-      % todo: implement as a transfer function
-      b = scan(this, sig.scan.buffering(nSamples), []);
-      b.Node.FormatSpec = sprintf('%%s.bufferUpTo(%i)', nSamples);
-    end
-    
-    function b = buffer(this, nSamples)
-      buffupto = bufferUpTo(this, nSamples);
-      b = buffupto.keepWhen(map(buffupto, @numel) == nSamples);
-      b.Node.DisplayInputs = this.Node;
-      b.Node.FormatSpec = sprintf('%%s.buffer(%i)', nSamples);
-    end
-    
-%     function b = bufferUpTo(this, nSamples)
-%       
-%       % Create a scanner that pairs the value with the sample count
-%       value_count = scan(this, fun.restrictScope(@(v,acc){v acc{2}+1}), {[] 0});
-%       % Scan this info to accumulate and slice an array
-%       circ_count = scan(value_count, @circbuff, {[] []});
-%       b = map(circ_count, @recent);
-%       b.Node.DisplayInputs = this.Node;
-%       b.Node.FormatSpec = sprintf('%%s.bufferUpTo(%i)', nSamples);
-%       function circ_cnt = circbuff(val_cnt, circ_cnt)
-%         circ_cnt{2} = val_cnt{2};
-%         if numel(circ_cnt{1}) < nSamples % grow stage
-%           circ_cnt{1} = [circ_cnt{1} val_cnt{1}];
-%         else % slice into next circular position
-%           idx = mod(val_cnt{2} - 1, nSamples) + 1;
-%           circ_cnt{1}(idx) = val_cnt{1};
-%         end
-%       end
-%       function buff = recent(circ_cnt)
-%         if numel(circ_cnt{1}) < nSamples % grow stage
-%           buff = circ_cnt{1};
-%         else
-%           reslice = mod((-nSamples:-1) + circ_cnt{2}, nSamples) + 1;
-%           buff = circ_cnt{1}(reslice);
-%         end
-%       end
-%     end
-
-    function m = merge(varargin)
-      formatSpec = ['( ' strJoin(repmat({'%s'}, 1, nargin), ' ~ ') ' )'];      
-      m = applyTransferFun(varargin{:}, 'sig.transfer.merge', [], formatSpec);
-    end
-    
-    function p = to(a, b)
-      p = applyTransferFun(a, b, 'sig.transfer.latch', [], '%s.to(%s)');
-      p.Node.CurrValue = false;
-
-%       p = skipRepeats(merge(map(a, @logical), ~b));
-%       p.Node.DisplayInputs = [a.Node b.Node];
-%       p.Node.FormatSpec = '%s.to(%s)';
-    end
-    
-    function tr = setTrigger(set, release)
-      armed = set.to(release);
-      tr = at(true, ~armed); % samples true each time armed goes to false
-      tr.Node.FormatSpec = '%s.setTrigger(%s)';
-      tr.Node.DisplayInputs = [set.Node release.Node];
-    end
-    
-    function nr = skipRepeats(this)
-      nr = applyTransferFun(this, 'sig.transfer.skipRepeats', [],  '(*%s)');
-    end
-    
-    function l = lag(this, n)
-      b = buffer(this, n + 1);
-      l = b.map(@(v)v(1), sprintf('%%s.lag(%s)', n));
-    end
-    
-    function d = delta(this)
-      d = map(buffer(this, 2), @diff);
-      d.Node.DisplayInputs = this.Node;
-      d.Node.FormatSpec = [char(916) '%s']; % char(916) is the delta character
-    end
-    
-    function d = delay(this, period)
-
-      % The scheduler creates a cell 'packet' with the new value to be
-      % delayed and the current delay value.
-      scheduler = applyTransferFun(...
-        this, period, 'sig.transfer.schedule', [], '%s.schedule(%s)');
-      % This packet will be 'delay posted' into d using a timer.
-      d = sig.node.OriginSignal(sig.node.Node(this.Node.Net));
-      d.Node.FormatSpec = '%s.delay(%s)';
-      d.Node.DisplayInputs = scheduler.Node.DisplayInputs;
-      delayedpost = scheduler.onValue(fun.partial(@delayedPost, d));
-      
-      % For complicated reasons, making a further identity signal from d to
-      % hold the listener handle helps ensure it can be garbage collected:
-      %   The handle can't be held by an object it holds a reference too
-      d = identity(d);
-      d.Listeners = [d.Listeners delayedpost];
-    end
-    
-    function id = identity(this)
-      id = applyTransferFun(this, 'sig.transfer.identity', [], this.Node.FormatSpec);
-      % the identity function should display exactly as this one does, i.e.
-      % look like it has the same inputs, use the same format spec
-      id.Node.DisplayInputs = this.Node.DisplayInputs;
-    end
-    
-    function out = flattenStruct(this)
-      % hmmmmmmmmmmmm
-      out = sig.SimpleSignal(sprintf('flattenStruct(%s)', toStr(this)));
-      remfuns = {};
-      addPusher(this, @fspush);
-      
-      function snks = fspush(value)
-        %% remove all previous connections
-        for ii = 1:numel(remfuns)
-          remfuns{ii}();
-        end
-        remfuns = {};
-        %% flatten any signal fields in the struct array
-        fields = fieldnames(value);
-        latest = cell2struct(cell([numel(fields) size(value)]), fields);
-        for jj = 1:numel(value)
-          for ii = 1:numel(fields)
-            field = fields{ii};
-            if isa(value(jj).(field), 'sig.SimpleSignal')
-              remfuns{end+1} = addPusher(value(jj).(field),...
-                fun.partial(@fieldpush, jj, field));
-            else
-              latest(jj).(field) = value(jj).(field);
-            end
-          end
-        end
-        %% immediately update, if any non-signal fields
-        if ~isempty(fieldnames(latest))
-          snks = update(out, latest);
-        else
-          snks = [];
-        end
-        %% pusher for signal field into main signal
-        function snks = fieldpush(idx, field, value)
-          latest(idx).(field) = value;
-          snks = update(out, latest);
-        end
+        c = ne@handle(a, b);
       end
     end
     
-    function tr = applyTransferFun(varargin)
-      % New signal derived by applying a transfer function to input nodes
-      %
-      % [tr] = s1.applyTransfer([s2], ..., funName, funArg, formatSpec)
-      % returns a new signal tr whose values result from applying a
-      % transfer function called funName to a variable number of input
-      % signals or constant values. Transfer functions work at a lower
-      % level than transformations like like map or mapn, instead operating
-      % directly with the underlying input nodes and output node,
-      % potentially using both their current *and* new values.
-      %
-      % This function creates a node with input nodes from each of the
-      % signals s1, s2,... (or for each non-signal values, creates a
-      % 'constant' node with that value). It then returns a sig.node.Signal
-      % tr containing the new node. It also sets the node's FormatSpec
-      % property as formatSpec.
-      %
-      % The transfer function will also be passed the funArg variable at
-      % each invocation.
+    function c = and(a, b)
+      % New signal carrying the logical AND between signals
       
-      % destructure arguments:
-      [sigs{1:nargin-3}, funName, funArg, formatSpec] = varargin{:};
-      inps = sig.node.from(sigs); % input signals & values -> nodes
-      node = sig.node.Node(inps, funName, funArg);
-      node.FormatSpec = formatSpec;
-      tr = sig.node.Signal(node);
+      c = map(a, @and, b, '%s & %s');
     end
     
-    function l = log(this)
-      node = sig.node.Node(this.Node, 'sig.transfer.log', @GetSecs, true);
-      node.FormatSpec = '%s.log()';
-      l = sig.node.Signal(node);
-      l.Node.CurrValue = struct('time', {}, 'value', {});
+    function c = or(a, b)
+      % New signal carrying the logical OR between signals
+      
+      c = map(a, @or, b, '%s | %s');
     end
     
-    function h = onValue(this, fun)
-      callbackidx = this.NextCallbackId + 1;
-      this.NextCallbackId = callbackidx;
-      this.OnValueCallbacks(callbackidx) = fun;
-      if length(this.OnValueCallbacks) == 1 % just added to an empty list
-        % so we now need to listen to mxnode events
-        setNodeEventTarget(this.Node.NetId, this.Node.Id, this);
-      end
-      h = TidyHandle(@unsub);
-      function unsub()
-        this.OnValueCallbacks.remove(callbackidx);
-        if isempty(this.OnValueCallbacks) % list now empty
-          % remove us as the event target from the mxnode
-          setNodeEventTarget(this.Node.NetId, this.Node.Id, []);
-        end
-      end
-    end
-    
-    function h = output(this)
-      h = onValue(this, @disp);
-    end
-    
-    function [varargout] = subsref(a, s)
-      b = a;
-      for ii = 1:length(s)
-        switch s(ii).type
-          case '.'
-            [varargout{1:nargout}] = builtin('subsref', a, s(ii:end));
-            return;
-          case '()' % signal with array subscripted values from b
-            subs = s(ii).subs;
-            inpform = strJoin(repmat({'%s'}, 1, numel(subs)), ',');
-            formatSpec = ['%s(' inpform ')'];
-            b = applyTransferFun(...
-              a, subs{:}, 'sig.transfer.subsref', '()', formatSpec);
-          case '{}'
-            [varargout{1:nargout}] = builtin('subsref', a, s(ii:end));
-            return;
-        end
-      end
-      varargout = {b};
-    end
-    
-    function h = into(from, to)
-      h = onValue(from, @(v)post(to, v));
-    end
-
-    function valueChanged(this, newValue)
-      callbacks = this.OnValueCallbacks.values();
-      n = numel(callbacks);
-      for ii = 1:n
-        callbacks{ii}(newValue);
-      end
+    function x = str2num(strSig)
+      x = map(strSig, @str2num, 'str2num(%s)');
     end
   end
   
-  methods (Access = protected)
-  end
 end
+
