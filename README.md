@@ -1,4 +1,4 @@
-# *squeak*
+# *flow*
 Simple, elegant and flexible stimulus presentation in MATLAB.
 
 Wouldn't it be nice if you could describe the presentation of stimuli in your experiment with simple, concise code? i.e.
@@ -8,11 +8,11 @@ Wouldn't it be nice if you could describe the presentation of stimuli in your ex
 * ...and yet, still benefit from easy data-logging, parameterisation and remote control.
 
 
-This is the goal of *squeak*.
+This is the goal of *flow*.
 
 ## Hello, grating!
 
-Here's how you could define a 3Hz drifting grating patch to be presented for half a second (with intervening 1 second blank periods), using *squeak*:
+Here's how you could define a 3Hz drifting grating patch to be presented for half a second (with intervening 1 second blank periods), using *flow*:
 
 ```matlab
 function flashedGrating(events, stimuli, t)
