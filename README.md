@@ -1,4 +1,4 @@
-# *flow*
+# *signals*
 Simple, elegant and flexible stimulus presentation in MATLAB.
 
 Wouldn't it be nice if you could describe the presentation of stimuli in your experiment with simple, concise code? i.e.
@@ -57,7 +57,7 @@ log = exp.runTrials(@flashedGrating2, paramValues);
 
 The `exp.promptForParams` function actually calls your presentation definition just to infer what parameters it requires. It will then show a (blocking) GUI requesting those parameters, and return your final choices in an appropriate `struct`. Finally, we use them to run the experiment presentation, all parameterised and stuff.
 
-## Signals
+## Working with signals
 
 *TODO: Introduce signals here*
 
