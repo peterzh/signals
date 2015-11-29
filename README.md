@@ -85,7 +85,7 @@ These operations actually use the signal mapping functions *TODO: make link to b
 
 `pred.if(trueSig, falseSig)` returns a signal that is takes the current value of `trueSig` when `pred` is true, or `falseSig` otherwise.
 
-`cond(pred1, value1, pred2, value2, ...)` returns a signal that takes the value from the first `valueN` signal whose corresponding predicate `predN` is true.
+`cond(pred1, value1, pred2, value2, ...)` returns a signal that takes the value from the first `valueX` (with X in 1...N) signal whose corresponding predicate `predX` is true.
 
 `what.keepWhen(pred)` returns a signal that takes each new value from `what` whenever `pred` is true. i.e. `pred` acts as a gate to filter values from what.
 
@@ -95,6 +95,6 @@ These operations actually use the signal mapping functions *TODO: make link to b
 
 `signal.map(f)` returns a new signal whose values result from mapping values in `signal` using the function `f`.
 
-`inp1.map(inp2, ..., f)` returns a new signal where its values result from mapping values from a set of input signals `inpX`  using the function `f`. Note that the resultant signal updates if any of the source signal change.
+`inp1.map(inp2, ..., f)` returns a new signal where its values result from mapping values from a set of input signals `inpX` (with X in 1...N)  using the function `f`. Note that the resultant signal updates if any of the source signal change.
 
 `signal.scan(f, seed)` returns a new signal where its values result from iteratively scanning each new value in `signal` through function `f` together with the last resulting value. i.e. this allows you to create a signal which iteratively updates based on the current value and each new piece of information. `seed` defines the intial value of the result signal.
