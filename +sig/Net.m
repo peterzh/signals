@@ -47,6 +47,15 @@ classdef Net < handle
       s = sig.node.SubscriptableOriginSignal(rootNode(this, name));
     end
     
+    function s = fromUIEvent(this, uihandle, callback)
+      if nargin < 3
+        callback = 'Callback';
+      end
+      name = sprintf('%s@%sEvents', get(uihandle, 'Type'), callback);
+      s = sig.node.SubscriptableOriginSignal(rootNode(this, name));
+      set(uihandle, callback, @(src,evt)post(s, evt));
+    end
+    
     function n = rootNode(this, name)
       n = sig.node.Node(this);
       if nargin < 2

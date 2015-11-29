@@ -1,0 +1,15 @@
+classdef Container < matlab.ui.container.Container
+  %UNTITLED Summary of this class goes here
+  %   Detailed explanation goes here
+  
+  properties
+  end
+  
+  methods
+    function obj = Container( varargin )
+      obj@matlab.ui.container.Container();
+    end
+  end
+  
+end
+

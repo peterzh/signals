@@ -16,9 +16,11 @@ f = @call;
       f = str2func(['@' mfile]);
       [varargout{1:nargout}] = f(varargin{:});
     catch ex
+      clear(mfile);
       rmpath(path);
       rethrow(ex);
     end
+    clear(mfile);
     rmpath(path);
   end
 

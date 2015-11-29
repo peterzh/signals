@@ -1,6 +1,6 @@
 function [pars, hasNext, repeatNum] = trialConditions(globalPars,...
   allCondPars, advanceTrial)
-%EXP.PRESETCONDSERVER Summary of this function goes here
+%exp.trialConditions Summary of this function goes here
 %   Detailed explanation goes here
 
 % a new 1 (or true) in nextTrial means move on to the next condition,

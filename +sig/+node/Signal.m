@@ -6,11 +6,11 @@ classdef Signal < sig.Signal & handle
     Name
   end
   
-  properties (Hidden, SetAccess = private)
+  properties (Hidden, SetAccess = immutable)
     Node
   end
   
-  properties (SetAccess = private, Transient)
+  properties %(SetAccess = private, Transient)
     OnValueCallbacks
     NextCallbackId = 0
     Listeners
@@ -32,12 +32,13 @@ classdef Signal < sig.Signal & handle
     
     function s = subscriptable(this)
       node = sig.node.Node(this.Node, 'sig.transfer.identity');
-      s = sig.node.StructSignal(node);
+      s = sig.node.SubscriptableSignal(node);
       node.FormatSpec = this.Node.FormatSpec;
       node.DisplayInputs = this.Node.DisplayInputs;
     end
     
     function y = end(this, k, n)
+      warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this));
       y = expr.End(k, n);
     end
     
@@ -54,21 +55,33 @@ classdef Signal < sig.Signal & handle
       f = applyTransferFun(what, when, 'sig.transfer.keepWhen', [], '%s.keepWhen(%s)');
     end
     
-    function m = map(varargin)
+    function m = map(this, f, varargin)
+      if numel(varargin) > 0
+        formatSpec = varargin{1};
+      else
+        formatSpec = sprintf('%%s.map(%s)', toStr(f));
+      end
+      if ~isa(f, 'function_handle') % always map to a value
+        f = fun.always(f);
+      end
+      m = applyTransferFun(this, 'sig.transfer.map', f, formatSpec);
+    end
+    
+    function m = map2(sig1, sig2, f, varargin)
+      m = mapn(sig1, sig2, f, varargin{:});
+    end
+    
+    function m = mapn(varargin)
+      % destructure varargin
       if isa(varargin{end}, 'function_handle')
         [sigs{1:nargin-1}, f] = varargin{:};
-        formatSpec = sprintf(['map(' repmat('%%s, ', 1, numel(sigs)) '%s)'], toStr(f));
+        formatSpec = sprintf(['mapn(' repmat('%%s, ', 1, numel(sigs)) '%s)'], toStr(f));
       else
         [sigs{1:nargin-2}, f, formatSpec] = varargin{:};
       end
-      switch numel(sigs)
-        case 1
-          m = applyTransferFun(sigs{:}, 'sig.transfer.map', f, '%s.map(%s)');
-        otherwise
-          m = applyTransferFun(sigs{:}, 'sig.transfer.mapn', f, formatSpec);
-      end
+      m = applyTransferFun(sigs{:}, 'sig.transfer.mapn', f, formatSpec);
     end
-
+    
     function sc = scan(this, f, seed)
       formatSpec = sprintf('%%s.scan(%s, %s)', toStr(f), toStr(seed));
       sc = applyTransferFun(this, 'sig.transfer.scan', f, formatSpec);
@@ -137,7 +150,8 @@ classdef Signal < sig.Signal & handle
     
     function b = buffer(this, nSamples)
       buffupto = bufferUpTo(this, nSamples);
-      b = buffupto.keepWhen(map(buffupto, @numel) == nSamples);
+      nelem = size(buffupto, 2);
+      b = buffupto.keepWhen(nelem == nSamples);
       b.Node.DisplayInputs = this.Node;
       b.Node.FormatSpec = sprintf('%%s.buffer(%i)', nSamples);
     end
@@ -232,14 +246,6 @@ classdef Signal < sig.Signal & handle
       id.Node.DisplayInputs = this.Node.DisplayInputs;
     end
     
-    function d = do(this, f)
-      formatSpec = sprintf('%%s.do(%s)', toStr(f));
-      if ~isa(f, 'function_handle') % always map to a value
-        f = fun.always(f);
-      end
-      d = applyTransferFun(this, 'sig.transfer.map0', f, formatSpec);
-    end
-    
     function fs = flattenStruct(this)
       state = StructRef;
       state.unappliedInputChanges = false;
@@ -293,7 +299,7 @@ classdef Signal < sig.Signal & handle
       % returns a new signal tr whose values result from applying a
       % transfer function called funName to a variable number of input
       % signals or constant values. Transfer functions work at a lower
-      % level than transformations like like map, instead operating
+      % level than transformations like like map or mapn, instead operating
       % directly with the underlying input nodes and output node,
       % potentially using both their current *and* new values.
       %
@@ -343,6 +349,14 @@ classdef Signal < sig.Signal & handle
       h = onValue(this, @disp);
     end
     
+    function s = size(x, dim)
+      if nargin > 1
+        s = map2(x, dim, @size);
+      else
+        s = map(x, @size);
+      end
+    end
+    
     function [varargout] = subsref(a, s)
       b = a;
       for ii = 1:length(s)
@@ -375,6 +389,9 @@ classdef Signal < sig.Signal & handle
         callbacks{ii}(newValue);
       end
     end
+  end
+  
+  methods (Access = protected)
   end
 end
 

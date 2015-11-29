@@ -22,21 +22,33 @@ classdef Signal < handle
     % values of what whenever the signal when is currently not false.
     s = keepWhen(what, when)
     
-    % Derive a signal by mapping the value from another
+    % Derive a signal by mapping the values from another
     %
-    % [m] = s.MAP(f, [formatSpec]) returns a new signal m whose values
+    % [m] = s.MAP(f, [formatSpec]) returns a new signal ms whose values
     % result from mapping values in this signal s using the function f.
-    %
-    % [m] = s1.MAP(s2, [s3]..., f, [formatSpec]) returns a new signal m
-    % whose values result from mapping each new value in s1 or s2 using the
-    % function f.
     %
     % Example:
     %   s = sig.SimpleSignal;
     %   ms = s.map(@(v)2*v); % ms will always have twice the value of s
     %
-    % See also map, mapn
+    % See also map2, mapn
     m = map(this, f, varargin)
+    
+    % Derive a signal by mapping the values from two signals
+    m = map2(this, other, f, varargin)
+    
+    % Derive a signal by mapping the values from n signals
+    %
+    % [m] = s1.MAPN([s2], [s3], ..., f, [formatSpec]) returns a new signal
+    % m whose values result from mapping values in this and an arbitrary
+    % number of other signals by applying function f.
+    %
+    % Example:
+    %   s = sig.SimpleSignal;
+    %   ms = s.map(@(v)2*v); % ms will always have twice the value of s
+    %
+    % See also map, map2
+    m = mapn(this, varargin)
     
     % Derive a signal by 'scanning and accumulating' values from another
     %
@@ -62,10 +74,21 @@ classdef Signal < handle
     % todo: document
     f = indexOfFirst(varargin)
     
-    % todo: document
+    % New signal carrying the last n samples from another
+    %
+    % [sc] = s.bufferUpTo(n) returns a new signal sc whoes values are
+    % the last n values signal s took.  Unlike buffer, bufferUpTo immediately
+    % returns new signal even if n samples have not yet been collected.
+    % 
+    % See also buffer
     b = bufferUpTo(this, nSamples)
     
-    % todo: document
+    % New signal carrying the last n samples from another
+    %
+    % [sc] = s.buffer(n) returns a new signal sc whoes values are
+    % the last n values signal s took.  Unlike bufferUpTo, buffer only 
+    % returns new signal when n samples have been collected.
+    % See also bufferUpTo
     b = buffer(this, nSamples)
     
     % New signal that gets all values from n signals
@@ -99,9 +122,6 @@ classdef Signal < handle
     
     % todo: document
     id = identity(this)
-    
-    % todo: document
-    d = do(this, f)
     
     l = log(this)
     
@@ -142,39 +162,39 @@ classdef Signal < handle
     end
     
     function c = plus(a, b)
-      c = map(a, b, @plus, '(%s + %s)');
+      c = map2(a, b, @plus, '(%s + %s)');
     end
     
     function c = minus(a, b)
-      c = map(a, b, @minus, '(%s - %s)');
+      c = map2(a, b, @minus, '(%s - %s)');
     end
     
     function c = mtimes(a, b)
-      c = map(a, b, @mtimes, '%s*%s');
+      c = map2(a, b, @mtimes, '%s*%s');
     end
     
     function c = times(a, b)
-      c = map(a, b, @times, '%s.*%s');
+      c = map2(a, b, @times, '%s.*%s');
     end
     
     function c = mrdivide(a, b)
-      c = map(a, b, @mrdivide, '%s/%s');
+      c = map2(a, b, @mrdivide, '%s/%s');
     end
     
     function c = rdivide(a, b)
-      c = map(a, b, @rdivide, '%s./%s');
+      c = map2(a, b, @rdivide, '%s./%s');
     end
     
     function c = mpower(a, b)
-      c = map(a, b, @mpower, '%s^%s');
+      c = map2(a, b, @mpower, '%s^%s');
     end
     
     function c = power(a, b)
-      c = map(a, b, @power, '%s.^%s');
+      c = map2(a, b, @power, '%s.^%s');
     end
     
     function c = mod(a, b)
-      c = map(a, b, @mod, '%s %% %s');
+      c = map2(a, b, @mod, '%s %% %s');
     end
     
     function y = vertcat(varargin)
@@ -182,11 +202,16 @@ classdef Signal < handle
       y = mapn(varargin{:}, @vertcat, formatSpec);
     end
     
+    function y = horzcat(varargin)
+      formatSpec = ['[' strJoin(repmat({'%s'}, 1, nargin), ' ') ']'];
+      y = mapn(varargin{:}, @horzcat, formatSpec);
+    end
+    
     function c = eq(a, b, handleComparison)
       % New signal carrying the current equality (==) between signals
       
       if nargin < 3 || ~handleComparison
-        c = map(a, b, @eq, '%s == %s');
+        c = map2(a, b, @eq, '%s == %s');
       else
         c = eq@handle(a, b);
       end
@@ -195,32 +220,32 @@ classdef Signal < handle
     function c = ge(a, b)
       % New signal carrying the current inequality (>=) between signals
       
-      c = map(a, b, @ge, '%s >= %s');
+      c = map2(a, b, @ge, '%s >= %s');
     end
     
     function c = gt(a, b)
       % New signal carrying the current inequality (>) between signals
       
-      c = map(a, b, @gt, '%s > %s');
+      c = map2(a, b, @gt, '%s > %s');
     end
     
     function c = le(a, b)
       % New signal carrying the current inequality (<=) between signals
       
-      c = map(a, b, @le, '%s <= %s');
+      c = map2(a, b, @le, '%s <= %s');
     end
     
     function c = lt(a, b)
       % New signal carrying the current inequality (<) between signals
       
-      c = map(a, b, @lt, '%s < %s');
+      c = map2(a, b, @lt, '%s < %s');
     end
     
     function c = ne(a, b, handleComparison)
       % New signal carrying the current non-equality (~=) between signals
       
       if nargin < 3 || ~handleComparison
-        c = map(a, b, @ne, '%s ~= %s');
+        c = map2(a, b, @ne, '%s ~= %s');
       else
         c = ne@handle(a, b);
       end
@@ -229,13 +254,23 @@ classdef Signal < handle
     function c = and(a, b)
       % New signal carrying the logical AND between signals
       
-      c = map(a, @and, b, '%s & %s');
+      c = map2(a, b, @and, '%s & %s');
     end
     
     function c = or(a, b)
       % New signal carrying the logical OR between signals
       
-      c = map(a, @or, b, '%s | %s');
+      c = map2(a, b, @or, '%s | %s');
+    end
+    
+    function b = strcmp(s1, s2)
+      % New signal carrying the result of string comparison
+      b = map2(s1, s2, @strcmp, 'strcmp(%s, %s)');
+    end
+    
+    function b = transpose(a)
+      % New signal carrying the result of transposing source values
+      b = map(a, @transpose, '%s''');
     end
     
     function x = str2num(strSig)

@@ -6,8 +6,8 @@ if nargin < 3
   bufferMax = 2;
 end
 
-id = naud.open(sampleRate);
-naud.start(id);
+id = audstream.open(sampleRate);
+audstream.start(id);
 listener = packetSignal.onValue(fun.partial(@audstream.throttlePost, id,...
   bufferMax));
 h = TidyHandle(@cleanup);

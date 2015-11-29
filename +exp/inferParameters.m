@@ -5,6 +5,13 @@ function parsStruct = inferParameters(expdef)
 % create some signals just to pass to the definition function and track
 % which parameter names are used
 
+if ischar(expdef) && file.exists(expdef)
+  expdeffun = fileFunction(expdef);
+else
+  expdeffun = expdef;
+  expdef = which(func2str(expdef));
+end
+
 net = sig.Net;
 e = struct;
 e.t = net.origin('t');
@@ -17,12 +24,12 @@ e.inputs = net.subscriptableOrigin('inputs');
 e.outputs = net.subscriptableOrigin('outputs');
 
 try
-  expdef(e.t, e.events, e.pars, e.visual, e.inputs , e.outputs);
+  expdeffun(e.t, e.events, e.pars, e.visual, e.inputs , e.outputs);
   paramNames = e.pars.Subscripts.keys';
   parsStruct = cell2struct(cell(size(paramNames)), paramNames);
   parsStruct.numRepeats = 0; % add 'numRepeats' parameter
   parsStruct.defFunction = expdef;
-  parsStruct.type = 'Custom';
+  parsStruct.type = 'custom';
 catch ex
   net.delete();
   rethrow(ex)

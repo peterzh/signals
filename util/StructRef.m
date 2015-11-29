@@ -7,8 +7,9 @@ classdef StructRef < handle
   end
 
   properties (SetAccess = protected)
-    Entries = struct('test', 1:3)
-    EntryNames = {};
+    Entries = struct()
+    EntryNames = {}
+    Reserved = {}
   end
   
   methods (Sealed)
@@ -34,6 +35,10 @@ classdef StructRef < handle
   methods
     function n = fieldnames(this)
       n = this.EntryNames';
+    end
+    
+    function c = struct2cell(this)
+      c = struct2cell(this.Entries);
     end
     
     function tf = isfield(this, varargin)
