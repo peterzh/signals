@@ -61,7 +61,7 @@ The `exp.promptForParams` function actually calls your presentation definition j
 
 ## Working with signals
 
-The *signals* framework is built on the paradigm of functional reactive programming, which aims to simplify problems which primarily involve dealing with change over time. A signal is an object that represents a value that changes over time. You can apply transformations to signals to derive a new signal whose values are derived by applying an operation to its input signals.
+The *signals* framework is built on the paradigm of functional reactive programming, which aims to simplify problems which primarily involve dealing with change over time. A signal is an object that represents a value that changes over time. Furthermore, you can apply transformations to signals to derive a new signal whose values are derived by applying an operation to its input signals.
 
 You can use most of the standard MATLAB operations on signals, with intuitive results, e.g.
 
