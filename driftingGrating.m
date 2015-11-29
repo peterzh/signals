@@ -1,5 +1,5 @@
-function flashedGrating(t, evts, pars, vs, inp, out, audio)
-%UNTITLED Summary of this function goes here
+function driftingGrating(t, evts, pars, stimuli, inp, out, audio)
+%driftingGrating A simple drifting grating flashed during each trial
 %   Detailed explanation goes here
 
 grating = vis.grating(t);    % we want a gabor grating patch
@@ -9,7 +9,7 @@ stimOff = evts.newTrial.delay(0.5); % stimOff occurs 0.5s after new trial starts
 evts.endTrial = stimOff.delay(1);  % next trial should start 1s after stimOff
 grating.show = evts.newTrial.to(stimOff);  % stimulus visible between trial onset & stimOff
 
-vs.grating = grating;
+stimuli.grating = grating;
 
 end
 
