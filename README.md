@@ -15,7 +15,7 @@ Here's how you could define a 3Hz drifting grating patch to be presented for hal
 
 ```matlab
 function driftingGrating(t, events, pars, visStim)
-grating = vis.grating(t);    % we want a gabor grating patch
+grating = vis.grating(t);    % we want a Gabor grating patch
 grating.phase = 2*pi*t*3; % with it's phase cycling at 3Hz
 
 stimOff = events.newTrial.delay(0.5); % stimOff occurs 0.5s after new trial starts
@@ -42,8 +42,8 @@ grating.altitude = pars.altitude;
 grating.spatialFreq = pars.spatialFreq;
 grating.phase = 2*pi*t*pars.temporalFreq; % now it's cycling at whatever pars.temporalFreq is
 
-stimOff = events.newTrial.delay(0.5); % stimOff occurs 0.5s after new trial starts
-events.endTrial = stimOff.delay(1);  % next trial should start 1s after stimOff
+stimOff = events.newTrial.delay(pars.stimDuration); % parameterise stimulus duration
+events.endTrial = stimOff.delay(pars.isi);  % parameterise period between stimuli
 grating.show = events.newTrial.to(stimOff);  % stimulus visible between trial onset & stimOff
 
 visStim.grating = grating;
@@ -57,23 +57,23 @@ paramValues = exp.promptForParams(@driftingGrating2);
 log = exp.runTrials(@flashedGrating2, paramValues);
 ```
 
-The `exp.promptForParams` function actually calls your presentation definition just to infer what parameters it requires. It will then show a (blocking) GUI requesting those parameters, and return your final choices in an appropriate `struct`. Finally, we use them to run the experiment presentation, all parameterised and stuff.
+The `exp.promptForParams` function actually calls your presentation definition just to infer what parameters it requires. It will then show a (blocking) GUI requesting those parameters, and return your final choices in an appropriate `struct`. Finally, we use them to run the experiment presentation, now fully parameterised.
 
 ## Working with signals
 
-The *signals* framework is built on the paradigm of functional reactive programming, which aims to simplify problems which primarily involve dealing with change over time. A signal is an object that represents a value that changes over time. Furthermore, you can apply transformations to signals to derive a new signal whose values are derived by applying an operation to its input signals.
+The *signals* framework is built around the paradigm of functional reactive programming, which can simplify problems that primarily involve dealing with change over time. A signal is an object that represents a value that changes over time. Furthermore, you can apply transformations to signals to derive a new signal whose values are obtained by applying an operation to the values of its input signals.
 
 You can use most of the standard MATLAB operations on signals, with intuitive results, e.g.
 
 ```matlab
 % if x and y are signals,
-z = x + y; % z is a new signal that updates with x and y as their sum
+z = x + y;    % z is a new signal that updates with x and y as their sum
 c = 2*cos(y); % c will always be twice the cosine of y
 posx = x > 0; % posx updates with x, true if x > 0, false otherwise
 ```
 In each case, these expressions return a new signal whose value will update as any of the source signals change.
 
-These operations actually use the signal mapping functions *TODO: make link to below*. E.g. `sig1 + sig2` is shorthand for `sig1.plus(sig2)` (or equivalently `plus(sig1, sig2)`), which ultimately evaluates to `sig1.map2(@plus, sig2)`. Thus, here the `plus` function is being called on each signal's value.
+Note: these operations actually use the signal mapping functions *TODO: make link to below*. E.g. `sig1 + sig2` is shorthand for `sig1.plus(sig2)` (or equivalently `plus(sig1, sig2)`), which ultimately evaluates to `sig1.map2(@plus, sig2)`. Thus, here the `plus` function is being called on each signal's value.
 
 ### Useful signal transformations
 
@@ -81,7 +81,7 @@ These operations actually use the signal mapping functions *TODO: make link to b
 
 `from.to(otherSignal)` returns a signal that will go true when `from` goes true, then false when `otherSignal` goes true.
 
-`signal.at(otherSignal)` returns a new signal that 
+`signal.at(sampler)` returns a new signal that takes the current value from `signal` each time `sampler` takes a new true value.
 
 `pred.if(trueSig, falseSig)` returns a signal that is takes the current value of `trueSig` when `pred` is true, or `falseSig` otherwise.
 
