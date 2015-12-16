@@ -36,7 +36,7 @@ target.altitude = p.targetAltitude;
 target.sigma = p.targetSigma;
 target.spatialFrequency = p.targetSpatialFrequency;
 target.contrast = p.contrast;
-targetAzimuth = p.targetAzimuth + cond(... conditional
+targetAzimuth = p.targetAzimuth + cond(... % conditional
   stimulusOn.to(interactiveOn), 0,... % no offset during fixed period
   interactiveOn.to(response),   targetDisplacement,...%offset by wheel
   response.to(stimulusOff),    -response*abs(p.targetAzimuth));%final response
