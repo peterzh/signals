@@ -1,10 +1,10 @@
 function simpleChoiceWorld(t, evts, pars, visStim, in, out, audio)
 %simpleChoiceWorld Basic movable grating experiment
-%   Defines a task with a horizontally translatable grating stimulus that
-%   is initially presented on each trial to the left or right. Centering
-%   the stimulus yields a reward; moving it too far in the other
-%   direction yields a noise burst. In either case it locks into the
-%   threshold position during the feedback period.
+%   Defines a task with a horizontally translatable grating that is
+%   initially presented to the left or right on each trial. Centering the
+%   stimulus yields a reward; moving it too far in the other direction
+%   yields a noise burst. In either case it locks into the threshold
+%   position during the feedback period.
 
 % make some short names
 p = pars;
@@ -24,7 +24,7 @@ threshold = interactiveOn.setTrigger(abs(targetDisplacement) >= abs(p.targetAzim
 response = -sign(targetDisplacement.at(threshold));
 
 %% feedback
-feedback =  sign(p.targetAzimuth.at(response))*response; % positive or negative feedback
+feedback = sign(p.targetAzimuth.at(response))*response; % positive or negative feedback
 % 96KHz stereo noist burst waveform played at negative feedback
 audio.noiseBurst = p.noiseBurstAmp.map(@(a)a*randn(2, 96e3)).at(feedback < 0);
 out.reward = p.rewardSize.at(feedback > 0); % reward only on positive feedback
