@@ -26,7 +26,8 @@ response = -sign(targetDisplacement.at(threshold));
 %% feedback
 feedback = sign(p.targetAzimuth.at(response))*response; % positive or negative feedback
 % 96KHz stereo noist burst waveform played at negative feedback
-audio.noiseBurst = p.noiseBurstAmp.map(@(a)a*randn(2, 96e3)).at(feedback < 0);
+noise = p.noiseBurstAmp*p.feedbackDuration.map(@(len)randn(2, len*96e3));
+audio.noiseBurst = noise.at(feedback < 0);
 out.reward = p.rewardSize.at(feedback > 0); % reward only on positive feedback
 stimulusOff = response.map(true).delay(p.feedbackDuration);
 
