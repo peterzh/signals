@@ -416,11 +416,12 @@ classdef SignalsExp < handle
       % complete any outstanding asynchronous flip
       if obj.AsyncFlipping
         % wait for flip to complete, and record the time
-        [time, ~, lag] = Screen('AsyncFlipEnd', obj.StimWindowPtr);
+        time = Screen('AsyncFlipEnd', obj.StimWindowPtr);
         obj.AsyncFlipping = false;
         time = fromPtb(obj.Clock, time); %convert ptb/sys time to our clock's time
-        obj.StimWindowUpdateCount = obj.StimWindowUpdateCount + 1;
+        
         obj.Data.stimWindowUpdateTimes(obj.StimWindowUpdateCount) = time;
+        lag = time - obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount);
         obj.Data.stimWindowUpdateLags(obj.StimWindowUpdateCount) = lag;
       end
     end
@@ -557,6 +558,7 @@ classdef SignalsExp < handle
       %clip the stim window update times array
       obj.Data.stimWindowUpdateTimes((obj.StimWindowUpdateCount + 1):end) = [];
       obj.Data.stimWindowUpdateLags((obj.StimWindowUpdateCount + 1):end) = [];
+      obj.Data.stimWindowRenderTimes((obj.StimWindowUpdateCount + 1):end) = [];
       
       % release resources
       obj.Listeners = [];
@@ -619,6 +621,11 @@ classdef SignalsExp < handle
           ensureWindowReady(obj); % complete any outstanding refresh
           % draw the visual frame
           drawFrame(obj);
+          renderTime = obj.Clock.now;
+          
+          obj.StimWindowUpdateCount = obj.StimWindowUpdateCount + 1;
+          obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount) = renderTime;
+          
           obj.StimWindowInvalid = false;
 
           % do the actual 'flip' of the frame onto the screen. This will
