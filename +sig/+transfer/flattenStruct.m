@@ -1,5 +1,5 @@
 function [val, valset] = flattenStruct(net, inputs, node, state)
-%SIG.TRANSFER.MAP Summary of this function goes here
+%SIG.TRANSFER.FLATTENSTRUCT Summary of this function goes here
 %   Detailed explanation goes here
 
 % assumes inputs are [blueprint, field1inp, field2inp, ...]

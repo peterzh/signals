@@ -5,6 +5,7 @@
 #include <math.h>
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+	// function id = deleteNode(net, node)
 	if (nrhs == 2) {
 		int netid = (int)mxGetScalar(prhs[0]);
 		size_t nodeid = (size_t)roundl(mxGetScalar(prhs[1]));

@@ -503,6 +503,7 @@ void setNodeWorkingValue(Node *n, SQ_NODE_DATA_TYPE *value) {
 }
 
 void addTargetToInputs(Node *inputs[], size_t nInputs, Node *target) {
+	// adds a target to a bunch of nodes (which will be the inputs
 	size_t i;
 	for (i = 0; i < nInputs; i++) {
 		Node* src = inputs[i];
@@ -714,6 +715,15 @@ BOOL transfer(Node* node) {
 				return true;
 			}
 			break;
+		//case 50: // identity
+		//	if (node->inputs[0]->workingValue) {
+		//		mxArray *newOutput = mxCreateDoubleScalar(
+		//			(double)mxGetNumberOfElements(node->inputs[0]->workingValue));
+		//		mexMakeArrayPersistent(newOutput);
+		//		setNodeWorkingValue(node, newOutput);
+		//		return true;
+		//	}
+		//	break;
 		default:
 			mexPrintf("Unknown opcode %d encountered.\n", opCode);
 			return transferInMATLAB(node);

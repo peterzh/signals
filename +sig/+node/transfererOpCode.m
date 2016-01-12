@@ -5,6 +5,8 @@ function code = transfererOpCode(transFun, transArg)
 code = 0; % default op code: means just use matlab transfer function
 
 switch transFun
+%   case 'sig.transfer.identity'
+%     code = 50;
   case 'sig.transfer.map'
     if isa(transArg, 'function_handle')
       switch func2str(transArg)

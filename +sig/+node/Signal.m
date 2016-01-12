@@ -82,10 +82,23 @@ classdef Signal < sig.Signal & handle
       m = applyTransferFun(sigs{:}, 'sig.transfer.mapn', f, formatSpec);
     end
     
-    function sc = scan(this, f, seed)
-      formatSpec = sprintf('%%s.scan(%s, %s)', toStr(f), toStr(seed));
-      sc = applyTransferFun(this, 'sig.transfer.scan', f, formatSpec);
-      sc.Node.CurrValue = seed; % need to initialise the current node value to seed
+    function sc = scan(varargin)
+      % acc = items.scan(f, seed)
+      %   or
+      % acc = scan(items1, f1, items2, f2, ... seed)
+      elems = varargin(1:2:end-1);
+      funcs = varargin(2:2:end-1);
+      seed = varargin{end};
+      warning('todo: fix formatSpec for multiple inputs');
+      formatSpec = sprintf('%%s.scan(%s, %s)', toStr(funcs{1}), toStr(seed));
+      sc = applyTransferFun(elems{:}, seed, 'sig.transfer.scan', funcs, formatSpec);
+      if isa(seed, 'sig.node.Signal')
+        if seed.Node.CurrValueSet
+          sc.Node.CurrValue = seed.Node.CurrValue;
+        end
+      else
+        sc.Node.CurrValue = seed; % need to initialise the current node value to seed
+      end
     end
     
 %     function sc = scanAsArgs(this, f, seed, formatSpec)
@@ -111,7 +124,15 @@ classdef Signal < sig.Signal & handle
 %       sNode.CurrValue = seed;
 %       sc = sig.node.Signal(sNode);
 %     end
-    
+
+    function r = iff(pred, trueVal, falseVal)
+      if nargin > 2
+        r = cond(pred, trueVal, true, falseVal);
+      else
+        r = cond(pred, trueVal);
+      end
+    end
+
     function c = cond(pred1, value1, varargin)
       preds = [{pred1} varargin(1:2:end)];
       vals = [{value1} varargin(2:2:end)];
