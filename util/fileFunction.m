@@ -1,9 +1,9 @@
-function f = fileFunction(path, mfile)
+function f = fileFunction(functionPath, mfile)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
 if nargin < 2
-  [path, mfile] = fileparts(path);
+  [functionPath, mfile] = fileparts(functionPath);
 else
   [~, mfile] = fileparts(mfile);
 end
@@ -11,17 +11,17 @@ end
 f = @call;
 
   function varargout = call(varargin)
-    addpath(path);
+    origpath = addpath(functionPath);
     try
       f = str2func(['@' mfile]);
       [varargout{1:nargout}] = f(varargin{:});
     catch ex
       clear(mfile);
-      rmpath(path);
+      path(origpath);
       rethrow(ex);
     end
     clear(mfile);
-    rmpath(path);
+    path(origpath);
   end
 
 end
