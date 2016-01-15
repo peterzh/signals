@@ -622,8 +622,15 @@ classdef SignalsExp < handle
           ensureWindowReady(obj); % complete any outstanding refresh
           % draw the visual frame
           drawFrame(obj);
+          if ~isempty(obj.SyncBounds) % render sync rectangle
+            % render sync region with next colour in cycle
+            col = obj.SyncColourCycle(obj.NextSyncIdx,:);
+            % render rectangle in the sync region bounds in the required colour
+            Screen('FillRect', obj.StimWindowPtr, col, obj.SyncBounds);
+            % cyclically increment the next sync idx
+            obj.NextSyncIdx = mod(obj.NextSyncIdx, size(obj.SyncColourCycle, 1)) + 1;
+          end
           renderTime = now(obj.Clock);
-          
           obj.StimWindowUpdateCount = obj.StimWindowUpdateCount + 1;
           obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount) = renderTime;
           
@@ -751,14 +758,6 @@ classdef SignalsExp < handle
       Screen('BeginOpenGL', win);
       vis.draw(win, obj.Occ, layerValues, obj.TextureById);
       Screen('EndOpenGL', win);
-      if ~isempty(obj.SyncBounds)
-         % render sync region with next colour in cycle
-         col = obj.SyncColourCycle(obj.NextSyncIdx,:);
-         % render rectangle in the sync region bounds in the required colour
-         Screen('FillRect', win, col, obj.SyncBounds);
-         % cyclically increment the next sync idx
-         obj.NextSyncIdx = mod(obj.NextSyncIdx, size(obj.SyncColourCycle, 1)) + 1;
-      end
     end
     
     function activateEventHandler(obj, handler, eventInfo, dueTime)
