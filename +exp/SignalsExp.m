@@ -611,7 +611,7 @@ classdef SignalsExp < handle
         obj.Pending(inactiveIdx) = [];
         
         %% squeaking
-        post(obj.Time, obj.Clock.now);
+        post(obj.Time, now(obj.Clock));
         runSchedule(obj.Net);
         wx = readAbsolutePosition(obj.Wheel);
         post(obj.Inputs.wheel, wx);
@@ -622,7 +622,7 @@ classdef SignalsExp < handle
           ensureWindowReady(obj); % complete any outstanding refresh
           % draw the visual frame
           drawFrame(obj);
-          renderTime = obj.Clock.now;
+          renderTime = now(obj.Clock);
           
           obj.StimWindowUpdateCount = obj.StimWindowUpdateCount + 1;
           obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount) = renderTime;
