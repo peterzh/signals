@@ -174,6 +174,7 @@ classdef SignalsExp < handle
 %       obj.Params = obj.Params.map(@(v)v, [], @(n,s)sig.Logger([n '[L]'],s));
       %initialise stim window frame times array, large enough for ~2 hours
       obj.Data.stimWindowUpdateTimes = zeros(60*60*60*2, 1);
+      obj.Data.stimWindowRenderTimes = zeros(60*60*60*2, 1);
       obj.Data.stimWindowUpdateLags = zeros(60*60*60*2, 1);
       obj.ParamsLog = obj.Params.log();
     end
@@ -419,7 +420,7 @@ classdef SignalsExp < handle
         time = Screen('AsyncFlipEnd', obj.StimWindowPtr);
         obj.AsyncFlipping = false;
         time = fromPtb(obj.Clock, time); %convert ptb/sys time to our clock's time
-        
+        assert(obj.Data.stimWindowUpdateTimes(obj.StimWindowUpdateCount) == 0);
         obj.Data.stimWindowUpdateTimes(obj.StimWindowUpdateCount) = time;
         lag = time - obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount);
         obj.Data.stimWindowUpdateLags(obj.StimWindowUpdateCount) = lag;
