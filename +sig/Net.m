@@ -18,7 +18,7 @@ classdef Net < handle
   methods
     function this = Net(size)
       if nargin < 1
-        size = 1000;
+        size = 4000;
       end
       this.Id = createNetwork(size);
       this.Schedule = struct('nodeid', {}, 'value', {}, 'when', {});
