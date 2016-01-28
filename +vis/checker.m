@@ -3,13 +3,14 @@ function elem = checker(t)
 %   Detailed explanation goes here
 
 elem = t.Node.Net.subscriptableOrigin('checker');
-azis = [-180 -90 0 90 180]; % horizontal grid coordinates (defining center of rectangles
-alts = [-90 0 90]; % vertical grid coordinates
+azis = [0]; % horizontal grid coordinates (defining center of rectangles)
+alts = [0]; % vertical grid coordinates
 elem.azimuths = azis;
 elem.altitudes = alts;
 elem.rectSize = [10 10]; % horizontal and vertical size of each rectangle
 elem.colour = [1 1 1];
 elem.show = false(numel(azis), numel(alts));
+% elem.show = map2(elem.azimuths.map(@numel), elem.altitudes.map(@numel), @false);
 elem.layers = elem.map(@makeLayers).flattenStruct();
 end
 

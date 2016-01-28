@@ -85,13 +85,26 @@ classdef Signal < sig.Signal & handle
     function sc = scan(varargin)
       % acc = items.scan(f, seed)
       %   or
-      % acc = scan(items1, f1, items2, f2, ... seed)
+      % acc = scan(items1, f1, items2, f2, ..., seed, ['pars', p1, p2, ...])
+      parsidx = find(cellfun(@(a)ischar(a) && strcmpi(a, 'pars'), varargin));
+      if ~isempty(parsidx)
+        pars = varargin(parsidx+1:end);
+        varargin = varargin(1:parsidx - 1);
+      else
+        pars = {};
+      end
+      seed = varargin{end};
       elems = varargin(1:2:end-1);
       funcs = varargin(2:2:end-1);
-      seed = varargin{end};
-      warning('todo: fix formatSpec for multiple inputs');
-      formatSpec = sprintf('%%s.scan(%s, %s)', toStr(funcs{1}), toStr(seed));
-      sc = applyTransferFun(elems{:}, seed, 'sig.transfer.scan', funcs, formatSpec);
+      %% formatting
+      funStrs = mapToCell(@toStr, funcs);
+      elemStrs = mapToCell(@(e)'%s', elems);
+      formatSpec = ['%s.scan(' strJoin(reshape([elemStrs; funStrs], 1, []), ', ') ')'];
+      if ~isempty(pars)
+        formatSpec = [formatSpec '[' strJoin(mapToCell(@(e)'%s', pars), ', ') ']'];
+      end
+      sc = applyTransferFun(elems{:}, seed, pars{:}, 'sig.transfer.scan', ...
+        funcs, formatSpec);
       if isa(seed, 'sig.node.Signal')
         if seed.Node.CurrValueSet
           sc.Node.CurrValue = seed.Node.CurrValue;

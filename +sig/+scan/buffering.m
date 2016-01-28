@@ -4,7 +4,7 @@ function f = buffering(maxSamples)
 
 f = @buffer;
 
-  function buff = buffer(buff, val)
+  function buff = buffer(val, buff)
     if size(buff, 2) == maxSamples
       buff = cat(2, buff(:,2:end), val);
     else

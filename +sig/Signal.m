@@ -24,7 +24,7 @@ classdef Signal < handle
     
     % Derive a signal by mapping the values from another
     %
-    % [m] = s.MAP(f, [formatSpec]) returns a new signal ms whose values
+    % m = s.MAP(f, [formatSpec]) returns a new signal m whose values
     % result from mapping values in this signal s using the function f.
     %
     % Example:
@@ -39,7 +39,7 @@ classdef Signal < handle
     
     % Derive a signal by mapping the values from n signals
     %
-    % [m] = s1.MAPN([s2], [s3], ..., f, [formatSpec]) returns a new signal
+    % m = s1.MAPN([s2], [s3], ..., f, [formatSpec]) returns a new signal
     % m whose values result from mapping values in this and an arbitrary
     % number of other signals by applying function f.
     %
