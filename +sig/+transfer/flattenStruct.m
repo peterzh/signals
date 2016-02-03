@@ -26,7 +26,7 @@ else % no new blueprint
     if cvset
       structval = flatten(cv);
     else
-      setNodeInputs(net, node, inputs(1));
+      nodeInputs(net, node, inputs(1));
       structval = currNodeValue(net, node);
     end
     state.unappliedInputChanges = false;
@@ -74,6 +74,6 @@ end
     % make the value structure that will take signal values as they come
     structval = cell2struct(vals, fn);
     % finally set inputs of this node to the nodes we just collected
-    setNodeInputs(net, node, [inputs(1) [inpnodes.Id]]);
+    nodeInputs(net, node, [inputs(1) [inpnodes.Id]]);
   end
 end
