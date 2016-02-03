@@ -50,15 +50,17 @@ classdef Signal < handle
     % See also map, map2
     m = mapn(this, varargin)
     
-    % Derive a signal by 'scanning and accumulating' values from another
+    % Create a signal updated iteratively from scanning this signal.
     %
-    % [sc] = s.SCAN(f, initacc) returns a new signal sc whose values result
-    % from applying each new value from signal s together with the previous
-    % value in sc to function f.
+    % acc = items.scan(f, init) returns a new signal acc whose values
+    % result from applying each new value from signal items together with
+    % the previous value in acc to function f, called as newacc = f(itemval,
+    % accval). init sets the initial value of acc, and can be a value or a
+    % signal. If a signal, init will overwrite the current value of acc
+    % whenever it changes.
     %
     % Example:
-    %   s = sig.SimpleSignal;
-    %   sc = s.scan(@plus, 0); % sc will contain a running total from s
+    %   y = x.scan(@plus, 0); % y will contain running total of values in x
     %
     % See also total
     s = scan(this, f, seed)

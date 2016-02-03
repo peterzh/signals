@@ -1,6 +1,7 @@
 classdef SubscriptableSignal < sig.node.Signal
-  %SIG.SUBSCRIPTABLESIGNAL Summary of this class goes here
-  %   Detailed explanation goes here
+  %sig.SubscriptableSignal Dot syntax subscripting derives a new a signal
+  %   A sig.SubscriptableSignal `s` can be subscripted to obtain a new
+  %   signal whose value results from subscripting the value of `s`.
   
   properties
     CacheSubscripts = false

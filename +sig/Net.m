@@ -1,6 +1,6 @@
 classdef Net < handle
-  %XSIG.NET Summary of this class goes here
-  %   Detailed explanation goes here
+  %sig.Net A network that can contain sig.node.Node's.
+  %   A network that contains and manages sig.node.Node's.
   
   properties (Transient)
     Schedule
