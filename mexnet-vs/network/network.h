@@ -73,6 +73,8 @@ typedef struct
 }
 Network;
 
+NETWORK_API mxArray *sqGetTransfererCustomArg(int net, size_t node);
+
 NETWORK_API int sqCreateNetwork(size_t size, mxArray *deleteCallback);
 
 NETWORK_API void sqDeleteNetwork(int net);
@@ -94,6 +96,8 @@ NETWORK_API void sqSetNodeWorkingValue(int net, size_t node, SQ_NODE_DATA_TYPE *
 NETWORK_API SQ_NODE_DATA_TYPE *sqGetNodeWorkingValue(int net, size_t node);
 
 NETWORK_API void sqSetNodeInputs(int net, size_t node, const mxArray *inputs);
+
+NETWORK_API mxArray *sqGetNodeInputs(int net, size_t node);
 
 NETWORK_API BOOL sqIsNetwork(int net);
 

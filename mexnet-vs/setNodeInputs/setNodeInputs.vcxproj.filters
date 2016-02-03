@@ -29,10 +29,10 @@
     <ClCompile Include="dllmain.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="setNodeInputs.c">
+    <ClCompile Include="stdafx.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stdafx.c">
+    <ClCompile Include="nodeInputs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

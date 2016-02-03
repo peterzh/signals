@@ -203,6 +203,41 @@ NETWORK_API void sqSetNodeInputs(int net, size_t node, const mxArray *inputs)
 	}
 }
 
+NETWORK_API mxArray *sqGetNodeInputs(int net, size_t node)
+{
+	if (!NETWORK_VALID(net)) {
+		mexPrintf("%d is not a valid network id\n", net);
+	}
+	else if (!NODE_VALID(networks[net], node)) {
+		mexPrintf("%d is not a valid node id\n", node);
+	}
+	else {
+		Node* n = &networks[net].nodes[node];
+		size_t nInputs = n->nInputs;
+		Node** inputs = n->inputs;
+		mxArray* inputids = mxCreateDoubleMatrix(1, nInputs, mxREAL);
+		double *idprs = mxGetPr(inputids);
+		for (size_t i = 0; i < nInputs; i++) {
+			idprs[i] = (double)inputs[i]->id;
+		}
+		return inputids;
+	}
+	return (SQ_NODE_DATA_TYPE *)NULL;
+}
+
+NETWORK_API mxArray *sqGetTransfererCustomArg(int net, size_t node) {
+	if (!NETWORK_VALID(net)) {
+		mexPrintf("%d is not a valid network id\n", net);
+	}
+	else if (!NODE_VALID(networks[net], node)) {
+		mexPrintf("%d is not a valid node id\n", node);
+	}
+	else {
+		return mxDuplicateArray(networks[net].nodes[node].transferer.args[TRANSFER_CUSTOM_ARG_IDX]);
+	}
+	return (SQ_NODE_DATA_TYPE *)NULL;
+}
+
 NETWORK_API BOOL sqIsNetwork(int net) {
 	return NETWORK_VALID(net);
 }
