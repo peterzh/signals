@@ -30,6 +30,8 @@ Network networks[MAX_NETWORKS];
 
 IndexStack transact(Network net, Node* node, SQ_NODE_DATA_TYPE *value);
 
+BOOL flattenStruct(Node* node);
+
 NETWORK_API int sqCreateNetwork(size_t size, mxArray *deleteCallback)
 {
 	int idx = nextFreeNetwork();
@@ -193,13 +195,14 @@ NETWORK_API void sqSetNodeInputs(int net, size_t node, const mxArray *inputs)
 		mexPrintf("%d is not a valid node id\n", node);
 	}
 	else {
+		double *inputsd = mxGetPr(inputs);
 		size_t nInputs = mxGetNumberOfElements(inputs);
 		size_t *inputsi = mxMalloc(sizeof(size_t)*nInputs);
-		double *inputsd = mxGetPr(inputs);
 		for (size_t i = 0; i < nInputs; i++) {
 			inputsi[i] = (size_t)roundl(inputsd[i]);
 		}
 		setNodeInputs(&networks[net].nodes[node], inputsi, nInputs);
+		mxFree(inputsi);
 	}
 }
 
@@ -750,6 +753,11 @@ BOOL transfer(Node* node) {
 				return true;
 			}
 			break;
+		case 40: // flattenStruct
+			if (flattenStruct(node)) {
+				return true;
+			}
+			break;
 		//case 50: // identity
 		//	if (node->inputs[0]->workingValue) {
 		//		mxArray *newOutput = mxCreateDoubleScalar(
@@ -774,5 +782,89 @@ BOOL transfer(Node* node) {
 	else { // but was previously set, so clear it
 		setNodeWorkingValue(node, (mxArray *)NULL);
 		return true;
+	}
+}
+
+SQ_NODE_DATA_TYPE* flattenSignalStruct(Node* target, SQ_NODE_DATA_TYPE* blueprint) {
+	/* use a struct with signal fields as a blueprint to wire up signals as inputs 
+	   to this target so that their values will set the field values directly in the
+	   target's struct value */
+	mxArray *lhs[4];
+	mexCallMATLAB(4, lhs, 1, &blueprint, "sig.node.flattenSignalStruct");
+	// list of field input nodes is second return arg
+	mxArray* fieldNodes = lhs[1];
+	// list of targetFields for each input is third return arg
+	if (target->transferer.targetFields)
+		mxDestroyArray(target->transferer.targetFields);
+	target->transferer.targetFields = lhs[2];
+	mexMakeArrayPersistent(lhs[2]);
+	// list of target indices for each input is fourth return arg
+	if (target->transferer.targetIndices)
+		mxDestroyArray(target->transferer.targetIndices);
+	target->transferer.targetIndices = lhs[3];
+	mexMakeArrayPersistent(lhs[3]);
+	// configure field inputs to this node
+	size_t nInputs = 1 + mxGetNumberOfElements(fieldNodes); // blueprint input + field inputs
+	size_t *inputsi = mxMalloc(sizeof(size_t)*nInputs); // list of all intended inputs
+	double *inputsd = mxGetPr(fieldNodes); // list of field inputs to copy to intended
+	inputsi[0] = target->inputs[0]->id; // set the blueprint input as the first input
+	for (size_t i = 1; i < nInputs; i++) { // then field inputs are 2nd onwards
+		inputsi[i] = (size_t)roundl(inputsd[i]);
+	}
+	setNodeInputs(target, inputsi, nInputs);
+	mxFree(inputsi);
+	return lhs[0];
+}
+
+BOOL flattenStruct(Node* node) {
+	BOOL newOutputSet = false;
+	SQ_NODE_DATA_TYPE* structval = NULL;
+	Node* blueprintInp = node->inputs[0];
+	if (blueprintInp->workingValue) { // new blueprint struct to reconfigure using
+		structval = flattenSignalStruct(node, blueprintInp->workingValue);
+		node->transferer.workingInputChanges = true;
+		newOutputSet = true;
+	} else { // no new blueprint struct to process
+		if (node->transferer.workingInputChanges) { // need to undo input changes
+			if (blueprintInp->currValue) { // existing blueprint available
+				structval = flattenSignalStruct(node, blueprintInp->workingValue);
+			}
+			else { // no blueprint available
+				setNodeInputs(node, &blueprintInp->id, 1); // eliminate field inputs
+				structval = mxCreateDoubleMatrix(0, 0, mxREAL); // this will just be destroyed later
+			}
+			node->transferer.workingInputChanges = false;
+		}
+		else { // no working input changes to undo
+			structval = mxDuplicateArray(node->currValue);
+		}
+	}
+
+	// check each field input, and update output if it's changed
+	double* idxs = mxGetPr(node->transferer.targetIndices);
+	double* fields = mxGetPr(node->transferer.targetFields);
+	size_t nInputs = node->nInputs;
+	for (int i = 1; i < nInputs; i++) {// iterate field inputs (2nd input onwards)
+		if (node->inputs[i]->workingValue) {
+			// free existing field value
+			mxDestroyArray(mxGetFieldByNumber(structval, (size_t)*idxs, (int)*fields));
+			// make a copy of the new field value from the input signal node
+			mxArray* fieldval = mxDuplicateArray(node->inputs[i]->workingValue);
+			// set new value
+			mxSetFieldByNumber(structval, (size_t)*idxs, (int)*fields, fieldval);
+			newOutputSet = true;
+		}
+		idxs++;
+		fields++;
+	}
+
+	if (newOutputSet) {
+		mexMakeArrayPersistent(structval);
+		setNodeWorkingValue(node, structval);
+		return true;
+	}
+	else {
+		mxDestroyArray(structval);
+		return false;
 	}
 }

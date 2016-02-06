@@ -42,6 +42,10 @@ typedef struct
 	int opCode;
 	char *funName;
 	mxArray *args[NUM_TRANSFERER_ARGS]; // TODO: tidy up and make safe when inputs deleted
+	// the following are currently used for flattenStruct transforms
+	bool workingInputChanges; // used to flag that inputs have changed due to unapplied transactions
+	mxArray *targetIndices; // the index into the target that each input goes to
+	mxArray *targetFields; // the field in the target that each input goes to
 }
 Transferer;
 
