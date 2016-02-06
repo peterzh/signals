@@ -7,16 +7,11 @@ code = 0; % default op code: means just use matlab transfer function
 switch transFun
 %   case 'sig.transfer.identity'
 %     code = 50;
-  case 'sig.transfer.map'
+  case {'sig.transfer.mapn' 'sig.transfer.map'}
     if isa(transArg, 'function_handle')
       switch func2str(transArg)
         case 'numel'
           code = 30;
-      end
-    end
-  case 'sig.transfer.mapn'
-    if isa(transArg, 'function_handle')
-      switch func2str(transArg)
         case 'plus'
           code = 1; % +
         case 'minus'
@@ -41,6 +36,8 @@ switch transFun
           code = 14;% ==
       end
     end
+  case 'sig.transfer.flattenStruct'
+    code = 40;
 end
 
 end

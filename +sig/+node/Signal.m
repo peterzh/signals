@@ -103,14 +103,18 @@ classdef Signal < sig.Signal & handle
       if ~isempty(pars)
         formatSpec = [formatSpec '[' strJoin(mapToCell(@(e)'%s', pars), ', ') ']'];
       end
-      sc = applyTransferFun(elems{:}, seed, pars{:}, 'sig.transfer.scan', ...
-        funcs, formatSpec);
-      if isa(seed, 'sig.node.Signal')
+      %% derive the scanning signal
+      inps = sig.node.from([elems {seed} pars]); % input signals & values -> nodes
+      node = sig.node.Node(inps, 'sig.transfer.scan', funcs);
+      node.FormatSpec = formatSpec;
+      sc = sig.node.ScanningSignal(node);
+      % initialise value of derived signal using seed
+      if isa(seed, 'sig.node.Signal') % if seed is a signal, use its current value, if any
         if seed.Node.CurrValueSet
           sc.Node.CurrValue = seed.Node.CurrValue;
         end
-      else
-        sc.Node.CurrValue = seed; % need to initialise the current node value to seed
+      else % seed not a signal, so use it directly as the value
+        sc.Node.CurrValue = seed;
       end
     end
     
@@ -281,49 +285,14 @@ classdef Signal < sig.Signal & handle
     end
     
     function fs = flattenStruct(this)
-      state = StructRef;
-      state.unappliedInputChanges = false;
-      state.inputsToSubsref = containers.Map(...
-        'KeyType', 'uint64', 'ValueType', 'any');
-      fs = applyTransferFun(this, 'sig.transfer.flattenStruct', state,...
-        '%s.flattenStruct()');
-%       % hmmmmmmmmmmmm
-%       out = sig.SimpleSignal(sprintf('flattenStruct(%s)', toStr(this)));
-%       remfuns = {};
-%       addPusher(this, @fspush);
-%       
-%       function snks = fspush(value)
-%         %% remove all previous connections
-%         for ii = 1:numel(remfuns)
-%           remfuns{ii}();
-%         end
-%         remfuns = {};
-%         %% flatten any signal fields in the struct array
-%         fields = fieldnames(value);
-%         latest = cell2struct(cell([numel(fields) size(value)]), fields);
-%         for jj = 1:numel(value)
-%           for ii = 1:numel(fields)
-%             field = fields{ii};
-%             if isa(value(jj).(field), 'sig.SimpleSignal')
-%               remfuns{end+1} = addPusher(value(jj).(field),...
-%                 fun.partial(@fieldpush, jj, field));
-%             else
-%               latest(jj).(field) = value(jj).(field);
-%             end
-%           end
-%         end
-%         %% immediately update, if any non-signal fields
-%         if ~isempty(fieldnames(latest))
-%           snks = update(out, latest);
-%         else
-%           snks = [];
-%         end
-%         %% pusher for signal field into main signal
-%         function snks = fieldpush(idx, field, value)
-%           latest(idx).(field) = value;
-%           snks = update(out, latest);
-%         end
-%       end
+      % all done in mexnet according to the transfer opcode
+      fs = applyTransferFun(this, 'sig.transfer.flattenStruct', [], '%s.flattenStruct()');
+%       state = StructRef;
+%       state.unappliedInputChanges = false;
+%       state.inputsToSubsref = containers.Map(...
+%         'KeyType', 'uint64', 'ValueType', 'any');
+%       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', state,...
+%         '%s.flattenStruct()');
     end
     
     function tr = applyTransferFun(varargin)
@@ -422,6 +391,10 @@ classdef Signal < sig.Signal & handle
       for ii = 1:n
         callbacks{ii}(newValue);
       end
+    end
+    
+    function n = node(this)
+      n = this.Node;
     end
   end
   

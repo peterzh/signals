@@ -111,11 +111,16 @@ classdef Node < handle
         n{i} = those(i).Name;
       end
     end
+    
+    function setInputs(this, nodes)
+    end
   end
   
   methods (Access = protected)
     function netDeleted(this, ~, ~)
-      this.Id = [];
+      if isvalid(this)
+        this.Id = [];
+      end
     end
   end
 end

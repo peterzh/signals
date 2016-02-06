@@ -438,6 +438,11 @@ void cleanupNode(Node *n, bool disconnect) {
 	mxFree(n->transferer.funName);
 	for (i = 0; i < NUMEL(n->transferer.args); i++)
 		mxDestroyArray(n->transferer.args[i]);
+	// free target field and index arrays
+	if (n->transferer.targetFields)
+		mxDestroyArray(n->transferer.targetFields);
+	if (n->transferer.targetIndices)
+		mxDestroyArray(n->transferer.targetIndices);
 	// free the data values & events target
 	if (n->currValue) {
 		mxDestroyArray(n->currValue);
@@ -809,10 +814,14 @@ SQ_NODE_DATA_TYPE* flattenSignalStruct(Node* target, SQ_NODE_DATA_TYPE* blueprin
 	double *inputsd = mxGetPr(fieldNodes); // list of field inputs to copy to intended
 	inputsi[0] = target->inputs[0]->id; // set the blueprint input as the first input
 	for (size_t i = 1; i < nInputs; i++) { // then field inputs are 2nd onwards
-		inputsi[i] = (size_t)roundl(inputsd[i]);
+		inputsi[i] = (size_t)inputsd[i];
 	}
 	setNodeInputs(target, inputsi, nInputs);
 	mxFree(inputsi);
+	
+	//mxArray* val = mxDuplicateArray(lhs[0]); // duplicate the struct value
+	//mexMakeArrayPersistent(lhs[0]);	// make it persist...
+	//mxDestroyArray(lhs[0]); // cleanup the original
 	return lhs[0];
 }
 
@@ -827,7 +836,7 @@ BOOL flattenStruct(Node* node) {
 	} else { // no new blueprint struct to process
 		if (node->transferer.workingInputChanges) { // need to undo input changes
 			if (blueprintInp->currValue) { // existing blueprint available
-				structval = flattenSignalStruct(node, blueprintInp->workingValue);
+				structval = flattenSignalStruct(node, blueprintInp->currValue);
 			}
 			else { // no blueprint available
 				setNodeInputs(node, &blueprintInp->id, 1); // eliminate field inputs
@@ -843,19 +852,16 @@ BOOL flattenStruct(Node* node) {
 	// check each field input, and update output if it's changed
 	double* idxs = mxGetPr(node->transferer.targetIndices);
 	double* fields = mxGetPr(node->transferer.targetFields);
-	size_t nInputs = node->nInputs;
-	for (int i = 1; i < nInputs; i++) {// iterate field inputs (2nd input onwards)
-		if (node->inputs[i]->workingValue) {
+	size_t nFieldInputs = node->nInputs - 1;
+	for (int i = 0; i < nFieldInputs; i++) {// iterate field inputs (2nd input onwards)
+		mxArray* inpwv = node->inputs[i + 1]->workingValue;
+		if (inpwv) {
 			// free existing field value
-			mxDestroyArray(mxGetFieldByNumber(structval, (size_t)*idxs, (int)*fields));
-			// make a copy of the new field value from the input signal node
-			mxArray* fieldval = mxDuplicateArray(node->inputs[i]->workingValue);
-			// set new value
-			mxSetFieldByNumber(structval, (size_t)*idxs, (int)*fields, fieldval);
+			mxDestroyArray(mxGetFieldByNumber(structval, (size_t)idxs[i] - 1, (int)fields[i] - 1));
+			// set field value to copy of field input working value
+			mxSetFieldByNumber(structval, (size_t)idxs[i] - 1, (int)fields[i] - 1, mxDuplicateArray(inpwv));
 			newOutputSet = true;
 		}
-		idxs++;
-		fields++;
 	}
 
 	if (newOutputSet) {
