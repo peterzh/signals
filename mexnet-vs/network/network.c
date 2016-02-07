@@ -20,11 +20,29 @@ typedef DEF_STACK_STRUCT(size_t) IndexStack;
 
 #define STACK_PUSH(stack, val) { (stack).arr[(stack).top++] = (val); }
 
-#define STACK_PUSH_ALL(stack, vals, n) { for(long i = (n)-1; i >= 0; i--) (stack).arr[(stack).top++] = (vals[i]); }
+#define STACK_PUSH_ALL(stack, vals, n) { for(long i = (n)-1; i >= 0; i--) (stack).arr[(stack).top++] = (vals)[i]; }
+
+//#define STACK_PUSH_ALL(stack, vals, n) { for(long i = (n)-1; i >= 0; i--) if (!(vals[i])->queued) {(stack).arr[(stack).top++] = (vals[i]); (vals[i])->queued = true;} }
 
 #define STACK_POP(stack) (stack).arr[--((stack).top)]
 
 #define STACK_IS_EMPTY(stack) ( (stack).top == 0 )
+
+#define DEF_QUEUE_STRUCT(type) struct { type *arr; size_t in; size_t out; size_t n; }
+
+#define QUEUE_ALLOC(q, size) { (q).arr = mxMalloc( sizeof(*(q).arr)*(size) ); (q).in = (q).out = 0; (q).n = (size); }
+
+#define QUEUE_FREE(q) { mxFree((q).arr); }
+
+//if ((q).in == (((q).out - 1 + (q).n) % (q).n)) return -1; // test for queue full minus one element
+
+#define QUEUE_PUT(q, val) {if (!(val)->queued) {(q).arr[(q).in] = (val); (val)->queued = true; (q).in = ((q).in + 1) % (q).n; } }
+
+#define QUEUE_PUT_ALL(q, vals, sz) for(size_t i = 0; i < sz; i++) { if (!(vals)[i]->queued) { (q).arr[(q).in] = (vals)[i]; (vals)[i]->queued = true; (q).in = ((q).in + 1) % (q).n; } }
+
+#define QUEUE_GET(q) (q).arr[(q).out]; { (q).arr[(q).out]->queued = false; (q).out = ((q).out + 1) % (q).n; }
+
+#define QUEUE_IS_EMPTY(q) ( (q).in == (q).out )
 
 Network networks[MAX_NETWORKS];
 
@@ -634,19 +652,20 @@ BOOL anyNetworksActive() {
 
 IndexStack transact(Network net, Node* node, SQ_NODE_DATA_TYPE *value) {
 	Node *nodes = net.nodes;
-	DEF_STACK_STRUCT(Node *) todo = { 0 };
+	DEF_QUEUE_STRUCT(Node *) todo = { 0 };
 	IndexStack affected = { 0 }; // list of nodes affected by transaction
-	STACK_ALLOC(todo, net.nNodes); // TODO: stack size is unsafe
+	QUEUE_ALLOC(todo, net.nNodes); // TODO: stack size is unsafe
 	STACK_ALLOC(affected, net.nNodes); // TODO: stack size is unsafe
 
 	//mexPrintf("transact begin on node #%d\n", node->id);
 
 	setNodeWorkingValue(node, value); // update the working value of starting node
-	STACK_PUSH_ALL(todo, node->targets, (long)node->nTargets); // starting node's targets need recomputing
+	QUEUE_PUT_ALL(todo, node->targets, node->nTargets); // starting node's targets need recomputing
 	STACK_PUSH(affected, node->id); // add starting node to visited list
 	//mexPrintf("#%d's output changed\n", node->id);
-	while (!STACK_IS_EMPTY(todo)) {
-		Node* curr = STACK_POP(todo); // next node to process
+	while (!QUEUE_IS_EMPTY(todo)) {
+		Node* curr = QUEUE_GET(todo); // next node to process
+		curr->queued = false;
 		BOOL propagate;
 		// compute value from inputs, propagate when working output might be different
 		propagate = transfer(curr);
@@ -655,10 +674,10 @@ IndexStack transact(Network net, Node* node, SQ_NODE_DATA_TYPE *value) {
 			// add to set of affected nodes
 			STACK_PUSH(affected, curr->id);
 			// push its target nodes onto the todo list
-			STACK_PUSH_ALL(todo, curr->targets, (long)curr->nTargets)
+			QUEUE_PUT_ALL(todo, curr->targets, (long)curr->nTargets);
 		}
 	}
-	STACK_FREE(todo); // done with node transfer todo list
+	QUEUE_FREE(todo); // done with node transfer todo list
 	return affected; // return indices of affected nodes
 }
 
