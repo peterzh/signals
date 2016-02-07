@@ -811,10 +811,10 @@ SQ_NODE_DATA_TYPE* flattenSignalStruct(Node* target, SQ_NODE_DATA_TYPE* blueprin
 	// configure field inputs to this node
 	size_t nInputs = 1 + mxGetNumberOfElements(fieldNodes); // blueprint input + field inputs
 	size_t *inputsi = mxMalloc(sizeof(size_t)*nInputs); // list of all intended inputs
-	double *inputsd = mxGetPr(fieldNodes); // list of field inputs to copy to intended
+	double *fieldInputsd = mxGetPr(fieldNodes); // list of field inputs to copy to intended
 	inputsi[0] = target->inputs[0]->id; // set the blueprint input as the first input
 	for (size_t i = 1; i < nInputs; i++) { // then field inputs are 2nd onwards
-		inputsi[i] = (size_t)inputsd[i];
+		inputsi[i] = (size_t)fieldInputsd[i - 1];
 	}
 	setNodeInputs(target, inputsi, nInputs);
 	mxFree(inputsi);
