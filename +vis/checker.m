@@ -1,5 +1,5 @@
 function elem = checker(t)
-%VIS.checker A grid of rectangles
+%vis.checker A grid of rectangles
 %   Detailed explanation goes here
 
 elem = t.Node.Net.subscriptableOrigin('checker');

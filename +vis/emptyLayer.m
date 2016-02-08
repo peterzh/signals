@@ -1,4 +1,4 @@
-function layer = emptyLayer()
+function layer = emptyLayer(n)
 %VIS.EMPTYLAYER Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -20,6 +20,10 @@ layer.colourMask = [true true true true];
 layer.interpolation = 'linear';
 layer.rgba = [];
 layer.rgbaSize = [];
+
+if nargin > 0 
+  layer = repmat(layer, 1, n);
+end
 
 end
 
