@@ -15,10 +15,13 @@ end
 
 newState = newPeriod.map(@initState);  
 
-state = scan(t.delta(), @tUpdate, x.delta(), @xUpdate, newState, 'pars', threshold);
-state = state.subscriptable();
-% event signal is derived by monitoring the armed field of state for new
-% false values (i.e. when it's released).
+state = scan(t.delta(), @tUpdate,... scan time increments
+  x.delta(), @xUpdate,... scan x deltas
+  newState,... initial state on arming trigger
+  'pars', threshold); % parameters
+state = state.subscriptable(); % allow field subscribting on state
+% event signal is derived by monitoring the 'armed' field of state for new
+% false values (i.e. when the armed trigger is released).
 qevt = state.armed.skipRepeats().not().then(true);
 
 end
@@ -28,17 +31,20 @@ function state = initState(dur)
 end
 
 function state = tUpdate(dt, state, ~)
-if state.armed
-  state.remaining = max(state.remaining - dt, 0);
-  if state.remaining == 0
+% update trigger state based on a time increment
+if state.armed % decrement time remaining until quiescent period met
+  state.remaining = max(state.remaining - dt, 0); 
+  if state.remaining == 0 % time's up, trigger can be released
     state.armed = false; % state is now released
   end
 end
 end
 
 function state = xUpdate(dx, state, thresh)
+% update trigger state based on a delta in the signal that must stay below
+% threshold
 if state.armed
-  state.mvmt = state.mvmt + abs(dx);
+  state.mvmt = state.mvmt + abs(dx); % accumulate the delta
   if state.mvmt > thresh % reached threshold, so reset
     state.mvmt = 0;
     state.remaining = state.win;
