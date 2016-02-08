@@ -27,7 +27,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "applyNodes", "applyNodes\ap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setNodeEventTarget", "setNodeEventTarget\setNodeEventTarget.vcxproj", "{ADD293F6-EDB5-40D4-A19A-C419BAE56388}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setNodeInputs", "setNodeInputs\setNodeInputs.vcxproj", "{B81C1942-C946-422E-8401-E37B9AAB1156}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nodeInputs", "setNodeInputs\setNodeInputs.vcxproj", "{B81C1942-C946-422E-8401-E37B9AAB1156}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

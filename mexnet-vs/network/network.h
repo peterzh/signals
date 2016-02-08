@@ -62,6 +62,8 @@ typedef struct Node
 	Transferer transferer;
 	mxArray *eventsTarget;
 	bool inUse;
+	// transaction status info
+	bool queued;
 	// state for appending new values to existing ones
 	bool appendValues;
 	size_t currValueAllocElems; // # elems allocated for mxArray data array
