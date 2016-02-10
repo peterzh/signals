@@ -82,7 +82,7 @@ classdef Node < handle
     end
     
     function v = get.CurrValue(this)
-      v = currNodeValue(this.NetId, this.Id);
+      v = currNodeValue(this.NetId, this.Id, true);
     end
     
     function set.CurrValue(this, v)
@@ -94,11 +94,11 @@ classdef Node < handle
     end
     
     function v = get.WorkingValue(this)
-      v = workingNodeValue(this.NetId, this.Id);
+      v = workingNodeValue(this.NetId, this.Id, true);
     end
     
     function set.WorkingValue(this, v)
-      workingNodeValue(this.NetId, this.Id, v);
+      workingNodeValue(this.NetId, this.Id, true, v);
     end
     
     function b = get.WorkingValueSet(this)

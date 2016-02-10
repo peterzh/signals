@@ -15,7 +15,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 		int netid = (int)mxGetScalar(prhs[0]);
 		size_t nodeid = (size_t)roundl(mxGetScalar(prhs[1]));
 		bool appendValue = false;
-		bool copyValue = true;
+		bool copyValue = false;
 		if (nrhs >= 3) {
 			copyValue = mxIsLogicalScalarTrue(prhs[2]);
 		}
