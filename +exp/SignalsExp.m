@@ -164,8 +164,8 @@ classdef SignalsExp < handle
         obj.Events.expStart.map(true).into(advanceTrial) %expStart signals advance
         obj.Events.endTrial.into(advanceTrial) %endTrial signals advance
         advanceTrial.map(true).keepWhen(hasNext).into(obj.Events.newTrial) %newTrial if more
-        lastTrialOver.onValue(@(~)quit(obj));
-        obj.Events.trialNum.onValue(fun.partial(@fprintf, 'trial %i started\n'))];
+        lastTrialOver.onValue(@(~)quit(obj));];
+%         obj.Events.trialNum.onValue(fun.partial(@fprintf, 'trial %i started\n'))];
       % initialise the parameter signals
       globalPars.post(rmfield(globalStruct, 'defFunction'));
       allCondPars.post(allCondStruct);
@@ -463,18 +463,26 @@ classdef SignalsExp < handle
         layersSig.onValue(fun.partial(@obj.newLayerValues, name))];
       newLayerValues(obj, name, layersSig.Node.CurrValue);
 
-      %% load textures
-      layerData = obj.LayersByStim(name);
-      for ii = 1:numel(layerData)
-        id = layerData(ii).textureId;
-        if ~obj.TextureById.isKey(id)
-          obj.TextureById(id) = ...
-            vis.loadLayerTextures(obj.StimWindowPtr, layerData(ii));
-        end
-      end
+%       %% load textures
+%       layerData = obj.LayersByStim(name);
+%       Screen('BeginOpenGL', win);
+%       try
+%         for ii = 1:numel(layerData)
+%           id = layerData(ii).textureId;
+%           if ~obj.TextureById.isKey(id)
+%             obj.TextureById(id) = ...
+%               vis.loadLayerTextures(layerData(ii));
+%           end
+%         end
+%       catch glEx
+%         Screen('EndOpenGL', win);
+%         rethrow(glEx);
+%       end
+%       Screen('EndOpenGL', win);
     end
     
     function newLayerValues(obj, name, val)
+%       fprintf('new layer %s\n', name);
       if isKey(obj.LayersByStim, name)
         prev = obj.LayersByStim(name);
         prevshow = any([prev.show]);
@@ -589,6 +597,7 @@ classdef SignalsExp < handle
       %set looping flag
       obj.IsLooping = true;
       % begin the loop
+      nChars = 0;
       while obj.IsLooping
         %% create a list of handlers that have become due
         dueIdx = find([obj.Pending.dueTime] <= now(obj.Clock));
@@ -597,6 +606,7 @@ classdef SignalsExp < handle
         %% check for and process any input
         checkInput(obj);
 
+        
         %% execute pending event handlers that have become due
         for i = 1:ndue
           due = obj.Pending(dueIdx(i));
@@ -611,7 +621,9 @@ classdef SignalsExp < handle
         obj.Pending(inactiveIdx) = [];
         
         %% squeaking
+        tic
         post(obj.Time, now(obj.Clock));
+        nChars = overfprintf(nChars, 'post took %.1fms\n', 1000*toc);
         runSchedule(obj.Net);
         wx = readAbsolutePosition(obj.Wheel);
         post(obj.Inputs.wheel, wx);
@@ -621,7 +633,9 @@ classdef SignalsExp < handle
         if obj.StimWindowInvalid
           ensureWindowReady(obj); % complete any outstanding refresh
           % draw the visual frame
+%           tic
           drawFrame(obj);
+%           toc;
           if ~isempty(obj.SyncBounds) % render sync rectangle
             % render sync region with next colour in cycle
             col = obj.SyncColourCycle(obj.NextSyncIdx,:);

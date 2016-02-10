@@ -8,10 +8,17 @@ try
 % glClear(GL.COLOR_BUFFER_BIT); %clear the colour buffer
 glUseProgram(model.glsl); % use our shader
 glBindVertexArray(model.vao); % bind our VAO
+% ensure all textures are loaded
+[texids, idToLayer] = unique({layers.textureId});
+for ti = 1:numel(texids)
+  id = texids{ti};
+  if ~texturesById.isKey(id)
+    texturesById(id) = vis.loadLayerTextures(layers(idToLayer));
+  end
+end
 
 % load model view projection transforms
 % constant for each projection
-
 glUniformMatrix4fv(model.modelIdx, 1, GL.FALSE, model.model);
 glUniform1i(model.texIdx, 0);
 for l = 1:numel(layers)
@@ -49,7 +56,7 @@ for l = 1:numel(layers)
   moglcore('glUniform4fv', model.maxColourIdx, 1, single(layer.maxColour));
   % load texture
   %glBindTexture(GL.TEXTURE_2D, texturesById(layer.textureId));
-  moglcore('glBindTexture', GL.TEXTURE_2D, texturesById(layer.textureId));
+  moglcore('glBindTexture', GL.TEXTURE_2D, texturesById(id));
   for ii = 1:numel(model.screens)
     % changes per projection
     scr = model.screens(ii);
