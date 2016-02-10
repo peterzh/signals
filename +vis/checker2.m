@@ -3,83 +3,57 @@ function elem = checker2(t)
 %   Detailed explanation goes here
 
 elem = t.Node.Net.subscriptableOrigin('checker');
+
+defRectSize = [10 10];
+% make initial layer to be replicated and configured for each square
+[initLayer, img] = vis.rectLayer([0 0], defRectSize, 0);
+[initLayer.rgba, initLayer.rgbaSize] = vis.rgba(1, img);
+initLayer.textureId = 'square';
+% elem.layers = elem.map(@removeLayers).flattenStruct().map(@makeLayers);
+
+show = elem.show.flatten();
+gridSize = show.map(@size);
+aziRange = elem.azimuthRange.flatten();
+altRange = elem.altitudeRange.flatten();
+elem.layers = scan(show, @updateShow,...
+                   elem.colour.flatten(), @updateColour,...
+                   aziRange, @updateAzi,...
+                   altRange, @updateAlt,...
+                   initLayer,... % initial value
+                   'pars', aziRange, altRange, gridSize);
 elem.azimuthRange = [-90 90];
 elem.altitudeRange = [-45 45];
 elem.rectSize = [10 10]; % horizontal and vertical size of each rectangle
-elem.colour = [1 1 1];
-
-% elem.show = map2(elem.azimuths.map(@numel), elem.altitudes.map(@numel), @false);
-elem.show = false(1);
-elem.layers = elem.map(@removeLayers).flattenStruct().map(@makeLayers);
-elem.show = false(1);
+elem.show = false(3, 3);
 end
-
-% function layers = showToLayers(show)
-% layers = vis.emptyLayer();
-% % for azGrid = 1:nAz
-% %   for alGrid = 1:nAl
-% %     q = (azGrid-1)*nAl+alGrid; % linear index
-% %     [layer, img] = vis.rectLayer(...
-% %       [newelem.azimuths(azGrid); newelem.altitudes(alGrid)],...
-% %       newelem.rectSize, 0);
-% %     [layer.rgba, layer.rgbaSize] = vis.rgba(1, img);
-% %     layer.textureId = 'square';
-% %     layer.blending = 'source';
-% %     layer.maxColour = [newelem.colour 1];
-% %     layer.show = newelem.show(azGrid, alGrid);
-% %     layers(q) = layer;
-% %   end
-% % end
-% end
-
-function elem = removeLayers(elem) % hack for now
-elem = rmfield(elem, 'layers');
+%% helper functions
+function layers = updateShow(layers, show, aziRange, altRange, ~)
+if numel(layers) ~= numel(show) % num of layers need to change
+  layers = repmat(layers(1), 1, numel(show)); % replicate one of them
+  newCentres = num2cell(gridCentres(aziRange, altRange, size(show)), 2);
+  [layers.texOffset] = newCentres{:};
 end
-
-function layers = makeLayers(elem)
-% fprintf(1, 'checker layers\n')
-% tic
-[nAl, nAz] = size(elem.show);
-nLayers = numel(elem.show);
-
-if nAl > 1
-  al = linspace(elem.altitudeRange(1), elem.altitudeRange(2), nAl);
-else
-  al = mean(elem.altitudeRange);
-end
-if nAz > 1
-  az = linspace(elem.azimuthRange(1), elem.azimuthRange(2), nAz);
-else
-  az = mean(elem.azimuthRange);
-end
-[cenAl, cenAz] = ndgrid(al, az);
-
-[layers, img] = vis.rectLayer([0 0], elem.rectSize, 0);
-[layers.rgba, layers.rgbaSize] = vis.rgba(1, img);
-layers.textureId = 'square';
-layers.maxColour = [elem.colour 1];
-layers = repmat(layers, 1, nLayers);
-
-show = num2cell(elem.show);
+show = num2cell(show);
 [layers.show] = show{:};
-% pos = num2cell([cenAz(:) cenAl(:)], 2);
-% [layers.texOffset] = pos{:};
-for li = 1:nLayers
-%   layers(li).show = elem.show(li);
-  layers(li).texOffset = [cenAz(li) cenAl(li)];
 end
-% toc
-% for azGrid = 1:nAz
-%     for alGrid = 1:nAl
-%         lidx = lidx + 1;
-%         [layer, img] = vis.rectLayer(...
-%             [elem.azimuths(azGrid); elem.altitudes(alGrid)], elem.rectSize, 0);
-%         [layer.rgba, layer.rgbaSize] = vis.rgba(1, img);
-%         layer.textureId = 'square';
-%         layer.blending = 'source';
-%         layer.maxColour = [elem.colour 1];
-%         layer.show = elem.show(azGrid, alGrid);
-%         layers(q) = layer;
-%     end
-% end
+
+function layers = updateColour(layers, colour, ~, ~, ~)
+[layers.maxColour] = deal([colour 1]);
+end
+
+function layers = updateAzi(layers, aziRange, ~, altRange, gridSize)
+newCentres = num2cell(gridCentres(aziRange, altRange, gridSize), 2);
+[layers.texOffset] = newCentres{:};
+end
+
+function layers = updateAlt(layers, altRange, aziRange, ~, gridSize)
+newCentres = num2cell(gridCentres(aziRange, altRange, gridSize), 2);
+[layers.texOffset] = newCentres{:};
+end
+
+function centres = gridCentres(aziRange, altRange, sz)
+azi = linspace(min(aziRange), max(aziRange), sz(2));
+alt = linspace(min(altRange), max(altRange), sz(1));
+[cenAlt, cenAzi] = ndgrid(alt, azi);
+centres = [cenAzi(:) cenAlt(:)];
 end
