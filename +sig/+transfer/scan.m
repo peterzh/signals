@@ -37,7 +37,7 @@ for ii = 1:nElemInps
     % current node value) and the new input value. New output is revised
     % accumulator value
     f = funcs{ii};
-    val = f(itemwv, val, pars{:});
+    val = f(val, itemwv, pars{:});
     valset = true;
   end
 end

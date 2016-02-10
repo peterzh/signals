@@ -1,4 +1,4 @@
-function n = lastTrue(pred, n)
+function n = lastTrue(n, pred)
 %SIG.SCAN.LASTTRUE Summary of this function goes here
 %   Detailed explanation goes here
 

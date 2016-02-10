@@ -30,7 +30,7 @@ function state = initState(dur)
  state = struct('win', dur, 'remaining', dur, 'mvmt', 0, 'armed', true);
 end
 
-function state = tUpdate(dt, state, ~)
+function state = tUpdate(state, dt, ~)
 % update trigger state based on a time increment
 if state.armed % decrement time remaining until quiescent period met
   state.remaining = max(state.remaining - dt, 0); 
@@ -40,7 +40,7 @@ if state.armed % decrement time remaining until quiescent period met
 end
 end
 
-function state = xUpdate(dx, state, thresh)
+function state = xUpdate(state, dx, thresh)
 % update trigger state based on a delta in the signal that must stay below
 % threshold
 if state.armed
