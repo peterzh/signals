@@ -13,7 +13,8 @@ if seedwvset
   valavail = true;
   valset = true;
 else
-  [val, valavail] = currNodeValue(net, node);
+  % get current node value, but not a copy
+  [val, valavail] = currNodeValue(net, node, false);
   valset = false;
 end
 %% obtain latest parameter inputs if any

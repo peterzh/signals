@@ -86,7 +86,7 @@ classdef Node < handle
     end
     
     function set.CurrValue(this, v)
-      currNodeValue(this.NetId, this.Id, v);
+      currNodeValue(this.NetId, this.Id, true, v);
     end
     
     function b = get.CurrValueSet(this)
