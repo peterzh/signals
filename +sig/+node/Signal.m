@@ -294,6 +294,14 @@ classdef Signal < sig.Signal & handle
 %       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', state,...
 %         '%s.flattenStruct()');
     end
+
+    function fs = flatten(this)
+      % all done in mexnet according to the transfer opcode
+      state = StructRef;
+      state.unappliedInputChanges = false;
+      fs = applyTransferFun(this, 'sig.transfer.flatten', state,...
+        '%s.flatten()');
+    end
     
     function tr = applyTransferFun(varargin)
       % New signal derived by applying a transfer function to input nodes
