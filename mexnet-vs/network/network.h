@@ -115,7 +115,7 @@ NETWORK_API void sqDispNode(int net, size_t node);
 
 NETWORK_API mxArray *sqTransact(int net, size_t node, SQ_NODE_DATA_TYPE *value);
 
-NETWORK_API mxArray *sqApply(int net, const mxArray *updatedNodes);
+NETWORK_API mxArray *sqApply(int net, const mxArray *updatedNodes, bool list);
 
 void setNodeInputs(Node *n, size_t inputs[], size_t nInputs);
 

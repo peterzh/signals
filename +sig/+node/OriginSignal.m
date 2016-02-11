@@ -13,7 +13,8 @@ classdef OriginSignal < sig.node.Signal
 
     function post(this, v)
       affectedIdxs = submit(this.Node.NetId, this.Node.Id, v);
-      changed = applyNodes(this.Node.NetId, affectedIdxs);
+%       changed = applyNodes(this.Node.NetId, affectedIdxs);
+      applyNodes(this.Node.NetId, affectedIdxs);
     end
 
     function delayedPost(this, value, delay)

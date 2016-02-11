@@ -336,7 +336,7 @@ NETWORK_API mxArray *sqTransact(int net, size_t node, SQ_NODE_DATA_TYPE *value) 
 	}
 }
 
-NETWORK_API mxArray *sqApply(int net, const mxArray *nodes) {
+NETWORK_API mxArray *sqApply(int net, const mxArray *nodes, bool list) {
 	if (!NETWORK_VALID(net)) {
 		mexPrintf("%d is not a valid network id\n", net);
 		return NULL;
@@ -344,14 +344,14 @@ NETWORK_API mxArray *sqApply(int net, const mxArray *nodes) {
 	else {
 		mxArray *notifyArgs[2];
 		Node *n = networks[net].nodes; // all the network's nodes
-		size_t i, nUpdates = mxGetNumberOfElements(nodes), nApplied;
+		size_t nApplied, i, nUpdates = mxGetNumberOfElements(nodes);
 		double *dNodes = mxGetPr(nodes), *applieddArr;
 		IndexStack applied = { 0 }; // set of all nodes that have had changes applied
 		mxArray *appliedmxArray;
 
-		//notifyArgs[1] = mxCreateDoubleScalar(net);
-
-		STACK_ALLOC(applied, nUpdates); // appliedSet will never be larger than nUpdates
+		if (list) {
+			STACK_ALLOC(applied, nUpdates); // appliedSet will never be larger than nUpdates
+		}
 
 		// iterate over list of updates, applying to a node only once
 		for (i = 0; i < nUpdates; i++) {
@@ -371,7 +371,9 @@ NETWORK_API mxArray *sqApply(int net, const mxArray *nodes) {
 				n[currNode].workingValue = (mxArray *)NULL;
 				//mexPrintf(" #%d", nodes[currNode].id);
 				setNodeCurrValue(&n[currNode], v, n[currNode].appendValues); // apply the value, ie working->current
-				STACK_PUSH(applied, currNode); // put the node idx into the applied set
+				if (list) {
+					STACK_PUSH(applied, currNode); // put the node idx into the applied set
+				}
 				// notify apply event, if any event target registered
 				if (n[currNode].eventsTarget) {
 					notifyArgs[0] = n[currNode].eventsTarget; // call function on target
@@ -381,17 +383,21 @@ NETWORK_API mxArray *sqApply(int net, const mxArray *nodes) {
 				}
 			}
 		}
-		//mxDestroyArray(notifyArgs[1]); // done with notifyArgs netid
-
-		// turn the applied set stack into a double mxArray to return
-		nApplied = applied.top;
-		appliedmxArray = mxCreateDoubleMatrix(nApplied, 1, mxREAL);
-		applieddArr = mxGetPr(appliedmxArray) + nApplied;
-		while (!STACK_IS_EMPTY(applied))
-			*(--applieddArr) = (double)STACK_POP(applied);
-		STACK_FREE(applied);
-
-		return appliedmxArray;
+		
+		if (list) {
+			// turn the applied set stack into a double mxArray to return
+			nApplied = applied.top;
+			appliedmxArray = mxCreateDoubleMatrix(nApplied, 1, mxREAL);
+			applieddArr = mxGetPr(appliedmxArray) + nApplied;
+			while (!STACK_IS_EMPTY(applied)) {
+				*(--applieddArr) = (double)STACK_POP(applied);
+			}
+			STACK_FREE(applied);
+			return appliedmxArray;
+		}
+		else {
+			return (mxArray*)NULL;
+		}
 	}
 }
 
@@ -654,15 +660,14 @@ IndexStack transact(Network net, Node* node, SQ_NODE_DATA_TYPE *value) {
 	Node *nodes = net.nodes;
 	DEF_QUEUE_STRUCT(Node *) todo = { 0 };
 	IndexStack affected = { 0 }; // list of nodes affected by transaction
-	QUEUE_ALLOC(todo, net.nNodes); // TODO: stack size is unsafe
-	STACK_ALLOC(affected, net.nNodes); // TODO: stack size is unsafe
+	QUEUE_ALLOC(todo, net.nNodes); // size limit is safe since nodes can only be queued once
+	STACK_ALLOC(affected, net.nNodes); // TODO: size is unsafe as nodes can be affected more than once
 
 	//mexPrintf("transact begin on node #%d\n", node->id);
 
 	setNodeWorkingValue(node, value); // update the working value of starting node
 	QUEUE_PUT_ALL(todo, node->targets, node->nTargets); // starting node's targets need recomputing
 	STACK_PUSH(affected, node->id); // add starting node to visited list
-	//mexPrintf("#%d's output changed\n", node->id);
 	while (!QUEUE_IS_EMPTY(todo)) {
 		Node* curr = QUEUE_GET(todo); // next node to process
 		curr->queued = false;
