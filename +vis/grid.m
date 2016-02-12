@@ -18,8 +18,8 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
         [layer, img] = vis.rectLayer(...
           [newelem.azimuths(li); 0],...
           colsize, 0);
-        [layer.rgba, layer.rgbaSize] = vis.rgba(1, img);
-        layer.textureId = 'square';
+        [layer.rgba, layer.rgbaSize] = vis.rgba(1, 0.5*img);
+        layer.textureId = 'transparentPixel';
         layer.blending = 'source';
         layer.maxColour = [newelem.colour 1];
         layer.show = newelem.show;

@@ -8,7 +8,7 @@ defRectSize = [10 10];
 % make initial layer to be replicated and configured for each square
 [initLayer, img] = vis.rectLayer([0 0], defRectSize, 0);
 [initLayer.rgba, initLayer.rgbaSize] = vis.rgba(1, img);
-initLayer.textureId = 'square';
+initLayer.textureId = '~square';
 % elem.layers = elem.map(@removeLayers).flattenStruct().map(@makeLayers);
 
 show = elem.show.flatten();
@@ -21,8 +21,8 @@ elem.layers = scan(show, @updateShow,...
                    altRange, @updateAlt,...
                    initLayer,... % initial value
                    'pars', aziRange, altRange, gridSize);
-elem.azimuthRange = [-90 90];
-elem.altitudeRange = [-45 45];
+elem.azimuthRange = [-30 30];
+elem.altitudeRange = [-30 30];
 elem.rectSize = [10 10]; % horizontal and vertical size of each rectangle
 elem.show = false(3, 3);
 end
