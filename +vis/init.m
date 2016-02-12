@@ -68,7 +68,7 @@ h.tridx = tridx;
 % rotation hack to look z upwards, y depthward
 vertexPos = [x(:) -z(:) y(:)]';
 vertexPos = -vertexPos; %invert cos we want the inside
-vertexUV = [u(:) v(:)]';
+vertexUV = [u(:) 1-v(:)]';
 h.vertexUV = vertexUV;
 
 % Load Position Buffer

@@ -18,4 +18,3 @@ layer.size = 3*dims;
 layer.isPeriodic = false;
 
 end
-

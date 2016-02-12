@@ -19,7 +19,7 @@ layer.maxColour = [1 1 1 1];
 layer.colourMask = [true true true true];
 layer.interpolation = 'linear';
 layer.rgba = [];
-layer.rgbaSize = [];
+layer.rgbaSize = [0 0];
 
 if nargin > 0 
   layer = repmat(layer, 1, n);

@@ -9,20 +9,23 @@ try
 glUseProgram(model.glsl); % use our shader
 glBindVertexArray(model.vao); % bind our VAO
 % ensure all textures are loaded
+
 [texids, idToLayer] = unique({layers.textureId});
 for ti = 1:numel(texids)
   id = texids{ti};
   if ~texturesById.isKey(id)
     texturesById(id) = vis.loadLayerTextures(layers(idToLayer));
+  elseif id(1) == '~' % dynamic texture, reload it each time
+    vis.reloadLayerTexture(layers(idToLayer), texturesById(id));
   end
 end
-
 % load model view projection transforms
 % constant for each projection
 glUniformMatrix4fv(model.modelIdx, 1, GL.FALSE, model.model);
 glUniform1i(model.texIdx, 0);
-for l = 1:numel(layers)
-  layer = layers(l);
+lastTexId = [];
+for li = 1:numel(layers)
+  layer = layers(li);
   if ~layer.show
     continue
   end
@@ -54,12 +57,15 @@ for l = 1:numel(layers)
   moglcore('glUniform4fv', model.minColourIdx, 1, single(layer.minColour));
   %glUniform4fv(model.maxColourIdx, 1, layer.maxColour);
   moglcore('glUniform4fv', model.maxColourIdx, 1, single(layer.maxColour));
-  % load texture
-  %glBindTexture(GL.TEXTURE_2D, texturesById(layer.textureId));
-  moglcore('glBindTexture', GL.TEXTURE_2D, texturesById(id));
-  for ii = 1:numel(model.screens)
+  % load texture if different from previous
+%   if ~strcmp(lastTexId, layer.textureId)
+%     lastTexId = layer.textureId;
+%     
+%   end
+  moglcore('glBindTexture', GL.TEXTURE_2D, texturesById(layer.textureId));
+  for si = 1:numel(model.screens)
     % changes per projection
-    scr = model.screens(ii);
+    scr = model.screens(si);
     %glViewport(scr.bounds(1), scr.bounds(2), w, h);
     moglcore('glViewport', scr.bounds(1), model.winSize(2) - scr.bounds(2) - scr.h, scr.w, scr.h);
     %glUniformMatrix4fv(model.projectionIdx, 1, GL.FALSE, scr.projection);

@@ -4,35 +4,16 @@ function gltex = loadLayerTextures(layers)
 
 global GL;
 
-% Screen('BeginOpenGL', win);
-% try
-gltex = glGenTextures(numel(layers));
+gltex = glGenTextures(numel(layers)); % make the OGL texture names
 for ii = 1:numel(layers)
+%   rgba = uint8(round(255*layers(ii).rgba));
+%   rgba = permute(rgba(end:-1:1,:,:), [3 2 1]);
   
-  %     rgb = layers(ii).colour;
-  %     alpha = layers(ii).alpha;
-  %
-  %     h = max(size(rgb, 1), size(alpha, 1));
-  %     w = max(size(rgb, 2), size(alpha, 2));
-  %
-  %     if ~isscalar(rgb) && size(rgb, 3) == 1
-  %       rgb = repmat(rgb, [1 1 3]);
-  %     end
-  %
-  %
-  %     rgba = zeros(h, w, 4);
-  %
-  %     rgba(:,:,1:3) = rgb;
-  %     rgba(:,:,4) = alpha;
   w = layers(ii).rgbaSize(1);
   h = layers(ii).rgbaSize(2);
-  rgba = uint8(round(255*layers(ii).rgba));
-  rgba = permute(rgba(end:-1:1,:,:), [3 2 1]);
-  
-  %     gltex(ii) = glGenTextures(1); % make the OGL texture name
-  glBindTexture(GL.TEXTURE_2D, gltex(ii)); % activate
+  glBindTexture(GL.TEXTURE_2D, gltex(ii)); % bind our texture name
   glTexImage2D(GL.TEXTURE_2D, 0, GL.RGBA, w, h, 0,...
-    GL.RGBA, GL.UNSIGNED_BYTE, rgba(:));
+    GL.RGBA, GL.UNSIGNED_BYTE, layers(ii).rgba);
   switch layers(ii).interpolation
     case 'linear'
       glTexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
@@ -53,11 +34,6 @@ for ii = 1:numel(layers)
     glTexParameterfv(GL.TEXTURE_2D, GL.TEXTURE_BORDER_COLOR, single([0 0 0 0]));
   end
 end
-% catch glEx
-%   Screen('EndOpenGL', win);
-%   rethrow(glEx);
-% end
-% Screen('EndOpenGL', win);
 
 end
 
