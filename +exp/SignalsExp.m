@@ -175,7 +175,7 @@ classdef SignalsExp < handle
       %initialise stim window frame times array, large enough for ~2 hours
       obj.Data.stimWindowUpdateTimes = zeros(60*60*60*2, 1);
       obj.Data.stimWindowRenderTimes = zeros(60*60*60*2, 1);
-      obj.Data.stimWindowUpdateLags = zeros(60*60*60*2, 1);
+%       obj.Data.stimWindowUpdateLags = zeros(60*60*60*2, 1);
       obj.ParamsLog = obj.Params.log();
     end
     
@@ -420,10 +420,10 @@ classdef SignalsExp < handle
         time = Screen('AsyncFlipEnd', obj.StimWindowPtr);
         obj.AsyncFlipping = false;
         time = fromPtb(obj.Clock, time); %convert ptb/sys time to our clock's time
-        assert(obj.Data.stimWindowUpdateTimes(obj.StimWindowUpdateCount) == 0);
+%         assert(obj.Data.stimWindowUpdateTimes(obj.StimWindowUpdateCount) == 0);
         obj.Data.stimWindowUpdateTimes(obj.StimWindowUpdateCount) = time;
-        lag = time - obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount);
-        obj.Data.stimWindowUpdateLags(obj.StimWindowUpdateCount) = lag;
+%         lag = time - obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount);
+%         obj.Data.stimWindowUpdateLags(obj.StimWindowUpdateCount) = lag;
       end
     end
     
@@ -566,7 +566,7 @@ classdef SignalsExp < handle
       
       %clip the stim window update times array
       obj.Data.stimWindowUpdateTimes((obj.StimWindowUpdateCount + 1):end) = [];
-      obj.Data.stimWindowUpdateLags((obj.StimWindowUpdateCount + 1):end) = [];
+%       obj.Data.stimWindowUpdateLags((obj.StimWindowUpdateCount + 1):end) = [];
       obj.Data.stimWindowRenderTimes((obj.StimWindowUpdateCount + 1):end) = [];
       
       % release resources
@@ -620,14 +620,15 @@ classdef SignalsExp < handle
         inactiveIdx = ~[obj.Pending.isActive];
         obj.Pending(inactiveIdx) = [];
         
-        %% squeaking
-        tic
-        post(obj.Time, now(obj.Clock));
-        nChars = overfprintf(nChars, 'post took %.1fms\n', 1000*toc);
-        runSchedule(obj.Net);
+        %% signalling
+%         tic
         wx = readAbsolutePosition(obj.Wheel);
         post(obj.Inputs.wheel, wx);
+        post(obj.Time, now(obj.Clock));
         runSchedule(obj.Net);
+        
+%         runSchedule(obj.Net);
+%         nChars = overfprintf(nChars, 'post took %.1fms\n', 1000*toc);
         
         %% redraw the stimulus window if it has been invalidated
         if obj.StimWindowInvalid
@@ -645,15 +646,12 @@ classdef SignalsExp < handle
             obj.NextSyncIdx = mod(obj.NextSyncIdx, size(obj.SyncColourCycle, 1)) + 1;
           end
           renderTime = now(obj.Clock);
-          obj.StimWindowUpdateCount = obj.StimWindowUpdateCount + 1;
-          obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount) = renderTime;
-          
-          obj.StimWindowInvalid = false;
-
-          % do the actual 'flip' of the frame onto the screen. This will
-          % also clear the screen to background colour
+          % start the 'flip' of the frame onto the screen
           Screen('AsyncFlipBegin', obj.StimWindowPtr);
           obj.AsyncFlipping = true;
+          obj.StimWindowUpdateCount = obj.StimWindowUpdateCount + 1;
+          obj.Data.stimWindowRenderTimes(obj.StimWindowUpdateCount) = renderTime;
+          obj.StimWindowInvalid = false;
         end
         sendSignalUpdates(obj);
         drawnow; % allow other callbacks to execute
