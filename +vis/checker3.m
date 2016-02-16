@@ -12,89 +12,105 @@ patternLayer.isPeriodic = false;
 patternLayer.interpolation = 'nearest';
 patternLayer.blending = 'destination';
 
-lineLayer = vis.emptyLayer();
-lineLayer.textureId = sprintf('stencilPixel');
-lineLayer.isPeriodic = false;
-lineLayer.interpolation = 'nearest';
-lineLayer.show = true;
-[lineLayer.rgba, lineLayer.rgbaSize] = vis.rgba(1, 1);
+maskTemplate = vis.emptyLayer();
+maskTemplate.isPeriodic = false;
+maskTemplate.interpolation = 'nearest';
+maskTemplate.show = true;
+maskTemplate.colourMask = [false false false true];
 
+maskTemplate.textureId = 'checkerMaskPixel';
+[maskTemplate.rgba, maskTemplate.rgbaSize] = vis.rgba(0, 0);
+maskTemplate.blending = '1-source';
 
-% lineLayer.blending = 'none';
-% lineLayer.colourMask = [false false false true];
+stencilTemplate = maskTemplate;
+stencilTemplate.textureId = 'checkerStencilPixel';
+[stencilTemplate.rgba, stencilTemplate.rgbaSize] = vis.rgba(1, 1);
+stencilTemplate.blending = 'none';
 
 % elem.layers = elem.map(@removeLayers).flattenStruct().map(@makeLayers);
 
-gridSize = elem.pattern.flatten().map(@size).skipRepeats();
+nRowsByCols = elem.pattern.flatten().map(@size).skipRepeats();
 aziRange = elem.azimuthRange.flatten();
 altRange = elem.altitudeRange.flatten();
-lineLayers = mapn(gridSize, aziRange, altRange, lineLayer, @gridMask);
+sizeFrac = elem.rectSizeFrac.flatten();
+gridMaskLayers = mapn(nRowsByCols, aziRange, altRange, sizeFrac, ...
+  maskTemplate, stencilTemplate, @gridMask);
 
-elem.layers = lineLayers;
+% elem.layers = gridMaskLayers;
 
-% elem.layers = scan(elem.pattern.flatten(), @updatePattern,...
-%                    elem.colour.flatten(), @updateColour,...
-%                    elem.azimuthRange.flatten(), @updateAzi,...
-%                    elem.altitudeRange.flatten(), @updateAlt,...
-%                    elem.show.flatten(), @updateShow,...
-%                    lineLayer); % initial value
-                   
-elem.azimuthRange = [-60 60];
+checkerLayer = scan(elem.pattern.flatten(), @updatePattern,...
+                   elem.colour.flatten(), @updateColour,...
+                   elem.azimuthRange.flatten(), @updateAzi,...
+                   elem.altitudeRange.flatten(), @updateAlt,...
+                   elem.show.flatten(), @updateShow,...
+                   patternLayer); % initial value
+elem.layers = [gridMaskLayers checkerLayer];
+elem.azimuthRange =  [-90 90];
 elem.altitudeRange = [-30 30];
-% elem.rectSize = defRectSize; % horizontal and vertical size of each rectangle
+elem.rectSizeFrac = [0.5 0.5]; % horizontal and vertical size of each rectangle
 elem.pattern = [
-   1  0  1
-   0 -1  0 
-   1  0  1];
+   1 -1  1 -1
+  -1  0  0  0 
+   1  0  0  0
+  -1  1 -1  1];
  elem.show = true;
 end
 %% helper functions
-function layers = gridMask(gridSize, aziRange, altRange, template)
-ncols = gridSize(2) + 1;
-nrows = gridSize(1) + 1;
-midazi = mean(aziRange);
-midalt = mean(altRange);
-if ncols > 1
-  azi = linspace(aziRange(1), aziRange(2), ncols);
+function layer = updatePattern(layer, pattern)
+[layer.rgba, layer.rgbaSize] = vis.rgbaFromUint8(...
+  uint8(127.5*(1 + pattern)), uint8(abs(255*pattern)));
+end
+
+function layer = updateColour(layer, colour)
+layer.maxColour = [colour 1];
+end
+
+function layer = updateAzi(layer, aziRange)
+layer.size(1) = abs(diff(aziRange));
+layer.texOffset(1) = mean(aziRange);
+end
+
+function layer = updateAlt(layer, altRange)
+layer.size(2) = abs(diff(altRange));
+layer.texOffset(2) = mean(altRange);
+end
+
+function layer = updateShow(layer, show)
+layer.show = show;
+end
+
+function layers = gridMask(nRowsByCols, aziRange, altRange, sizeFrac, mask, stencil)
+gridDims = [abs(diff(aziRange)) abs(diff(altRange))];
+cellSize = gridDims./flip(nRowsByCols);
+nCols = nRowsByCols(2) + 1;
+nRows = nRowsByCols(1) + 1;
+midAzi = mean(aziRange);
+midAlt = mean(altRange);
+%% base layer
+stencil.texOffset = [midAzi midAlt];
+stencil.size = gridDims;
+%% make layers for vertical lines
+if nCols > 1
+  azi = linspace(aziRange(1), aziRange(2), nCols);
 else
-  azi = midazi;
+  azi = midAzi;
 end
-if nrows > 1
-  alt = linspace(altRange(1), altRange(2), nrows);
+collayers = repmat(mask, 1, nCols);
+for vi = 1:nCols
+  collayers(vi).texOffset = [azi(vi) midAlt];
+end
+[collayers.size] = deal([(1 - sizeFrac(1))*cellSize(1) gridDims(2)]);
+%% make layers for horizontal lines
+if nRows > 1
+  alt = linspace(altRange(1), altRange(2), nRows);
 else
-  alt = midalt;
+  alt = midAlt;
 end
-collayers = repmat(template, 1, ncols);
-for vi = 1:(gridSize(1) + 1)
-  collayers(vi).texOffset = [azi(vi) midalt];
+rowlayers = repmat(mask, 1, nRows);
+for hi = 1:nRows
+  rowlayers(hi).texOffset = [midAzi alt(hi)];
 end
-
-[collayers.size] = deal([5 abs(diff(aziRange))]);
-
-layers = collayers;
-
+[rowlayers.size] = deal([gridDims(1) (1 - sizeFrac(2))*cellSize(2)]);
+%% combine
+layers = [stencil collayers rowlayers];
 end
-
-% function layers = updatePattern(layers, pattern)
-% 
-% % [layers.rgba, layers.rgbaSize] = vis.rgbaFromUint8(...
-% %   uint8(127.5*(1 + pattern)), uint8(abs(255*pattern)));
-% end
-% 
-% function layer = updateColour(layer, colour)
-% layer.maxColour = [colour 1];
-% end
-% 
-% function layers = updateAzi(layers, aziRange)
-% % layers.size(1) = abs(diff(aziRange));
-% % layers.texOffset(1) = mean(aziRange);
-% end
-% 
-% function layer = updateAlt(layer, altRange)
-% % layer.size(2) = abs(diff(altRange));
-% % layer.texOffset(2) = mean(altRange);
-% end
-% 
-% function layer = updateShow(layer, show)
-% [layers.show] = deal(show);
-% end
