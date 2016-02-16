@@ -36,6 +36,8 @@ for li = 1:numel(layers)
       glBlendFunc(GL.DST_ALPHA, GL.ONE_MINUS_DST_ALPHA);
     case {'src' 'source'}
       glBlendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
+    case {'1-src' '1-source'}
+      glBlendFunc(GL.ONE_MINUS_SRC_ALPHA, GL.SRC_ALPHA);
   end
   %glColorMask(layer.colourMask(1), layer.colourMask(2),...
   %  layer.colourMask(3), layer.colourMask(4));

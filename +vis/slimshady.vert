@@ -33,8 +33,10 @@ void main()
     /*mat4 view = rot3(yax, posRad.x)*rot3(zax, posRad.y)*rot3(xax, viewRad);*/
     gl_Position = projection*view*model*vec4(vertexPos.xyz, 1.0f);
     
-    vec2 texScale = vec2(180.0/texSize.x, 180.0/texSize.y);
-    vec2 texTrans = vec2(-texOffset.x/texSize.x, -texOffset.y/texSize.y);
+    vec2 safeTexSize = vec2(texSize.x != 0.0f ? texSize.x : 1e-10, 
+      texSize.y != 0.0f ? texSize.y : 1e-10);
+    vec2 texScale = vec2(180.0/safeTexSize.x, 180.0/safeTexSize.y);
+    vec2 texTrans = vec2(-texOffset.x/safeTexSize.x, -texOffset.y/safeTexSize.y);
     mat3 uvTrans = trans2(vec2(0.5) + texTrans)*scale2(texScale)*
       rot2(texAngle*pi/180)*scale2(vec2(2.0, 1.0))*trans2(vec2(-0.5));
     UV = (uvTrans*vec3(vertexUV.xy, 1.0f)).xy;
