@@ -13,10 +13,11 @@ glBindVertexArray(model.vao); % bind our VAO
 [texids, idToLayer] = unique({layers.textureId});
 for ti = 1:numel(texids)
   id = texids{ti};
+  layer = layers(idToLayer(ti));
   if ~texturesById.isKey(id)
-    texturesById(id) = vis.loadLayerTextures(layers(idToLayer));
+    texturesById(id) = vis.loadLayerTextures(layer);
   elseif id(1) == '~' % dynamic texture, reload it each time
-    vis.reloadLayerTexture(layers(idToLayer), texturesById(id));
+    vis.reloadLayerTexture(layer, texturesById(id));
   end
 end
 % load model view projection transforms
@@ -60,11 +61,12 @@ for li = 1:numel(layers)
   %glUniform4fv(model.maxColourIdx, 1, layer.maxColour);
   moglcore('glUniform4fv', model.maxColourIdx, 1, single(layer.maxColour));
   % load texture if different from previous
-%   if ~strcmp(lastTexId, layer.textureId)
-%     lastTexId = layer.textureId;
-%     
-%   end
-  moglcore('glBindTexture', GL.TEXTURE_2D, texturesById(layer.textureId));
+  texId = layer.textureId;
+  if ~strcmp(lastTexId, texId) || texId(1) == '~'
+    lastTexId = layer.textureId;
+    moglcore('glBindTexture', GL.TEXTURE_2D, texturesById(lastTexId));
+  end
+%   moglcore('glBindTexture', GL.TEXTURE_2D, texturesById(layer.textureId));
   for si = 1:numel(model.screens)
     % changes per projection
     scr = model.screens(si);

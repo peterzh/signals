@@ -94,29 +94,34 @@ midAlt = mean(altRange);
 %% base layer to imprint area the checker can draw on (by applying an alpha mask)
 stencil.texOffset = [midAzi midAlt];
 stencil.size = gridDims;
-%% layers for lines making up mask grid - masks out margins around each square
-% make layers for vertical lines
-if nCols > 1
-  azi = linspace(aziRange(1), aziRange(2), nCols);
-else
-  azi = midAzi;
+if any(sizeFrac < 1)
+  %% layers for lines making up mask grid - masks out margins around each square
+  % make layers for vertical lines
+  if nCols > 1
+    azi = linspace(aziRange(1), aziRange(2), nCols);
+  else
+    azi = midAzi;
+  end
+  collayers = repmat(mask, 1, nCols);
+  for vi = 1:nCols
+    collayers(vi).texOffset = [azi(vi) midAlt];
+  end
+  [collayers.size] = deal([(1 - sizeFrac(1))*cellSize(1) gridDims(2)]);
+  % make layers for horizontal lines
+  if nRows > 1
+    alt = linspace(altRange(1), altRange(2), nRows);
+  else
+    alt = midAlt;
+  end
+  rowlayers = repmat(mask, 1, nRows);
+  for hi = 1:nRows
+    rowlayers(hi).texOffset = [midAzi alt(hi)];
+  end
+  [rowlayers.size] = deal([gridDims(1) (1 - sizeFrac(2))*cellSize(2)]);
+  %% combine the layers and return
+  layers = [stencil collayers rowlayers];
+else % no mask grid needed as each cell is full size
+  layers = stencil;
 end
-collayers = repmat(mask, 1, nCols);
-for vi = 1:nCols
-  collayers(vi).texOffset = [azi(vi) midAlt];
-end
-[collayers.size] = deal([(1 - sizeFrac(1))*cellSize(1) gridDims(2)]);
-% make layers for horizontal lines
-if nRows > 1
-  alt = linspace(altRange(1), altRange(2), nRows);
-else
-  alt = midAlt;
-end
-rowlayers = repmat(mask, 1, nRows);
-for hi = 1:nRows
-  rowlayers(hi).texOffset = [midAzi alt(hi)];
-end
-[rowlayers.size] = deal([gridDims(1) (1 - sizeFrac(2))*cellSize(2)]);
-%% combine the layers and return
-layers = [stencil collayers rowlayers];
+
 end
