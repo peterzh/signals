@@ -122,7 +122,10 @@ classdef SignalsExp < handle
       obj.Inputs = sig.Registry;
       obj.Outputs = sig.Registry;
       obj.Visual = StructRef;
-      obj.Audio = audstream.Registry(192e3);
+      nAudChannels = getOr(paramStruct, 'numAudChannels', 2);
+      audSampleRate = getOr(paramStruct, 'audSampleRate', 192e3); % Hz
+      audDevIdx = getOr(paramStruct, 'audDevIdx', -1); % -1 means use system default
+      obj.Audio = audstream.Registry(audSampleRate, nAudChannels, audDevIdx);
       obj.Events = sig.Registry;
       %% configure signals
       net = sig.Net;
