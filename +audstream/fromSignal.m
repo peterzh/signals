@@ -14,7 +14,7 @@ if nargin < 5 || isempty(devIdx)
   devIdx = 2;
 end
 
-id = audstream.open(sampleRate, nChannels);
+id = audstream.open(sampleRate, nChannels, devIdx);
 audstream.start(id);
 listener = packetSignal.onValue(fun.partial(@audstream.throttlePost, id,...
   bufferMax));
