@@ -485,7 +485,8 @@ classdef SignalsExp < handle
     end
     
     function newLayerValues(obj, name, val)
-%       fprintf('new layer %s\n', name);
+%       fprintf('new layer value for %s\n', name);
+%       show = [val.show]
       if isKey(obj.LayersByStim, name)
         prev = obj.LayersByStim(name);
         prevshow = any([prev.show]);
@@ -493,9 +494,11 @@ classdef SignalsExp < handle
         prevshow = false;
       end
       obj.LayersByStim(name) = val;
+
       if any([val.show]) || prevshow
         obj.StimWindowInvalid = true;
       end
+      
     end
 
     function delete(obj)
