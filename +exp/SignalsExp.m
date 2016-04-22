@@ -315,10 +315,10 @@ classdef SignalsExp < handle
       %refresh the stimulus window
       Screen('Flip', obj.StimWindowPtr);
       
-      % start the experiment loop
-      mainLoop(obj);
-      
       try
+        % start the experiment loop
+        mainLoop(obj);
+        
         %Trigger the 'experimentCleanup' event so any handlers will be called
         cleanupInfo = exp.EventInfo('experimentCleanup', obj.Clock.now, obj);
         fireEvent(obj, cleanupInfo);
@@ -339,6 +339,7 @@ classdef SignalsExp < handle
         if ~isempty(ref)
           saveData(obj); %save the data
         end
+        ensureWindowReady(obj); % complete any outstanding refresh
         %rethrow the exception
         rethrow(ex)
       end
