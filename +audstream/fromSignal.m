@@ -11,10 +11,11 @@ if nargin < 4 || isempty(nChannels)
 end
 
 if nargin < 5 || isempty(devIdx)
-  devIdx = 2;
+  id = audstream.open(sampleRate, nChannels);
+else
+  id = audstream.open(sampleRate, nChannels, devIdx);
 end
 
-id = audstream.open(sampleRate, nChannels, devIdx);
 audstream.start(id);
 listener = packetSignal.onValue(fun.partial(@audstream.throttlePost, id,...
   bufferMax));
