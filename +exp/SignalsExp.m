@@ -116,9 +116,9 @@ classdef SignalsExp < handle
   end
   
   methods
-    function obj = SignalsExp(paramStruct, clock)
-      obj.Clock = clock;
-      clockFun = @clock.now
+    function obj = SignalsExp(paramStruct, rig)
+      clock = rig.clock;
+      clockFun = @clock.now;
       obj.TextureById = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
       obj.LayersByStim = containers.Map;
       obj.Inputs = sig.Registry(clockFun);
@@ -182,9 +182,11 @@ classdef SignalsExp < handle
       obj.Data.stimWindowRenderTimes = zeros(60*60*60*2, 1);
 %       obj.Data.stimWindowUpdateLags = zeros(60*60*60*2, 1);
       obj.ParamsLog = obj.Params.log();
+      obj.useRig(rig);
     end
     
     function useRig(obj, rig)
+      obj.Clock = clock;
       obj.Data.rigName = rig.name;
       obj.SyncBounds = rig.stimWindow.SyncBounds;
       obj.SyncColourCycle = rig.stimWindow.SyncColourCycle;
