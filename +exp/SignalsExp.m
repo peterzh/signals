@@ -116,17 +116,19 @@ classdef SignalsExp < handle
   end
   
   methods
-    function obj = SignalsExp(paramStruct)
+    function obj = SignalsExp(paramStruct, clock)
+      obj.Clock = clock;
+      clockFun = @clock.now
       obj.TextureById = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
       obj.LayersByStim = containers.Map;
-      obj.Inputs = sig.Registry;
-      obj.Outputs = sig.Registry;
+      obj.Inputs = sig.Registry(clockFun);
+      obj.Outputs = sig.Registry(clockFun);
       obj.Visual = StructRef;
       nAudChannels = getOr(paramStruct, 'numAudChannels', 2);
       audSampleRate = getOr(paramStruct, 'audSampleRate', 192e3); % Hz
       audDevIdx = getOr(paramStruct, 'audDevIdx', -1); % -1 means use system default
       obj.Audio = audstream.Registry(audSampleRate, nAudChannels, audDevIdx);
-      obj.Events = sig.Registry;
+      obj.Events = sig.Registry(clockFun);
       %% configure signals
       net = sig.Net;
       obj.Net = net;
@@ -184,7 +186,6 @@ classdef SignalsExp < handle
     
     function useRig(obj, rig)
       obj.Data.rigName = rig.name;
-      obj.Clock = rig.clock;
       obj.SyncBounds = rig.stimWindow.SyncBounds;
       obj.SyncColourCycle = rig.stimWindow.SyncColourCycle;
       obj.NextSyncIdx = 1;
