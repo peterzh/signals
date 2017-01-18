@@ -26,7 +26,11 @@ e.outputs = net.subscriptableOrigin('outputs');
 try
   expdeffun(e.t, e.events, e.pars, e.visual, e.inputs , e.outputs);
   paramNames = e.pars.Subscripts.keys';
+  paramValues = e.pars.Subscripts.values';
   parsStruct = cell2struct(cell(size(paramNames)), paramNames);
+  for i = 1:size(paramNames,1)
+      parsStruct.(paramNames{i}) = paramValues{i}.Node.CurrValue;
+  end
   parsStruct.numRepeats = 0; % add 'numRepeats' parameter
   parsStruct.defFunction = expdef;
   parsStruct.type = 'custom';
