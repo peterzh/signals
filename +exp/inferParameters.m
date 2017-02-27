@@ -25,7 +25,14 @@ e.outputs = net.subscriptableOrigin('outputs');
 
 try
   expdeffun(e.t, e.events, e.pars, e.visual, e.inputs , e.outputs);
+  % paramNames will be the strings corresponding to the fields of e.pars
+  % that the user tried to reference in her expdeffun.
   paramNames = e.pars.Subscripts.keys';
+  %The paramValues are signals corresponding to those parameters and they
+  %will all be empty, except when they've been given explicit numerical
+  %definitions right at the end of the function - and in that case, we'll
+  %take those values (extracted into matlab datatypes, from the signals,
+  %using .Node.CurrValue) to be the desired default values.
   paramValues = e.pars.Subscripts.values';
   parsStruct = cell2struct(cell(size(paramNames)), paramNames);
   for i = 1:size(paramNames,1)
