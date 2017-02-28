@@ -8,7 +8,7 @@ classdef Registry < StructRef
   end
   
   methods
-    function obj = Registry(clockFun)
+    function obj = SignalsExp(clockFun)
       if nargin < 1
         obj.ClockFun = @GetSecs;
       else
