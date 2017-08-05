@@ -15,8 +15,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			size_t nInputs = mxGetNumberOfElements(prhs[1]);
 			double *dinputs = mxGetPr(prhs[1]);
 			size_t nodeid, *inputs = mxMalloc(sizeof(size_t)*nInputs);
+			char *funName = mxArrayToString(prhs[2]);
+			mexMakeMemoryPersistent(funName);
 			Transferer transferer = { 
-				.funName = mxArrayToString(prhs[2]),
+				.funName = funName,
 				.opCode = (int)mxGetScalar(prhs[3]),
 				.args = 0 };
 			bool appendValues = false;
@@ -27,7 +29,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 			else {
 				transferer.args[TRANSFER_CUSTOM_ARG_IDX] = mxCreateDoubleMatrix(0, 0, mxREAL);
 			}
-			mexMakeArrayPersistent(transferer.args[3]);
+			mexMakeArrayPersistent(transferer.args[TRANSFER_CUSTOM_ARG_IDX]);
 
 			if (nrhs == 6) {
 				appendValues = mxIsLogicalScalarTrue(prhs[5]);
