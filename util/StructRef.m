@@ -28,7 +28,12 @@ classdef StructRef < handle
     end
     
     function [varargout] = subsref(this, s)
-      [varargout{1:nargout}] = subsref(this.Entries, s);
+      if any(strcmp(this.Reserved, s(1).subs))
+        % If subscripted reference is a reserved property, use builtin
+        [varargout{1:nargout}] = builtin('subsref', this, s);
+      else % Otherwise return entry value
+        [varargout{1:nargout}] = subsref(this.Entries, s);
+      end
     end
   end
 

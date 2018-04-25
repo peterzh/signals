@@ -1,5 +1,5 @@
-classdef Registry < sig.Registry
-  %audstream.Registry Summary of this class goes here
+classdef Registry < StructRef
+  %audstream.Registry A registry for interating with PsychPortAudio devices
   %   Detailed explanation goes here
   
   properties
@@ -7,29 +7,33 @@ classdef Registry < sig.Registry
   end
   
   properties (SetAccess = private)
-    SampleRate
-    NChannels
-    DevIdx
+    % Structure of available audio devices similar to that returned by
+    % PsychPortAudio('GetDevices')
+    Devices
   end
   
   methods
-    function this = Registry(sampleRate, nChannels, devIdx)
-      if nargin < 2
-        nChannels = 2;
+    function this = Registry(devices)
+      % Populate Devices property with audio device information, namely
+      % sample rate, number of output channels and device index
+      if ~nargin
+        this.Devices = containers.Map('default',...
+          struct('DeviceIndex', -1,...% -1 means use system default audio device
+          'DefaultSampleRate', 44100,...
+          'NrOutputChannels', 2));
+      else
+        this.Devices = containers.Map(...
+          {devices.DeviceName},...
+          arrayfun(@(s){s}, devices));
       end
-      if nargin < 3
-        devIdx = -1; % -1 means use system default audio device
-      end
-      this.SampleRate = sampleRate;
-      this.NChannels = nChannels;
-      this.DevIdx = devIdx;
+      this.Reserved = {'Devices'};
     end
-
+    
     function value = entryAdded(this, name, value)
+      d = this.Devices(name);
       this.Handles = ...
-        [this.Handles audstream.fromSignal(value, this.SampleRate, 2, this.NChannels, this.DevIdx)];
+        [this.Handles audstream.fromSignal(value, d.DefaultSampleRate, 2, d.NrOutputChannels, d.DeviceIndex)];
     end
   end
   
 end
-
