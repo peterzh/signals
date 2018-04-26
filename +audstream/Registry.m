@@ -33,6 +33,7 @@ classdef Registry < StructRef
       d = this.Devices(name);
       this.Handles = ...
         [this.Handles audstream.fromSignal(value, d.DefaultSampleRate, 2, d.NrOutputChannels, d.DeviceIndex)];
+      this.EntryNames = {}; % Clear entry names in order to keep adding new handles
     end
   end
   
