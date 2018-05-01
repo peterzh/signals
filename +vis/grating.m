@@ -18,6 +18,7 @@ elem.sigma = [10 10];
 elem.spatialFreq = 1/15;
 elem.phase = 0;
 elem.orientation = 0;
+elem.colour = [1 1 1];
 elem.contrast = 1;
 elem.show = false;
 
@@ -42,8 +43,8 @@ end
 gratingLayer.blending = 'destination';
 l = 0.5 - 0.5*newelem.contrast;
 h = 0.5 + 0.5*newelem.contrast;
-gratingLayer.minColour = l.*[1 1 1 0];
-gratingLayer.maxColour = [h.*ones(1, 3) 1];
+gratingLayer.minColour = l.*[newelem.colour 0];
+gratingLayer.maxColour = h.*[newelem.colour 1];
 gratingLayer.show = newelem.show;
 
 %% make a stencil layer using a window of the specified type
