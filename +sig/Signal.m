@@ -23,7 +23,8 @@ classdef Signal < handle
     % New signal that samples the value from this signal when another updates
     %
     % [s] = what.at(when) returns a new signal s that takes the current
-    % value of signal 'what' at the moment signal 'when' gets a new value.
+    % value of signal 'what' at the moment signal 'when' gets a new, truthy
+    % value (that is, a value not false or zero).
     %
     % Example:
     %   x = sig.SimpleSignal;
