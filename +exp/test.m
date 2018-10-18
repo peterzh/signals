@@ -1,9 +1,9 @@
 function test(expdef)
 %UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+%   Input: Handle to experiment definition function
 
 addSignalsJava();
-
+global AGL GL GLU %#ok<NUSED>
 persistent defdir lastParams;
 
 
@@ -30,12 +30,12 @@ end
 
 parsStruct = exp.inferParameters(expdef);
 parsStruct = rmfield(parsStruct, 'defFunction');
-parsStruct.numRepeats = 100;
+parsStruct.expRef = dat.constructExpRef('fake', now, 1);
 
 %% boring UI stuff
 parsWindow = figure('Name', sprintf('%s', expdefname),...
   'NumberTitle', 'off', 'Toolbar', 'none', 'Menubar', 'none',...
-  'Position', [30 100 1600 580]);
+  'Position', [800 550 800 580]);
 mainsplit = uiextras.HBox('Parent', parsWindow);
 leftbox = uiextras.VBox('Parent', mainsplit);
 
@@ -67,19 +67,21 @@ leftbox.Sizes = [-1 100];
 % leftbox.Sizes = [-1 30 25];
 % parslist = addlistener(parsEditor, 'Changed', @appl);
 %% experiment framework
-[t, setElems] = sig.playground(expdefname, mainsplit);
-mainsplit.Sizes = [700 -1];
+[t, setElems] = sig.playgroundPTB(expdefname, ctrlgrid);
+% mainsplit.Sizes = [700 -1]; 
 net = t.Node.Net;
 % inputs & outputs
 inputs = sig.Registry;
 inputs.wheel = net.origin('wheel');
+inputs.keyboard = net.origin('keyboard');
 outputs = sig.Registry;
 % video and audio registries
 vs = StructRef;
-audio = audstream.Registry(192e3);
+audio = audstream.Registry();
 % events registry
 evts = sig.Registry;
 evts.expStart = net.origin('expStart');
+evts.expStop = net.origin('expStop');
 evts.newTrial = net.origin('newTrial');
 evts.trialNum = evts.newTrial.scan(@plus, 0); % track trial number
 advanceTrial = net.origin('advanceTrial');
@@ -105,10 +107,9 @@ if isfield(outputs, 'reward')
 end
 
 % plotting the signals
-sigsFig = figure; 
-tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 100e-3,...
-    'TimerFcn', @(~, ~)plotSignals(sigsFig, evts));
- start(tmr);
+sigsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off'); 
+tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 100e-3, 'Tag', 'figUpdate',...
+    'TimerFcn', @(~, ~)plotSignals(sigsFig, evts), 'Name', 'FigUpdate');
 set(sigsFig, 'CloseRequestFcn', @(s,c)stopAndClose(s,c,tmr));
 
   function applyPars(~,~)
@@ -121,20 +122,21 @@ set(sigsFig, 'CloseRequestFcn', @(s,c)stopAndClose(s,c,tmr));
 
   function startExp(~,~)
     applyPars();
-    evts.expStart.post(true);
+    evts.expStart.post(parsStruct.expRef);
     inputs.wheel.post(get(wheelslider, 'Value'));
   end
 
   function wheelSliderChanged(src, ~)
     pos = get(src, 'Value');
+    if isempty(pos); return; end
     set(src, 'Min', pos - 50, 'Max', pos + 50);
-    inputs.wheel.post(get(src, 'Value'));
+    inputs.wheel.post(pos);
   end
   
-    function stopAndClose(~,~,tmr)
-        stop(tmr);
-        delete(tmr);
-        delete(gcf);
-    end  
+  function stopAndClose(~,~,tmr)
+    stop(tmr);
+    delete(tmr);
+    delete(gcf);
+  end
 
 end
