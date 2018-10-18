@@ -1,9 +1,9 @@
 function test(expdef)
 %UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+%   Input: Handle to experiment definition function
 
 addSignalsJava();
-global AGL GL GLU
+global AGL GL GLU %#ok<NUSED>
 persistent defdir lastParams;
 
 
@@ -30,7 +30,7 @@ end
 
 parsStruct = exp.inferParameters(expdef);
 parsStruct = rmfield(parsStruct, 'defFunction');
-% parsStruct.numRepeats = 100;
+parsStruct.expRef = dat.constructExpRef('fake', now, 1);
 
 %% boring UI stuff
 parsWindow = figure('Name', sprintf('%s', expdefname),...
@@ -81,6 +81,7 @@ audio = audstream.Registry();
 % events registry
 evts = sig.Registry;
 evts.expStart = net.origin('expStart');
+evts.expStop = net.origin('expStop');
 evts.newTrial = net.origin('newTrial');
 evts.trialNum = evts.newTrial.scan(@plus, 0); % track trial number
 advanceTrial = net.origin('advanceTrial');
@@ -121,7 +122,7 @@ set(sigsFig, 'CloseRequestFcn', @(s,c)stopAndClose(s,c,tmr));
 
   function startExp(~,~)
     applyPars();
-    evts.expStart.post(true);
+    evts.expStart.post(parsStruct.expRef);
     inputs.wheel.post(get(wheelslider, 'Value'));
   end
 
