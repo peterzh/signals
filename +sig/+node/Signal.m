@@ -285,7 +285,10 @@ classdef Signal < sig.Signal & handle
     end
     
     function fs = flattenStruct(this)
-      % all done in mexnet according to the transfer opcode
+      % Use a struct with signal fields as a blueprint to wire up signals
+      % as inputs to this target so that their values will set the field
+      % values directly in the target's struct value all done in mexnet
+      % according to the transfer opcode
       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', [], '%s.flattenStruct()');
 %       state = StructRef;
 %       state.unappliedInputChanges = false;
@@ -332,8 +335,18 @@ classdef Signal < sig.Signal & handle
     end
     
     function l = log(this, clockFun)
+      % Creates signals that logs the values and timestamps of input signal
+      %
+      % Sometimes you want the values of a signal to be logged and
+      % timestamped. The log method returns a signal that carries a
+      % structure with the fields 'time' and 'value'.  Log takes two
+      % inputs: the signal to be logged and an optional clock function to
+      % use for the timestamps.  The default clock function is GetSecs
+      %
+      % NB: This doesn't have anything to do with logarithms.  To take the
+      % log of a signal: logA = a.map(@log)
       if nargin < 2
-        clockFun = @GetSecs
+        clockFun = @GetSecs;
       end
       node = sig.node.Node(this.Node, 'sig.transfer.log', clockFun, true);
       node.FormatSpec = '%s.log()';
