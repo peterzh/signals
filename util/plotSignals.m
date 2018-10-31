@@ -3,6 +3,8 @@ function plotSignals(figHand, signalRegistry)
 % get the current time and current values immediately
 thisTime = GetSecs();
 sigNames = fieldnames(signalRegistry);
+sigNames(strcmp('expStart',sigNames)) = []; %hide 'expStart' signal from LivePlot
+sigNames(strcmp('expStop',sigNames)) = []; %hide 'expStop' signal from LivePlot
 
 nSig = length(sigNames);
 sigLogs = logs(signalRegistry,get(figHand, 'UserData')); % the figure user data was the initialization time, so logs will be zeroed to that

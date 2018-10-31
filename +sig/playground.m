@@ -1,6 +1,7 @@
 function [t, setgraphic] = playground(title, parent)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
+%equivalent to exp.SignalsExp
 
 if nargin < 1
   title = 'Signals playground';
@@ -18,7 +19,7 @@ tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 5e-3,...
 
 vbox = uiextras.VBox('Parent', parent);
 
-[vc, vcc] = vis.component(vbox.UIContainer);
+[vc, vcc] = vis.component(vbox.UIContainer); %error with jave and new openGL
 vc.clearColour([0.5 0.5 0.5 1]);
 
 btnbox = uiextras.HBox('Parent', vbox);

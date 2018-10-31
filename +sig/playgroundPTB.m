@@ -1,6 +1,7 @@
 function [t, setgraphic, curser] = playgroundPTB(title, parent)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
+%equivalent to exp.SignalsExp
 global AGL GL GLU
 InitializeMatlabOpenGL
 if nargin < 1
