@@ -4,19 +4,19 @@
 
 % Every signal has an underlying node; a sig.node.Node object that contains
 % a number of important properties:
-% Net: a handle to the parant network (sig.Net)
-% Inputs: and array of input nodes
+% Net: a handle to the parent network (sig.Net)
+% Inputs: an array of input nodes
 % Id: an integer ID used by the low level C code
 % NetId: an integer ID for the parent network, used by the low level C code
 % CurrValue: the current value that the node holds
 
 %% Origin signals
 % An origin signal is a special sub-class of the sig.node.Signal object
-% that allows one to directly update its value using the post method.  It
+% that allows one to directly update its value using the post method. It
 % takes two inputs: the parent network and optionally, a string identifier.
 %
 % These origin signals are the input nodes to the reactive network, while
-% all other signals are dependent on one another.  Origin signals can can a
+% all other signals are dependent on one another.  Origin signals can be a
 % value of any type, as demonstrated below.
 
 net = sig.Net; % Create a new signals network
@@ -38,9 +38,9 @@ sig2.Node.WorkingValue
 post(originSignal, 4)
 
 %% Demonstration on sig.Signal/output() method
-% The output method is a useful function for understanding the realtionship
+% The output method is a useful function for understanding the relationship
 % between signals.  It simply displays a signal's output each time it takes
-% a value.  The output method returns an object of the class TinyHandle,
+% a value.  The output method returns an object of the class TidyHandle,
 % which is like a normal handle, however when it's lifecyle ends it will
 % delete itself.  What this means is that when the handle is no longer
 % referenced anywhere (i.e. stored as a variable), the callback will no
@@ -94,7 +94,7 @@ start(tmr)
 pause(3) % ...
 
 %%% When we clear the handle, the value is no longer displayed
-disp('Clearing the output TinyHandle')
+disp('Clearing the output TidyHandle')
 clear handle
 pause(1) % ...The values the 'time' signal are no longer displayed
 
@@ -117,8 +117,8 @@ delete(tmr); clear tmr frequency t0 time
 
 %% Timing 2 - Scheduling
 % The net object contains an attribute called Schedule which 
+
 net = sig.Net; % Create network
-clc % Clear previous output for clarity
 frequency = 10e-2; 
 tmr = timer('TimerFcn', @(~,~)net.runSchedule,...
     'ExecutionMode', 'fixedrate', 'Period', frequency);
