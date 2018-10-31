@@ -1,4 +1,4 @@
-function [t, setgraphic] = playgroundPTB(title, parent)
+function [t, setgraphic, curser] = playgroundPTB(title, parent)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 global AGL GL GLU
@@ -16,6 +16,7 @@ set(bui.parentFigure(parent), 'DeleteFcn', @cleanup);
 
 tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 5e-3,...
   'TimerFcn', @process, 'Name', 'MainLoop');
+cp = hw.CursorPosition;
 
 vbox = uiextras.VBox('Parent', parent);
 
@@ -33,6 +34,7 @@ btnh = uicontrol('Parent', btnbox, 'Style', 'pushbutton',...
 sn = sig.Net;
 dt = sn.origin('dt');
 t = dt.scan(@plus, 0);
+curser = sn.origin('curser');
 
 tlast = [];
 listhandle = [];
@@ -61,13 +63,11 @@ renderCount = 0;
       running = false;
       stop(tmr);
       set(btnh, 'String', 'Play');
-      stop(timerfind('Tag','figUpdate'))
     else
       tlast = GetSecs;
       running = true;
       start(tmr);
       set(btnh, 'String', 'Pause');
-      start(timerfind('Tag','figUpdate'))
     end
   end
 
@@ -75,6 +75,8 @@ renderCount = 0;
     tnow = GetSecs;
 %     tic
     post(dt, tnow - tlast);
+    post(curser, GetMouse());
+%     post(curser, readAbsolutePosition(cp));
 %     fprintf('%.0f\n', 1000*toc);
     tlast = tnow;
     runSchedule(sn);
@@ -92,7 +94,10 @@ renderCount = 0;
   function cleanup(~,~)
     stop(tmr);
     delete(tmr);
-    close('LivePlot')
+    try
+      close('LivePlot')
+    catch
+    end
     t.end(t.Node.Id, 1)
     dt.end(dt.Node.Id, 1)
     % delete gl textures

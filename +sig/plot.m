@@ -6,7 +6,7 @@ pltsig = x.map2(...
   @(x,y)struct('x',{x},'y',{y}), y, '{x:%s,y:%s}',@(name)sig.Logger(name));
 
 plth = [];
-listener = event.listener(pltsig, 'NewValue', @new);
+listener = pltsig.onValue(@new);
 
   function new(~,~)
     vals = pltsig.Values;
