@@ -1,6 +1,7 @@
 classdef StructRef < handle
   %UNTITLED2 Summary of this class goes here
   %   Detailed explanation goes here
+  %   TODO Add Reserved flag to subassign
   
   properties
     Name = ''
@@ -9,7 +10,7 @@ classdef StructRef < handle
   properties (SetAccess = protected)
     Entries = struct()
     EntryNames = {}
-    Reserved = {}
+    Reserved = {'Name'}
   end
   
   methods (Sealed)

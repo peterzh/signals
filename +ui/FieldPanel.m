@@ -20,8 +20,8 @@ classdef FieldPanel < handle
   end
   
   methods
-    function obj = FieldPanel(varargin)
-      obj.UI = uipanel('Parent', [], 'BorderType', 'none');
+    function obj = FieldPanel(f,varargin)
+      obj.UI = uipanel('Parent', f, 'BorderType', 'none');
       obj.Listener = event.listener(obj.UI, 'SizeChanged', @obj.onResize);
     end
 

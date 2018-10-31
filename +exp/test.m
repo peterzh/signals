@@ -57,8 +57,11 @@ trialNumCtrl = uicontrol('Parent', ctrlgrid, 'Style', 'text',...
   'String', '0');
 rewardCtrl = uicontrol('Parent', ctrlgrid, 'Style', 'text',...
   'String', '0');
+% wheelslider = uicontrol('Parent', ctrlgrid, 'Style', 'slider',...
+%   'Callback', @wheelSliderChanged, 'Min', -50, 'Max', 50, 'Value', 0);
 wheelslider = uicontrol('Parent', ctrlgrid, 'Style', 'slider',...
-  'Callback', @wheelSliderChanged, 'Min', -50, 'Max', 50, 'Value', 0);
+  'Min', -50, 'Max', 50, 'Value', 0);
+
 
 ctrlgrid.ColumnSizes = [-1 -1];
 ctrlgrid.RowSizes = [30 20*ones(1, 3)];
@@ -67,12 +70,14 @@ leftbox.Sizes = [-1 100];
 % leftbox.Sizes = [-1 30 25];
 % parslist = addlistener(parsEditor, 'Changed', @appl);
 %% experiment framework
-[t, setElems] = sig.playgroundPTB(expdefname, ctrlgrid);
+[t, setElems, curser] = sig.playgroundPTB(expdefname, ctrlgrid);
 % mainsplit.Sizes = [700 -1]; 
 net = t.Node.Net;
 % inputs & outputs
 inputs = sig.Registry;
+wx = net.fromUIEvent(wheelslider);
 inputs.wheel = net.origin('wheel');
+% inputs.wheel = net.origin('wheel');
 inputs.keyboard = net.origin('keyboard');
 outputs = sig.Registry;
 % video and audio registries
@@ -99,18 +104,20 @@ listeners = [
   evts.endTrial.into(advanceTrial) %endTrial signals advance
   advanceTrial.map(true).keepWhen(hasNext).into(evts.newTrial) %newTrial if more
   evts.trialNum.onValue(setCtrlStr(trialNumCtrl))
+  curser.into(inputs.wheel)
+%   wx.onValue(@(e)post(inputs.wheel,e.Source.Value))
+%   wx.onValue(@(e)set(e.Source,'Min', e.Source.Value - 50, 'Max', e.Source.Value + 50))
   ];
 
-if isfield(outputs, 'reward')
+if isfield(outputs, 'reward') % TODO display all outputs in UI
   listeners = [listeners
     outputs.reward.scan(@plus, 0).onValue(setCtrlStr(rewardCtrl))];
 end
 
 % plotting the signals
-sigsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off'); 
-tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 100e-3, 'Tag', 'figUpdate',...
-    'TimerFcn', @(~, ~)plotSignals(sigsFig, evts), 'Name', 'FigUpdate');
-set(sigsFig, 'CloseRequestFcn', @(s,c)stopAndClose(s,c,tmr));
+sigsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w'); 
+listeners = [listeners 
+  sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 5)];
 
   function applyPars(~,~)
     setElems(vs);
@@ -127,16 +134,9 @@ set(sigsFig, 'CloseRequestFcn', @(s,c)stopAndClose(s,c,tmr));
   end
 
   function wheelSliderChanged(src, ~)
-    pos = get(src, 'Value');
-    if isempty(pos); return; end
-    set(src, 'Min', pos - 50, 'Max', pos + 50);
-    inputs.wheel.post(pos);
+    set(src, 'Min', get(src, 'Value') - 50, 'Max', get(src, 'Value') + 50);
+    inputs.wheel.post(get(src, 'Value'));
   end
-  
-  function stopAndClose(~,~,tmr)
-    stop(tmr);
-    delete(tmr);
-    delete(gcf);
-  end
+ 
 
 end
