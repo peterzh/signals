@@ -5,8 +5,7 @@ function listeners = timeplot(varargin)
 %   TODO Deal with logging signals & registries
 %   TODO Use set('XData'), etc.
 %   TODO Deal with strings and arrays
-%   TODO Used Registry instead
-%sigs, figh, mode, tmax
+%sigs, figh, mode, tWin
 [present, value, idx] = namedArg(varargin, 'parent');
 if present
   figh = value;
@@ -22,12 +21,12 @@ else
   mode = 0;
 end
 
-[present, value, idx] = namedArg(varargin, 'tmax');
+[present, value, idx] = namedArg(varargin, 'tWin');
 if present
-  tmax = value;
+  tWin = value;
   varargin(idx:idx+1) = [];
 else
-  tmax = 5;
+  tWin = 5;
 end
 
 clf(figh);
@@ -38,9 +37,7 @@ for i = 1:length(varargin)
   s = varargin{i};
   name = genvarname(s.Name);
   switch class(s)
-    case 'StructRef'
-      disp('StructRef')
-    case 'sig.Registry'
+    case {'sig.Registry', 'StructRef'}
       names = strcat([name '_'], fieldnames(s));
       values = struct2cell(s);
       for j = 1:length(names)
@@ -62,7 +59,7 @@ args = {'linewidth' 2};
 
 axh = zeros(n,1);
 x_t = cell(n,1);
-fontsz = 12;
+fontsz = 9;
 
 if numel(mode) == 1
   mode = repmat(mode, n, 1);
@@ -94,7 +91,7 @@ for i = 1:n % add listeners to the signals that will update the plots
   listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
 end
 
-set(axh, 'Xlim', [GetSecs-tmax GetSecs+tmax]);
+set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
 set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
 
   function new(idx, value)
@@ -123,7 +120,7 @@ set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
         line(tt, xx, 'Parent', axh(idx), 'Color', cmap(idx,:), args{:});
     end
     lastval{idx} = value;
-    set(axh, 'Xlim', [GetSecs-tstart-tmax GetSecs-tstart+tmax]);
+    set(axh, 'Xlim', [GetSecs-tstart-tWin GetSecs-tstart+tWin]);
   end
 
   function cycleMode(src)

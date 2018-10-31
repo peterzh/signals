@@ -120,7 +120,7 @@ end
 % plotting the signals
 sigsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w'); 
 listeners = [listeners 
-  sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tmax', 5)];
+  sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 5)];
 
   function applyPars(~,~)
     setElems(vs);
