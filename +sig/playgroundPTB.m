@@ -1,7 +1,7 @@
-function [t, setgraphic, curser] = playgroundPTB(title, parent)
+function [t, setgraphic, cursor] = playgroundPTB(title, parent)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
-%equivalent to exp.SignalsExp
+% equivalent to exp.SignalsExp
 global AGL GL GLU
 InitializeMatlabOpenGL
 if nargin < 1
@@ -15,29 +15,36 @@ end
 
 set(bui.parentFigure(parent), 'DeleteFcn', @cleanup);
 
-tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 5e-3,...
-  'TimerFcn', @process, 'Name', 'MainLoop');
-cp = hw.CursorPosition;
+%%%tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 5e-3,...
+%%%   'TimerFcn', @process, 'Name', 'MainLoop');
+%%%cp = hw.CursorPosition;
 
-vbox = uiextras.VBox('Parent', parent);
+%%%vbox = uiextras.VBox('Parent', parent);
 
-%[vc, vcc] = vis.component(vbox);
-% vc.clearColour([0.5 0.5 0.5 1]);
-vc = Screen('OpenWindow', 1, 0, [50,50,850,650], 32);
+%%%[vc, vcc] = vis.component(vbox);
+%%%vc.clearColour([0.5 0.5 0.5 1]);
+
+% to-do: Go into "Screen" function to allow mouse interaction with PTB window?
+
+% Screen Args: (open, monitor, color, position=[L,T,R,B], pixelSz)
+% *note: position is different than MATLAB default: [L,B,R,T]
+%%%scrnSz = get(0, 'screensize');
+[vc, rect] = Screen('OpenWindow', 1, 40, [1,40,840,601], 32);
 Screen('FillRect', vc, 255/2);
 Screen('Flip', vc);
 
-btnbox = uiextras.HBox('Parent', vbox);
-vbox.Sizes = 30;
-btnh = uicontrol('Parent', btnbox, 'Style', 'pushbutton',...
-  'String', 'Play', 'Callback', @(~,~)startstop());
+%%%btnbox = uiextras.HBox('Parent', vbox);
+%%%btnbox = uiextras.HBox('Parent', parent);
+%%%vbox.Sizes = 30;
+%%%btnh = uicontrol('Parent', parent, 'Style', 'pushbutton',...
+%%%  'String', 'Play Stimuli', 'Callback', @(~,~)startstop());
 
 sn = sig.Net;
 dt = sn.origin('dt');
 t = dt.scan(@plus, 0);
-curser = sn.origin('curser');
+cursor = sn.origin('cursor');
 
-tlast = [];
+%%%tlast = [];
 listhandle = [];
 textureById = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
 layersByName = containers.Map();
@@ -52,49 +59,49 @@ invalid = false;
 
 setgraphic = @setElements;
 
-running = false;
+%%%running = false;
 % while running
 %   pause(10e-3);
 % end
 
-renderCount = 0;
+%%%renderCount = 0;
 
-  function startstop()
-    if running
-      running = false;
-      stop(tmr);
-      set(btnh, 'String', 'Play');
-    else
-      tlast = GetSecs;
-      running = true;
-      start(tmr);
-      set(btnh, 'String', 'Pause');
-    end
-  end
+%%%  function startstop()
+%%%    if running
+%%%      running = false;
+%%%      stop(tmr);
+%%%      set(btnh, 'String', 'Play');
+%%%    else
+%%%      tlast = GetSecs;
+%%%      running = true;
+%%%      start(tmr);
+%%%      set(btnh, 'String', 'Pause');
+%%%    end
+%%%  end
 
-  function process(~,~)
-    tnow = GetSecs;
-%     tic
-    post(dt, tnow - tlast);
-    post(curser, GetMouse());
-%     post(curser, readAbsolutePosition(cp));
-%     fprintf('%.0f\n', 1000*toc);
-    tlast = tnow;
-    runSchedule(sn);
-    if invalid
-      layerValues = cell2mat(layersByName.values());
-      Screen('BeginOpenGL', vc);
-      vis.draw(vc, model, layerValues, textureById);
-      Screen('EndOpenGL', vc);
-      Screen('Flip', vc, 0);
-      renderCount = renderCount + 1;
-      invalid = false;
-    end
-  end
+%%%   function process(~,~)
+%%%     tnow = GetSecs;
+%%%     tic
+%%%   post(dt, tnow - tlast);
+%%%   post(cursor, GetMouse());
+%%%   post(cursor, readAbsolutePosition(cp));
+%%%     fprintf('%.0f\n', 1000*toc);
+%%%     tlast = tnow;
+%%%     runSchedule(sn);
+%%%     if invalid
+%%%       layerValues = cell2mat(layersByName.values());
+%%%       Screen('BeginOpenGL', vc);
+%%%       vis.draw(vc, model, layerValues, textureById);
+%%%       Screen('EndOpenGL', vc);
+%%%       Screen('Flip', vc, 0);
+%%%       renderCount = renderCount + 1;
+%%%       invalid = false;
+%%%     end
+%%%   end
 
   function cleanup(~,~)
-    stop(tmr);
-    delete(tmr);
+    %%%stop(tmr);
+    %%%delete(tmr);
     try
       close('LivePlot')
     catch

@@ -1,5 +1,6 @@
 # *signals*
-Simple, elegant and flexible stimulus presentation in MATLAB.
+
+Simple, elegant and flexible stimulus presentation in MATLAB. Signals was built for neuroscientists to gain hitherto unprecedented, real-time control over multiple aspects of their bevhaioural experiments. 
 
 Wouldn't it be nice if you could describe the presentation of stimuli in your experiment with simple, concise code? i.e.
 
@@ -7,7 +8,7 @@ Wouldn't it be nice if you could describe the presentation of stimuli in your ex
 * It should be free from the messy details of how it actually gets presented: no unpredictable loops, tangles of event-handlers, tricky state management nor low-level graphics rendering.
 * ...and yet, still benefit from easy data-logging, parameterisation and remote control.
 
-This is the goal of *signals*.
+This is the goal of signals.
 
 ## Hello, grating!
 
@@ -98,3 +99,47 @@ Note: these operations actually use the signal mapping functions *TODO: make lin
 `inp1.map(inp2, ..., f)` returns a new signal where its values result from mapping values from a set of input signals `inpX` (with X in 1...N)  using the function `f`. Note that the resultant signal updates if any of the source signal change.
 
 `signal.scan(f, seed)` returns a new signal where its values result from iteratively scanning each new value in `signal` through function `f` together with the last resulting value. i.e. this allows you to create a signal which iteratively updates based on the current value and each new piece of information. `seed` defines the intial value of the result signal.
+
+## Code organization
+
+Below is a list of Signal's subdirectories and an overview of their respective contents.
+
+### +audstream
+
+The "audio stream" package contains code for creating and using new audio streams in experiments with audio stimulus presentation, and interacting with PsychPortAudio devices (via PsychToolbox).
+
+
+### +expr
+
+...?
+
+
+### +fun
+
+The "functions" package contains functions that act on other functions to do things like restrict the scope of, return partial applications of, and map functions. 
+
+
+### +sig
+
+The "signal" package contains code for creating signals, nodes, and the network that contains them, defining how signals can interact, plotting signals, and generally keeping track of signals over time.
+
+
+### +ui
+
+...?
+
+### +vis 
+
+The "visual stimulus" package contains code for creating various visual stimuli to be used when running signals.
+
+### java
+
+The "java" subdirectory contains java code that mostly pertains to creating and using visual renderings.
+
+### mexnet, mexnet-vs
+
+The "mex network" subdirectories contain code that are mex compilations of underlying C source code that allows for improved optimization of performance when operations are performed on signals during run-time.
+
+### util
+
+The "utilities" subdirectory contains assorted helper functions, mex files, and classes which provide auxiliary services to the rest of signals, and don't schematically fit into any of the other packages or subdirectories. 
