@@ -2,9 +2,8 @@ function listeners = timeplot(varargin)
 %SIG.PLOT Summary of this function goes here
 %   TODO Document
 %   TODO Vararg for axes name value args, e.g. LineWidth
-%   TODO Deal with logging signals & registries
-%   TODO Use set('XData'), etc.
-%   TODO Deal with strings and arrays
+%   TODO Deal with logging signals & registries & subscriptable signals
+%   TODO Deal with strings, arrays, structures, cell arrays
 %sigs, figh, mode, tWin
 [present, value, idx] = namedArg(varargin, 'parent');
 if present
@@ -54,6 +53,7 @@ names = fieldnames(sigs);
 n = numel(names);
 tstart = [];
 lastval = cell(n,1);
+% to-do: sample full range of colormap
 cmap = colormap(figh, 'hsv');
 args = {'linewidth' 2};
 
