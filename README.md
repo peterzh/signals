@@ -102,7 +102,7 @@ Note: these operations actually use the signal mapping functions *TODO: make lin
 
 ## Code organization
 
-Below is a list of Signal's subdirectories and an overview of their respective contents.
+Below is a list of *signal*'s subdirectories and an overview of their respective contents.
 
 ### +audstream
 
@@ -111,8 +111,8 @@ The "audio stream" package contains code for creating and using new audio stream
 
 ### +expr
 
-...?
-
+The "math expressions" package contains code for allowing the use of math expressions whose syntax is not supported by default in MATLAB on signals.
+(E.g. c = a(b:c))
 
 ### +fun
 
@@ -126,11 +126,11 @@ The "signal" package contains code for creating signals, nodes, and the network 
 
 ### +ui
 
-...?
+The "user interface" package contains code for the creation and display of GUIs used in *signals*.
 
 ### +vis 
 
-The "visual stimulus" package contains code for creating various visual stimuli to be used when running signals.
+The "visual stimulus" package contains code for creating various visual stimuli to be used when running *signals*.
 
 ### java
 
@@ -142,4 +142,4 @@ The "mex network" subdirectories contain code that are mex compilations of under
 
 ### util
 
-The "utilities" subdirectory contains assorted helper functions, mex files, and classes which provide auxiliary services to the rest of signals, and don't schematically fit into any of the other packages or subdirectories. 
+The "utilities" subdirectory contains assorted helper functions, mex files, and classes which provide auxiliary services to the rest of *signals*, and don't schematically fit into any of the other packages or subdirectories. 

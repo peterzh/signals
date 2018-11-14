@@ -3,13 +3,13 @@ function signals_tutorial_1(t, events, parameters, visStim, inputs, outputs, aud
 % 170328 - AP
 %
 % Welcome to Signals! Launch this tutorial by running the command 
-% "exp.test" in MATLAB and selecting this file from the file explorer.
+% "expTestPanel" in MATLAB and selecting this file from the file explorer.
 % From this point on, it's useful to have the Signals
 % documentation open that lists the available methods: 
 % type 'doc sig.node.Signal'
 %
-% Signals operates by using objects called signals (a class defined by
-% sig.Signal) which have user-defined relationships with each other for
+% Signals operates by using objects called signals (defined by the class
+% signals/sig.Signal) which have user-defined relationships with each other for
 % when and to what values they update. 
 %
 %% ORIGIN SIGNALS %%
@@ -33,6 +33,7 @@ function signals_tutorial_1(t, events, parameters, visStim, inputs, outputs, aud
 % fifth input argument in a Signals protocol)
 %
 %% PROTOCOL INPUT ARGUMENTS %%
+%
 % Signals protocols are functions defined as 
 % signalsProtocol(t, events, parameters, visStim, inputs, outputs, audio)
 % Note that as with any function, these input arguments can be named
@@ -62,10 +63,10 @@ function signals_tutorial_1(t, events, parameters, visStim, inputs, outputs, aud
 % visStim - This is the handler for visual stimuli that will be described
 % later
 %
-% inputs - These are the hardware inputs that signals receives. As above,
+% inputs - These are the hardware inputs to signals. As above,
 % inputs.wheel is pre-defined
 %
-% outputs - These are the hardware outputs that signals puts out. As will
+% outputs - These are the hardware outputs from signals. As will
 % be discussed later, outputs.reward is predefined to control the water
 % valve
 %

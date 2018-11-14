@@ -44,13 +44,15 @@ end
 [parsEditor, vc, listhandle, textureById, layersByName, model,...
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,... 
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,... 
-      hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, signalsFig]... 
-      = setExpr; %local function
+      hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,... 
+      signalsFig, expStarted] = setExpr; %local function
 
-%% local functions & callbacks
+%% main local functions (setExpDefPanel, setPars, setExpr)
 
   function [parsFig, mainbox, ctrlgrid, applyParsBtn, playStimBtn,...
-      startExpBtn, runXBtn, trialNumCount, rewardCount, wheelslider] = setExpDefPanel
+      startExpBtn, runXBtn, trialNumCount, rewardCount, wheelslider] =... 
+    setExpDefPanel
+  
     % create panel
     parsFig = figure('Name', 'ExpTestPanel',...
       'NumberTitle', 'off', 'Toolbar', 'none', 'Menubar', 'none',...
@@ -67,13 +69,13 @@ end
     applyParsBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
       'String', 'Apply Parameters', 'Callback', @applyPars);
     
-    % create button to play stimuli
-    playStimBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
-      'String', 'Play Stimuli', 'Callback', @playStim);
-    
     % create "Start Experiment" button
     startExpBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
       'String', 'Start Experiment', 'Callback', @startExp);
+    
+    % create button to play stimuli
+    playStimBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
+      'String', 'Pause', 'Callback', @pausePlay);
     
     % create "Run Another Exp Def" button
     runXBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
@@ -96,20 +98,21 @@ end
 %     set(parsFig, 'KeyPressFcn', @wheelTurn);
   end
 
-  function [mfile, mpath, defdir, expdef, expdefname, parsStruct] = setPars    
+  function [mfile, mpath, defdir, expdef, expdefname, parsStruct] = setPars
+    
     % if expdef not specified as input arg, get it
-%    if nargin < 1
-      [mfile, mpath] = uigetfile(...
-        '*.m', 'Select the experiment definition function');
-      if mfile == 0
-        return
-      end
-      defdir = mpath;
-      [~, expdefname] = fileparts(mfile);
-      expdef = fileFunction(mpath, mfile);
-%    else
-%      expdefname = func2str(expdef);
-%    end
+    %    if nargin < 1
+    [mfile, mpath] = uigetfile(...
+      '*.m', 'Select the experiment definition function');
+    if mfile == 0
+      return
+    end
+    defdir = mpath;
+    [~, expdefname] = fileparts(mfile);
+    expdef = fileFunction(mpath, mfile);
+    %    else
+    %      expdefname = func2str(expdef);
+    %    end
     
     parsStruct = exp.inferParameters(expdef);
     %parsStruct = rmfield(parsStruct, 'defFunction');
@@ -121,7 +124,8 @@ end
   function [parsEditor, vc, listhandle, textureById, layersByName, model,...
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,... 
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,... 
-      hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, signalsFig] = setExpr
+      hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,... 
+      signalsFig, expStarted] = setExpr
     % set up parameter editor in panel
     parsEditor = eui.ParamEditor(exp.Parameters(parsStruct), mainbox);
     
@@ -195,12 +199,15 @@ end
     expdef(t, evts, pars, vs, inputs, outputs, audio); %run expdef with origin signals
     
     setCtrlStr = @(h)@(v)set(h, 'String', toStr(v)); % @h = handles, @v = value
+    
+    cursor = sn.origin('cursor');
+    
     listeners = [
       evts.expStart.into(advanceTrial) %expStart signals advance
       evts.endTrial.into(advanceTrial) %endTrial signals advance
       advanceTrial.map(true).keepWhen(hasNext).into(evts.newTrial) %newTrial if more
       evts.trialNum.onValue(setCtrlStr(trialNumCount))
-      %  cursor.into(inputs.wheel)
+      cursor.into(inputs.wheel)
       ];
     
     if isfield(outputs, 'reward')  % to-do display all outputs in UI
@@ -208,31 +215,43 @@ end
         outputs.reward.scan(@plus, 0).onValue(setCtrlStr(rewardCount))];
     end
     
-    % emulate wheel input    
-    set(parsFig, 'KeyPressFcn', @wheelTurn);
-    
-    function wheelTurn(src, event)
-      switch event.Key
-        case 'leftarrow'
-          inputs.wheel.post(-5);
-        case 'rightarrow'
-          inputs.wheel.post(5);
-      end
-      %disp(event.Key);
-    end
-    
-    % plot the signalsset
+    % plot the signals
     signalsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off');
     
     % use sig.timeplot for live plotting
     listeners = [listeners
       sig.timeplot(t, evts, 'parent', signalsFig, 'mode', 0, 'tWin', 5)];
+    
+    expStarted = false;
+    
+  end
+
+%% secondary local functions and callbacks
+
+% emulate wheel input when user clicks mouse scroll button
+
+set(parsFig, 'WindowButtonDownFcn', @wheelTurn);
+cursorAsWheel = false;
+
+  function wheelTurn(src, event)
+    if strcmp(get(src, 'SelectionType'), 'extend')
+      cursorAsWheel = not(cursorAsWheel);
+    end
+    if cursorAsWheel
+      disp('Mouse cursor as wheel input emulator has been set')
+    else
+      disp('Mouse cursor as wheel input emulator unset')
+    end
   end
 
   function process(~,~)
     tnow = GetSecs;
     %tic
     post(dt, tnow - tLast);
+    % use mouse cursor as wheel input if it has been user selected
+    if cursorAsWheel
+      post(cursor, GetMouse());
+    end
     %post(cursor, GetMouse());
     %post(cursor, readAbsolutePosition(cp));
     %fprintf('%.0f\n', 1000*toc);
@@ -334,33 +353,38 @@ end
     [~, gpars, cpars] = toConditionServer(parsEditor.Parameters);
     globalPars.post(gpars);
     allCondPars.post(cpars);
-    disp('parameters applied');
-  end
-
-  function playStim(~,~)
-    if isRunning
-      isRunning = false;
-      stop(tmr);
-      set(playStimBtn, 'String', 'Play Stimuli');
-    else
-      tLast = GetSecs;
-      isRunning = true;
-      start(tmr);
-      set(playStimBtn, 'String', 'Pause');
-    end
+    disp('Parameters Applied');
   end
 
   function startExp(~,~)
-    applyPars();
+    tLast = GetSecs;
+    isRunning = true;
+    start(tmr);
     evts.expStart.post(parsStruct.expRef);
     % inputs.wheel.post(get(wheelslider, 'Value'));
+    expStarted = true;
+  end
+
+  function pausePlay(~,~)
+    if expStarted
+      if isRunning
+        isRunning = false;
+        stop(tmr);
+        set(playStimBtn, 'String', 'Play');
+      else
+        tLast = GetSecs;
+        isRunning = true;
+        start(tmr);
+        set(playStimBtn, 'String', 'Pause');
+      end
+    end
   end
 
   function runXExpDef(~,~)
     mainboxChldrn = get(mainbox, 'Children');
     
     expDefSelect = questdlg('Which Exp Def would you like to run?',...
-      'Select Exp Def', 'Re-run Current Exp Def', 'Select A Different Exp Def',... 
+      'Select Exp Def', 'Re-run Current Exp Def', 'Select A Different Exp Def',...
       'Re-run Current Exp Def');
     
     switch expDefSelect
@@ -370,8 +394,8 @@ end
         [parsEditor, vc, listhandle, textureById, layersByName, model,...
           screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
-          hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, signalsFig]... 
-          = setExpr;
+          hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
+          signalsFig, expStarted] = setExpr;
         
       case 'Select A Different Exp Def'
         delete(mainboxChldrn(1)); %delete parameter editor before loading a different
@@ -381,26 +405,15 @@ end
         [parsEditor, vc, listhandle, textureById, layersByName, model,...
           screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
-          hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, signalsFig]... 
-          = setExpr; 
+          hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
+          signalsFig, expStarted] = setExpr;
     end
-    
   end
-
-  % emulate wheel input with arrow keys
-%   function wheelTurn(src, event)
-%     switch event.Key
-%       case 'leftarrow'
-%         inputs.wheel.post(-5);
-%       case 'rightarrow'
-%         inputs.wheel.post(5);
-%     end
-%     %disp(event.Key);
-%   end
 
  function wheelSliderChanged(src, ~)
    set(src, 'Min', get(src, 'Value') - 50, 'Max', get(src, 'Value') + 50);
-   inputs.wheel.post(get(src, 'Value'));
+   wheelDelta = get(src, 'Value') * 50;
+   inputs.wheel.post(wheelDelta);
  end
   
 
