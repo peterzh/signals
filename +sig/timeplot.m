@@ -93,7 +93,6 @@ for ii = 1:n
   end
 end
 
-listeners = zeros(n,1);
 for i = 1:n % add listeners to the signals that will update the plots
   listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
 end
