@@ -50,11 +50,15 @@ for i = 1:length(varargin)
   end
 end
 names = fieldnames(sigs);
+names{1} = 'Time Signal';
 n = numel(names);
 tstart = [];
 lastval = cell(n,1);
-% to-do: sample full range of colormap
+
 cmap = colormap(figh, 'hsv');
+skipsInCmap = length(cmap) / n;
+cmap = cmap(1:skipsInCmap:end, :);
+
 args = {'linewidth' 2};
 
 axh = zeros(n,1);
@@ -71,7 +75,9 @@ for i = 1:n
   axh(i) = subtightplot(n,1,i,[0.01,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
-  ylabel(axh(i), names{i}, 'fontsize',fontsz, 'interpreter', 'none');
+  curTitle = title(axh(i), names{i}, 'fontsize', fontsz, 'interpreter', 'none');
+  titlePos = get(curTitle, 'Position');
+  set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
   if i == n    
     xlabel(axh(i), 't (s)', 'fontsize',fontsz);
   else
@@ -87,6 +93,7 @@ for ii = 1:n
   end
 end
 
+listeners = zeros(n,1);
 for i = 1:n % add listeners to the signals that will update the plots
   listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
 end

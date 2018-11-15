@@ -9,8 +9,8 @@ function signals_tutorial_1(t, events, parameters, visStim, inputs, outputs, aud
 % type 'doc sig.node.Signal'
 %
 % Signals operates by using objects called signals (defined by the class
-% signals/sig.Signal) which have user-defined relationships with each other for
-% when and to what values they update. 
+% signals/sig.Signal) which have user-defined relationships with each other
+% for when and to what values they update. 
 %
 %% ORIGIN SIGNALS %%
 %
