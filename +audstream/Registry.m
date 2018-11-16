@@ -16,7 +16,7 @@ classdef Registry < StructRef
     function this = Registry(devices)
       % Populate Devices property with audio device information, namely
       % sample rate, number of output channels and device index
-      if ~nargin
+      if nargin == 0
         this.Devices = containers.Map('default',...
           struct('DeviceIndex', -1,...% -1 means use system default audio device
           'DefaultSampleRate', 44100,...
