@@ -32,8 +32,8 @@ if isempty(lastPars)
   lastPars = containers.Map('KeyType', 'char', 'ValueType', 'any');
 end
 
-[parsFig, mainbox, ctrlgrid, applyParsBtn, playStimBtn, startExpBtn,... 
-  runXBtn, trialNumCount, rewardCount, wheelslider] = setExpDefPanel; %local function
+[parsFig, mainbox, ctrlgrid, applyParsBtn, startExpBtn, reRunExpBtn,... 
+  runAnotherExpBtn, trialNumCount, rewardCount, wheelslider] = setExpDefPanel; %local function
 
 %% get experiment definition and its parameters
 
@@ -49,9 +49,8 @@ end
 
 %% main local functions (setExpDefPanel, setPars, setExpr)
 
-  function [parsFig, mainbox, ctrlgrid, applyParsBtn, playStimBtn,...
-      startExpBtn, runXBtn, trialNumCount, rewardCount, wheelslider] =... 
-    setExpDefPanel
+  function [parsFig, mainbox, ctrlgrid, applyParsBtn, startExpBtn, reRunExpBtn,... 
+  runAnotherExpBtn, trialNumCount, rewardCount, wheelslider] = setExpDefPanel
   
     % create panel
     parsFig = figure('Name', 'ExpTestPanel',...
@@ -74,11 +73,11 @@ end
       'String', 'Start Experiment', 'Callback', @startExp);
     
     % create button to play stimuli
-    playStimBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
-      'String', 'Pause', 'Callback', @pausePlay);
+    reRunExpBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
+      'String', 'Re-run Exp Def', 'Callback', @reRunExpDef);
     
     % create "Run Another Exp Def" button
-    runXBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
+    runAnotherExpBtn = uicontrol('Parent', ctrlgrid, 'Style', 'pushbutton',...
       'String', 'Run Another Exp Def', 'Callback', @runXExpDef);
     
     % create a "Trial" text
@@ -181,7 +180,7 @@ end
     inputs.keyboard = net.origin('keyboard');
     outputs = sig.Registry; % create outputs as logging signals
     % video and audio registries
-    vs = StructRef; % hold visual signals as a structure (StructRef is ~overloaded MATLAB 'struct'
+    vs = StructRef; % hold visual signals as a structure (StructRef is overloaded MATLAB 'struct')
     audio = audstream.Registry(); % assign to registry; post samples assigned to it from audio device (without saving)
     % events registry
     evts = sig.Registry;
@@ -198,7 +197,7 @@ end
       globalPars, allCondPars, advanceTrial);
     expdef(t, evts, pars, vs, inputs, outputs, audio); %run expdef with origin signals
     
-    setCtrlStr = @(h)@(v)set(h, 'String', toStr(v)); % @h = handles, @v = value
+    setCtrlStr = @(h)@(v)set(h, 'String', toStr(v)); % @h = handle, @v = value
     
     cursor = sn.origin('cursor');
     
@@ -236,11 +235,11 @@ cursorAsWheel = false;
   function wheelTurn(src, event)
     if strcmp(get(src, 'SelectionType'), 'extend')
       cursorAsWheel = not(cursorAsWheel);
-    end
-    if cursorAsWheel
-      disp('Mouse cursor as wheel input emulator has been set')
-    else
-      disp('Mouse cursor as wheel input emulator unset')
+      if cursorAsWheel
+        disp('Mouse cursor as wheel input emulator has been set')
+      else
+        disp('Mouse cursor as wheel input emulator unset')
+      end
     end
   end
 
@@ -269,7 +268,7 @@ cursorAsWheel = false;
   end
 
   function cleanup(~,~)
-    % some of these values may not exist during certain times when 
+    % some of these values may not exist during certain times when
     % "cleanup" is called, so catch exceptions when they don't exist
     try
       stop(tmr);
@@ -284,19 +283,22 @@ cursorAsWheel = false;
       sn.delete();
     catch end
     try
-    % delete gl textures
-    listhandle = [];
-    tex = cell2mat(textureById.values);
-    fprintf('Deleting %i textures\n', numel(tex));
-    glDeleteTextures(numel(tex), tex);
-    textureById.remove(textureById.keys);
+      % delete gl textures
+      listhandle = [];
+      tex = cell2mat(textureById.values);
+      fprintf('Deleting %i textures\n', numel(tex));
+      glDeleteTextures(numel(tex), tex);
+      textureById.remove(textureById.keys);
     catch end
     try
-    Screen('AsyncFlipEnd', vc);
-    Screen('BeginOpenGL', vc);
-    Screen('EndOpenGL', vc);
+      Screen('AsyncFlipEnd', vc);
+      Screen('BeginOpenGL', vc);
+      Screen('EndOpenGL', vc);
     catch end
     Screen('CloseAll');
+    trialNumCount.String = '0';
+    rewardCount.String = '0';
+    startExpBtn.String = 'Start Experiment';
   end
 
   function setElements(elems)
@@ -357,47 +359,57 @@ cursorAsWheel = false;
   end
 
   function startExp(~,~)
-    tLast = GetSecs;
-    isRunning = true;
-    start(tmr);
-    evts.expStart.post(parsStruct.expRef);
-    % inputs.wheel.post(get(wheelslider, 'Value'));
-    expStarted = true;
-  end
-
-  function pausePlay(~,~)
-    if expStarted
+    if not(expStarted)
+      tLast = GetSecs;
+      isRunning = true;
+      start(tmr);
+      evts.expStart.post(parsStruct.expRef);
+      % inputs.wheel.post(get(wheelslider, 'Value'));
+      set(startExpBtn, 'String', 'Pause');
+      expStarted = true;
+    else
       if isRunning
         isRunning = false;
         stop(tmr);
-        set(playStimBtn, 'String', 'Play');
+        set(startExpBtn, 'String', 'Play');
       else
         tLast = GetSecs;
         isRunning = true;
         start(tmr);
-        set(playStimBtn, 'String', 'Pause');
+        set(startExpBtn, 'String', 'Pause');
       end
     end
+  end
+
+  function reRunExpDef(~,~)
+    mainboxChldrn = get(mainbox, 'Children');
+    delete(mainboxChldrn(1)); %delete parameter editor before re-loading
+    cleanup;
+    [parsEditor, vc, listhandle, textureById, layersByName, model,...
+      screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
+      inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
+      hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
+      signalsFig, expStarted] = setExpr;
   end
 
   function runXExpDef(~,~)
     mainboxChldrn = get(mainbox, 'Children');
     
-    expDefSelect = questdlg('Which Exp Def would you like to run?',...
-      'Select Exp Def', 'Re-run Current Exp Def', 'Select A Different Exp Def',...
-      'Re-run Current Exp Def');
-    
-    switch expDefSelect
-      case 'Re-run Current Exp Def'
-        delete(mainboxChldrn(1)); %delete parameter editor before re-loading
-        cleanup;
-        [parsEditor, vc, listhandle, textureById, layersByName, model,...
-          screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
-          inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
-          hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
-          signalsFig, expStarted] = setExpr;
-        
-      case 'Select A Different Exp Def'
+%     expDefSelect = questdlg('Which Exp Def would you like to run?',...
+%       'Select Exp Def', 'Re-run Current Exp Def', 'Select A Different Exp Def',...
+%       'Re-run Current Exp Def');
+%     
+%     switch expDefSelect
+%       case 'Re-run Current Exp Def'
+%         delete(mainboxChldrn(1)); %delete parameter editor before re-loading
+%         cleanup;
+%         [parsEditor, vc, listhandle, textureById, layersByName, model,...
+%           screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
+%           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
+%           hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
+%           signalsFig, expStarted] = setExpr;
+%         
+%       case 'Select A Different Exp Def'
         delete(mainboxChldrn(1)); %delete parameter editor before loading a different
         cleanup;
         [mfile, mpath, defdir, expdef, expdefname, parsStruct] = setPars;
@@ -407,7 +419,6 @@ cursorAsWheel = false;
           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
           hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
           signalsFig, expStarted] = setExpr;
-    end
   end
 
  function wheelSliderChanged(src, ~)
