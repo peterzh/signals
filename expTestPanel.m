@@ -2,8 +2,14 @@ function test(expdef)
 %UNTITLED Summary of this function goes here
 %   Input: Handle to experiment definition function
 
-addSignalsJava();
-global AGL GL GLU %#ok<NUSED>
+% should this file (along with playground PTB) actually be in Rigbox (not signals)?
+% global parameters?
+% what does "apply parameters" button actually do?
+% what all is playgroundPTB doing and what are diffs between it and playground?
+% expdef (line 99) ?
+
+addSignalsJava(); %adds necessary Java files (classes) to *signals*
+global AGL GL GLU %#ok<NUSED> %used by PTB 
 persistent defdir lastParams;
 
 
@@ -57,11 +63,8 @@ trialNumCtrl = uicontrol('Parent', ctrlgrid, 'Style', 'text',...
   'String', '0');
 rewardCtrl = uicontrol('Parent', ctrlgrid, 'Style', 'text',...
   'String', '0');
-% wheelslider = uicontrol('Parent', ctrlgrid, 'Style', 'slider',...
-%   'Callback', @wheelSliderChanged, 'Min', -50, 'Max', 50, 'Value', 0);
 wheelslider = uicontrol('Parent', ctrlgrid, 'Style', 'slider',...
-  'Min', -50, 'Max', 50, 'Value', 0);
-
+  'Callback', @wheelSliderChanged, 'Min', -50, 'Max', 50, 'Value', 0);
 
 ctrlgrid.ColumnSizes = [-1 -1];
 ctrlgrid.RowSizes = [30 20*ones(1, 3)];
@@ -70,19 +73,17 @@ leftbox.Sizes = [-1 100];
 % leftbox.Sizes = [-1 30 25];
 % parslist = addlistener(parsEditor, 'Changed', @appl);
 %% experiment framework
-[t, setElems, curser] = sig.playgroundPTB(expdefname, ctrlgrid);
+[t, setElems] = sig.playgroundPTB(expdefname, ctrlgrid);
 % mainsplit.Sizes = [700 -1]; 
 net = t.Node.Net;
 % inputs & outputs
-inputs = sig.Registry;
-wx = net.fromUIEvent(wheelslider);
+inputs = sig.Registry; %create inputs as logging signals
 inputs.wheel = net.origin('wheel');
-% inputs.wheel = net.origin('wheel');
 inputs.keyboard = net.origin('keyboard');
-outputs = sig.Registry;
+outputs = sig.Registry; %create outputs as logging signals
 % video and audio registries
-vs = StructRef;
-audio = audstream.Registry();
+vs = StructRef; %holds visual signals as a structure (StructRef is ~overloaded MATLAB 'struct'
+audio = audstream.Registry(); %assigning to registry posts samples assigned to it from audio device *without saving)
 % events registry
 evts = sig.Registry;
 evts.expStart = net.origin('expStart');
@@ -96,7 +97,7 @@ allCondPars = net.origin('condPars');
 
 [pars, hasNext, repeatNum] = exp.trialConditions(...
   globalPars, allCondPars, advanceTrial);
-expdef(t, evts, pars, vs, inputs, outputs, audio);
+expdef(t, evts, pars, vs, inputs, outputs, audio); %run expdef with origin signals 
 
 setCtrlStr = @(h)@(v)set(h, 'String', toStr(v));
 listeners = [
@@ -104,20 +105,18 @@ listeners = [
   evts.endTrial.into(advanceTrial) %endTrial signals advance
   advanceTrial.map(true).keepWhen(hasNext).into(evts.newTrial) %newTrial if more
   evts.trialNum.onValue(setCtrlStr(trialNumCtrl))
-  curser.into(inputs.wheel)
-%   wx.onValue(@(e)post(inputs.wheel,e.Source.Value))
-%   wx.onValue(@(e)set(e.Source,'Min', e.Source.Value - 50, 'Max', e.Source.Value + 50))
   ];
 
-if isfield(outputs, 'reward') % TODO display all outputs in UI
+if isfield(outputs, 'reward')
   listeners = [listeners
     outputs.reward.scan(@plus, 0).onValue(setCtrlStr(rewardCtrl))];
 end
 
 % plotting the signals
-sigsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w'); 
-listeners = [listeners 
-  sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 5)];
+sigsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off'); 
+tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 100e-3, 'Tag', 'figUpdate',...
+    'TimerFcn', @(~, ~)plotSignals(sigsFig, evts), 'Name', 'FigUpdate');
+set(sigsFig, 'CloseRequestFcn', @(s,c)stopAndClose(s,c,tmr));
 
   function applyPars(~,~)
     setElems(vs);
@@ -134,9 +133,16 @@ listeners = [listeners
   end
 
   function wheelSliderChanged(src, ~)
-    set(src, 'Min', get(src, 'Value') - 50, 'Max', get(src, 'Value') + 50);
-    inputs.wheel.post(get(src, 'Value'));
+    pos = get(src, 'Value');
+    if isempty(pos); return; end
+    set(src, 'Min', pos - 50, 'Max', pos + 50);
+    inputs.wheel.post(pos);
   end
- 
+  
+  function stopAndClose(~,~,tmr)
+    stop(tmr);
+    delete(tmr);
+    delete(gcf);
+  end
 
 end

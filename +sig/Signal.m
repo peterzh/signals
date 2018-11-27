@@ -1,12 +1,30 @@
 classdef Signal < handle
-  % sig.Signal Summary of this class goes here
-  %   Detailed explanation goes here
+  % sig.Signal Abstract class defining how Signals objects can interact
+  % with one another
+  %   This class contains the methods that define how a Signals object can
+  %   be manipulated.  The principle subclass to this is SIG.NODE.SIGNAL,
+  %   which inherhits these methods.  All concrete methods defined here 
+  %   effectively overload builtin functions using the map function with a
+  %   format spec to allow straightforward syntax.
+  %
+  %     Example: 
+  %       net = sig.Net; % Create network
+  %       simpleSignal = net.origin('simpleSignal'); % Create signal one
+  %       simpleSignal2 = output(simpleSignal^2); % display result
+  %       simpleSignal.post(5);
+  %       >> 25
+  %       simpleSignal.post(2);
+  %       >> 4
+  %       
+  %
+  % See also sig.node.Signal, sig.node.Signal/mapn
   
   methods (Abstract)
     % New signal that samples the value from this signal when another updates
     %
     % [s] = what.at(when) returns a new signal s that takes the current
-    % value of signal 'what' at the moment signal 'when' gets a new value.
+    % value of signal 'what' at the moment signal 'when' gets a new, truthy
+    % value (that is, a value not false or zero).
     %
     % Example:
     %   x = sig.SimpleSignal;
@@ -70,10 +88,17 @@ classdef Signal < handle
     % [c] = cond(pred1, value1, [pred2], [value2],...)
     c = cond(pred1, value1, varargin)
     
-    % todo: document
+    % Returns the value of the input signal indexed by this
+    % The resulting signal samples a new value if either the index signal
+    % (this) or the indexed signal changes
     s = selectFrom(this, varargin)
     
-    % todo: document
+    % Returns the index of the first input to evaluate true
+    %
+    % [idx] = indexOfFirst(a, b, [...], n) Returns number of first truthy
+    % input in list.  If no match is found, then idx = n+1.  NB: The order
+    % of inputs is important, e.g. if a is undefined (has no value) but b
+    % is true, idx = n+1.  Vice versa would yeild idx = 1.
     f = indexOfFirst(varargin)
     
     % New signal carrying the last n samples from another
@@ -95,6 +120,7 @@ classdef Signal < handle
     
     % New signal that gets all values from n signals
     %
+    % This signal takes the value of the last input signal to update.
     % Note: if multiple signals update during the same transaction, the
     % merged signal will only get one signal's value (and which it will be
     % is undefined).
@@ -103,15 +129,21 @@ classdef Signal < handle
     % New signal that's true when one signal is true until another is true
     p = to(a, b)
     
-    % todo: document
+    % New signal that's true when a 'release' signal is true, given that a
+    % third signal 'arm' was true
+    %
+    % tr = setTrigger(arm, release) samples true once and only once when
+    % release is true, given that arm was true.  This signal doesn't sample
+    % another value until 'armed' again.
     tr = setTrigger(arm, release)
     
-    % todo: document
+    % New signal that only updates its values when the new value is
+    % different from its current one
     nr = skipRepeats(this)
     
     % New signal that follows another, but is always n samples behind
     %
-    %
+    % See also delay
     d = lag(this, n)
     
     % New signal with the difference between the last two source samples
@@ -122,15 +154,28 @@ classdef Signal < handle
     %
     d = delay(this, period)
     
-    % todo: document
+    % Mathmematical identity function, i.e. output == input
+    % 
+    % When two signals update at the same time, the order is undefined.
+    % Sometimes it is required that one signal updates first, in which case
+    % the use of identity can help.
+    % 
+    % Example:
+    %   endTrial = repeat.at(stimOff) 
+    %   % endTrial and stimOff update during the same propagation through 
+    %   % the network.  stimOff may update AFTER endTrial, which is
+    %   % undesirable.
+    %   endTrial = repeat.at(stimOff.identity())
+    %   % Now endTrial is likely to update just after stimOff takes a value
     id = identity(this)
     
+    % Returns a struct with a timestamp and value for every update
     l = log(this)
     
-    % todo: document
+    % Define a callback function for when signal takes a value
     h = onValue(this, fun)
     
-    % todo: document
+    % Display the current value each time a signal updates
     h = output(this)
   end
   

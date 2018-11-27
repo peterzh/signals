@@ -25,6 +25,12 @@ elem.layers = elem.map(@makeLayer).flattenStruct();
           newelem.dims, newelem.orientation);
         layer.textureId = 'square';
         layer.blending = 'source';
+      case {'circle', 'circ'}
+        [layer, img] = vis.circLayer(...
+          [newelem.azimuth; newelem.altitude],...
+          newelem.dims, newelem.orientation);
+        layer.textureId = 'circle';
+        layer.blending = 'source';
       otherwise
         error('Invalid grating type ''%s''', shape);
     end

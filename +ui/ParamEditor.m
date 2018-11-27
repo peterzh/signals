@@ -7,8 +7,8 @@ classdef ParamEditor < handle
   end
   
   methods
-    function obj = ParamEditor()
-      obj.UI = ui.FieldPanel;
+    function obj = ParamEditor(f)
+      obj.UI = ui.FieldPanel(f);
     end
     
     function buildUI(obj, pars)

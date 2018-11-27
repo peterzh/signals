@@ -28,7 +28,7 @@ classdef SubscriptableSignal < sig.node.Signal
         this.Deep = deep;
       end
       this.Reserved = [methods('sig.node.Signal'); 'Name'; 'Node'
-        'CacheSubscripts'; 'Subscripts'];
+        'CacheSubscripts'; 'Subscripts'; 'Reserved'; 'Deep']; % Added MW 02/2018
     end
     
     function this = subscriptable(this) % just return this
