@@ -37,7 +37,8 @@ for i = 1:length(varargin)
   name = genvarname(s.Name);
   switch class(s)
     case {'sig.Registry', 'StructRef'}
-      names = strcat([name '_'], fieldnames(s));
+      %names = strcat([name '_'], fieldnames(s));
+      names = strcat(fieldnames(s));      
       values = struct2cell(s);
       for j = 1:length(names)
         sigs.(names{j}) = values{j};
@@ -72,12 +73,12 @@ end
 signals = struct2cell(sigs);
 
 for i = 1:n
-  axh(i) = subtightplot(n,1,i,[0.01,0.2],0.05,0.05,'parent',figh);
+  axh(i) = subtightplot(n,1,i,[0.02,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
-  curTitle = title(axh(i), names{i}, 'fontsize', fontsz, 'interpreter', 'none');
-  titlePos = get(curTitle, 'Position');
-  set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
+  curTitle = title(axh(i), names{i}, 'fontsize', 8, 'interpreter', 'none');
+%   titlePos = get(curTitle, 'Position');
+%   set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
   if i == n    
     xlabel(axh(i), 't (s)', 'fontsize',fontsz);
   else
@@ -97,7 +98,8 @@ for i = 1:n % add listeners to the signals that will update the plots
   listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
 end
 
-set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
+%set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
+set(axh, 'Xlim', [0 1]);
 set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
 
   function new(idx, value)

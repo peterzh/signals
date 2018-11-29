@@ -230,7 +230,12 @@ end
 % emulate wheel input when user clicks mouse scroll button
 
 set(parsFig, 'WindowButtonDownFcn', @wheelTurn);
-cursorAsWheel = false;
+cursorAsWheel = true;
+disp('Mouse cursor as wheel input emulator has been set')
+% cursor = sn.origin('cursor');
+% listeners = [listeners
+%   cursor.into(inputs.wheel)
+%   ];
 
   function wheelTurn(src, event)
     if strcmp(get(src, 'SelectionType'), 'extend')
@@ -248,6 +253,8 @@ cursorAsWheel = false;
     %tic
     post(dt, tnow - tLast);
     % use mouse cursor as wheel input if it has been user selected
+    %post(cursor, GetMouse());
+    %cursorAsWheel = true;
     if cursorAsWheel
       post(cursor, GetMouse());
     end

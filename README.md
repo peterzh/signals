@@ -138,7 +138,7 @@ The "java" subdirectory contains java code that mostly pertains to creating and 
 
 ### mexnet, mexnet-vs
 
-The "mex network" subdirectories contain code that are mex compilations of underlying C source code that allows for improved optimization of performance when operations are performed on signals during run-time.
+The "mex network" subdirectories contain code with mex compilations of underlying C source code (mexnet) and the C source code itself (mexnet-vs) that allows for improved performance when operations are performed on signals during run-time.
 
 ### util
 
