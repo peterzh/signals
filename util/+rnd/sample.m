@@ -19,4 +19,5 @@ function duration = sample(time)
     otherwise % Pick on of the values
       duration = randsample(time, 1);
   end
+  
 end
