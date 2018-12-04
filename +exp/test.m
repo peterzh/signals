@@ -29,7 +29,7 @@ else
 end
 
 parsStruct = exp.inferParameters(expdef);
-parsStruct = rmfield(parsStruct, 'defFunction');
+%parsStruct = rmfield(parsStruct, 'defFunction');
 parsStruct.expRef = dat.constructExpRef('fake', now, 1);
 
 %% boring UI stuff
