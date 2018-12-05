@@ -6,8 +6,8 @@ h = max(size(colour, 1), size(alpha, 1));
 w = max(size(colour, 2), size(alpha, 2));
 sz = [w h];
 
-colour = iff(all(colour<=1), uint8(round(255*colour)), uint8(colour));
-alpha = iff(all(colour<=1), uint8(round(255*alpha)), uint8(alpha));
+colour = uint8(iff(all(colour<=1), @()round(255*colour), colour));
+alpha = uint8(iff(all(alpha<=1), @()round(255*alpha), alpha));
 
 if ~isscalar(colour) && size(colour, 3) == 1 % overall luminance specified
   colour = repmat(colour, [1, 1, 3]); % replicate to rgb
