@@ -1,8 +1,8 @@
 %% Signals Test Script
-% Every signal is part of a network, managed through a 'sig.Net' object.
+% Every signal is part of a network, managed through the 'sig.Net' object.
 % The network object holds all the ids of every signals node
 
-% Every signal has an underlying node, a sig.node.Node object that contains
+% Every signal has an underlying node; a sig.node.Node object that contains
 % a number of important properties:
 % Net: a handle to the parent network (sig.Net)
 % Inputs: an array of input nodes

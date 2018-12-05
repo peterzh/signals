@@ -2,8 +2,9 @@ function listeners = timeplot(varargin)
 %SIG.PLOT Summary of this function goes here
 %   TODO Document
 %   TODO Vararg for axes name value args, e.g. LineWidth
-%   TODO Deal with logging signals & registries & subscriptable signals
-%   TODO Deal with strings, arrays, structures, cell arrays
+%   TODO Deal with logging signals & registries
+%   TODO Use set('XData'), etc.
+%   TODO Deal with strings and arrays
 %sigs, figh, mode, tWin
 [present, value, idx] = namedArg(varargin, 'parent');
 if present
@@ -37,8 +38,7 @@ for i = 1:length(varargin)
   name = genvarname(s.Name);
   switch class(s)
     case {'sig.Registry', 'StructRef'}
-      %names = strcat([name '_'], fieldnames(s));
-      names = strcat(fieldnames(s));      
+      names = strcat([name '_'], fieldnames(s));
       values = struct2cell(s);
       for j = 1:length(names)
         sigs.(names{j}) = values{j};
@@ -51,15 +51,10 @@ for i = 1:length(varargin)
   end
 end
 names = fieldnames(sigs);
-names{1} = 'Time Signal';
 n = numel(names);
 tstart = [];
 lastval = cell(n,1);
-
 cmap = colormap(figh, 'hsv');
-skipsInCmap = length(cmap) / n;
-cmap = cmap(1:skipsInCmap:end, :);
-
 args = {'linewidth' 2};
 
 axh = zeros(n,1);
@@ -73,12 +68,10 @@ end
 signals = struct2cell(sigs);
 
 for i = 1:n
-  axh(i) = subtightplot(n,1,i,[0.02,0.2],0.05,0.05,'parent',figh);
+  axh(i) = subtightplot(n,1,i,[0.01,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
-  curTitle = title(axh(i), names{i}, 'fontsize', 8, 'interpreter', 'none');
-%   titlePos = get(curTitle, 'Position');
-%   set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
+  ylabel(axh(i), names{i}, 'fontsize',fontsz, 'interpreter', 'none');
   if i == n    
     xlabel(axh(i), 't (s)', 'fontsize',fontsz);
   else
@@ -98,8 +91,7 @@ for i = 1:n % add listeners to the signals that will update the plots
   listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
 end
 
-%set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
-set(axh, 'Xlim', [0 1]);
+set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
 set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
 
   function new(idx, value)
