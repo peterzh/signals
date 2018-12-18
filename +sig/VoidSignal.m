@@ -41,6 +41,58 @@ classdef VoidSignal < sig.Signal
     function s = keepWhen(this, when)
       s = this;
     end
+    
+    function h = onValue(this, fun)
+      h = TidyHandle.empty;
+    end
+    
+    function h = output(this)
+      h = TidyHandle.empty;
+    end
+    
+    function l = log(this, clockFun)
+      l = this;
+    end
+    
+    function id = identity(this)
+      id = this;
+    end
+    
+    function d = delta(this)
+      d = this;
+    end
+    
+    function nr = skipRepeats(this)
+      nr = this;
+    end
+    
+    function tr = setTrigger(set, release)
+      tr = set;
+    end
+    
+    function p = to(a, b)
+      p = a;
+    end
+    
+    function m = merge(varargin)
+      m = varargin{1};
+    end
+    
+    function b = bufferUpTo(this, nSamples)
+      b = this;
+    end
+    
+    function b = buffer(this, nSamples)
+      b = this;
+    end
+    
+    function f = indexOfFirst(varargin)
+      f = varargin{1};
+    end
+    
+    function s = selectFrom(this, varargin)
+      s = this;
+    end
   end
   
   methods (Access = private)
