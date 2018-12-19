@@ -77,6 +77,9 @@ net = t.Node.Net;
 inputs = sig.Registry;
 wx = net.fromUIEvent(wheelslider);
 inputs.wheel = net.origin('wheel');
+inputs.wheelMM = inputs.wheel.skipRepeats();
+inputs.wheelDeg = inputs.wheel.skipRepeats();
+
 % inputs.wheel = net.origin('wheel');
 inputs.keyboard = net.origin('keyboard');
 outputs = sig.Registry;
@@ -117,7 +120,7 @@ end
 % plotting the signals
 sigsFig = figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w'); 
 listeners = [listeners 
-  sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 5)];
+  sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 60)];
 
   function applyPars(~,~)
     setElems(vs);
