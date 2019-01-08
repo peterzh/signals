@@ -39,6 +39,7 @@ classdef Registry < StructRef
       %    simpleSignal.post(4)
       %    simpleSignal.post(8)
       %    s = logs(events, t0); % Return our logged signals as a structure
+      if nargin == 1; clockOffset = 0; end
       s = struct;
       evtsfields = fieldnames(this);
       for ii = 1:numel(evtsfields)
