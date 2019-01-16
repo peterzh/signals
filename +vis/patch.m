@@ -24,16 +24,20 @@ elem.layers = elem.map(@makeLayer).flattenStruct();
           [newelem.azimuth; newelem.altitude],...
           newelem.dims, newelem.orientation);
         layer.textureId = 'square';
-        layer.blending = 'source';
       case {'circle', 'circ'}
         [layer, img] = vis.circLayer(...
           [newelem.azimuth; newelem.altitude],...
           newelem.dims, newelem.orientation);
         layer.textureId = 'circle';
-        layer.blending = 'source';
+      case {'plus', 'cross'}
+        [layer, img] = vis.crossLayer(...
+          [newelem.azimuth; newelem.altitude],...
+          newelem.dims, newelem.orientation);
+        layer.textureId = 'cross';
       otherwise
         error('Invalid grating type ''%s''', shape);
     end
+    layer.blending = 'source';
     layer.maxColour = [newelem.colour 1];
     [layer.rgba, layer.rgbaSize] = vis.rgba(1, img);
     layer.show = newelem.show;
