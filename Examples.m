@@ -1,4 +1,8 @@
-%% Signals Test Script
+%% Signals Test Script - Introduction
+% The purpose of this script if to introduce Signals, how to wire a network
+% and a few of the important functional methods associated.
+
+%% 
 % Every signal is part of a network, managed through the 'sig.Net' object.
 % The network object holds all the ids of every signals node
 
@@ -29,14 +33,6 @@ originSignal.Node.CurrValue % The current value is now 21
 post(originSignal, 'hello') % Post a new value to originSignal
 originSignal.Node.CurrValue % The current value is now 'hello'
 
-%% Relationships between signals
-net = sig.Net; % Create a new signals network
-originSignal = net.origin('input'); % Create an origin signal
-sig2 = originSignal.scan(@plus, 1);
-sig2.Node.CurrValue
-sig2.Node.WorkingValue
-post(originSignal, 4)
-
 %% Demonstration on sig.Signal/output() method
 % The output method is a useful function for understanding the relationship
 % between signals.  It simply displays a signal's output each time it takes
@@ -55,6 +51,151 @@ class(h)
 simpleSignal.post(false)
 simpleSignal.post(true)
 
+%% Relationships between signals
+% Once you have one or more inputs to the network you can start to build a
+% reactive network.  Most of MATLAB's elementary operators work with
+% Signals objects in the way you would expect, as demonstrated below.
+
+net = sig.Net; % Create a new signals network
+x = net.origin('x'); % Create an origin signal
+a = 5; b = 2; c = 8;
+y = a*x^2 + b*x + c; % Define a quadratic relationship between x and y
+x.post(5)
+y.Node.CurrValue
+
+% TODO example using sin & pi
+
+% Note that the short circuit operators && and || are not implemented in
+% Signals
+bool = x >= 5 & x < 10; 
+x.post(5)
+bool.Node.CurrValue
+
+% mod, floor, ceil
+even = mod(floor(x), 2) == 0;
+odd = ~even;
+
+% array cat
+X = [x 2*x];
+X_sz = size(X) == 2;
+x.post(5)
+X.Node.CurrValue
+
+% For a full list see doc sig.Signal.  NB: Sometimes due to limitations of
+% syntax, it's necessary to do away with syntactic sugar.  It is therefore
+% worth remembering the basic functions, i.e. not(), plus(), times(), etc.
+
+%% A note about Signals variables
+% Signals are objects that constantly update their values each time the
+% Signals they depend on update.  A Signal will not a take a value post-hoc
+% after a new Signal takes a value.  Consider the following:
+x.Node.CurrValue
+y = x^2;
+y.Node.CurrValue
+x.post(3)
+y.Node.CurrValue
+
+% Likewise if you re-define a Signal, any previous Signals will continue
+% using the old values and any future Signals will use the new values,
+% regardless of whether the variable name is the same.
+y = x^2;
+a = y + 2;
+y = x^3; % A new Signal object is assigned to the variable y
+b = y + 2;
+
+% Looking at the name of your Signals may help you here
+% TODO use visualizations (sig.Visulizer)
+y.Name
+a.Name
+b.Name
+
+%% Signals can derive from multiple signals
+% The above examples show how a signal can derive from one other signal,
+% however a signal can be defined by any number of other signals as well as
+% by constants.
+% Mathematically, Signals can be viewed as variables which any time they
+% take a new value, cause any equations dependent equations to be
+% re-evaluated.
+
+x = net.origin('x'); % Create an origin signal
+a = net.origin('a'); % Create an origin signal
+b = net.origin('b'); % Create an origin signal
+c = net.origin('c'); % Create an origin signal
+
+y = a*x^2 + b*x + c;
+upperBound = max([abs(a), abs(b), abs(c)]) / abs(a) * (1 + sqrt(5))/2;
+% TODO Add a timeplot
+
+%% Indexing with Signals
+A = net.origin('A');
+a = A(1); % index a and assign to b
+a.post(1:10); % assign a vector of values from 1 to 10
+
+b.Node.CurrValue % 1
+
+c = a(end);
+d = a(1:5);
+a.post(10:20); % assign new vector with values from 10 to 20
+b.Node.CurrValue % 10
+c.Node.CurrValue % 20
+d.Node.CurrValue % [10 11 12 13 14]
+
+% FIXME: This is for later
+% a(1) = 5; % fail!
+% a = a.subscriptable(); % only for structs
+% a(1) = 1; % also fail
+
+idx = net.origin('index');
+e = a(idx);
+a.post(10:20);
+idx.post(5);
+e.Node.CurrValue % 14
+
+%% Use more complex functions with map
+% It is not possible to call all functions with signals objects as inputs,
+% and therefore expressions like fliplr(A), where A is a Signal will cause
+% an error:
+A = net.origin('A'); % Create an origin signal
+B = fliplr(A); % Conversion to logical from sig.node.Signal is not possible
+
+% Instead we can use the function map, which will call a given function
+% with a Signal's current value as its input each time that signal take a
+% new value
+B = A.map(@fliplr);
+A.post(eye(5));
+
+% Sometimes your Signal must be in a different positional argument:
+% delta = A.map(@(A)diff(A,1,2)); % Take 1st order difference over 2nd dimension
+a = A.map(@(A)sum(A,2)); % Take sum over 2nd dimension
+A.post(magic(3));
+
+% fun.partial can be a convenient way to map a function where there are a
+% number of constant variables in a function:
+f = fun.partial(@sprintf, '%.1f%%'); % Returns a function handle which will call sprintf with the first argument as '%.1f%%' 
+class(f)
+y = x.map(f);
+y1 = map(1-y, f);
+
+% Sometimes you want to derive a Signal whose value is always constant but
+% nevertheless updates depending on another Signal, thus acting as a
+% trigger for something.  This can be achieved by using a constant value
+% instead of a function in map.  For example here we produce a signal that
+% is always mapped to true and updates whenever its dependent value
+% updates
+updated = x.map(true);
+% NB c.f. with at and skipRepeats
+
+% Note that the if it's a value rather than a function handle, it is truely
+% constant, even if it's the output of a function:
+c = x.map(rand);
+rnd = x.map(@(~)rand);
+
+%% Map multiple Signals through a function with mapn
+% TODO
+B = A.mapn(n, 1, @repmat);
+
+% NB: Map will only assign the first output argument of the function to the
+% resulting Signal
 
 %% Timing in signals
 % Most experiments require things to occur at specific times.  This can be
@@ -189,6 +330,105 @@ simpleSignal.post(8)
 
 s = logs(events, t0); % Return our logged signals as a structure
 disp(s)
+
+%% Demonstration of scan
+% Scan is a very powerful method that allows one to map a signal's current
+% value and it's previous value through a function.  This allows one to 
+%
+net = sig.Net;
+x = net.origin('x');
+
+y = x.scan(@plus, 0);
+h = y.output();
+x.post(1);
+x.post(1);
+
+%% 
+    x = net.origin('x');
+    seed = net.origin('seed');
+    seed.post(0); % Initialize seed with value
+    y = x.scan(@plus, seed);
+    h = y.output();
+    
+    x.post(1);
+    x.post(1);
+    x.post(1);
+    seed.post(0);
+    x.post(1);
+    x.post(1);
+    
+    %%
+        x = net.origin('x');
+    seed = net.origin('seed');
+    seed.post('!'); % Initialize seed with value
+    f = @(acc,itm) [itm acc]; % Prepend char to array
+    y = x.scan(f, seed);
+    h = y.output();
+
+    x.post('>')
+    %% 
+            x = net.origin('x');
+    seed = net.origin('seed');
+    seed.post('!'); % Initialize seed with value
+    f = @(acc,itm,p1) [itm p1 acc]; % Prepend char to array
+    y = x.scan(f, seed, 'pars', 'i'); % Pars may be signals or no
+    h = y.output();
+
+    x.post('>')
+    %% 
+            x = net.origin('x');
+    seed = net.origin('seed');
+    seed.post('0'); % Initialize seed with value
+    f = @(acc,itm,delim) strjoin({acc, itm}, delim); % Prepend char to array
+    y = x.scan(f, seed, 'pars', ' + '); % Pars may be signals or no
+    h = y.output();
+
+    x.post('1')
+ x.post('12')
+ x.post('18')
+ x.post('5')
+ x.post('8')
+ 
+ %% When pars take new value accumulator function is not called!
+             x = net.origin('x');
+    seed = net.origin('seed');
+    p = net.origin('delimiter');
+    seed.post('0'); % Initialize seed with value
+    p.post(' + '); % Initialize seed with value
+    f = @(acc,itm,delim) strjoin({acc, itm}, delim); % Prepend char to array
+    y = x.scan(f, seed, 'pars', p); % Pars may be signals or no
+    h = y.output();
+
+    x.post('1')
+ x.post('12')
+ p.post(' - '); % Updating p doesn't affect scan
+ x.post('18')
+ x.post('5')
+ p.post(' * ');
+ x.post('8')
+ 
+ %%
+              x = net.origin('x');
+              y = net.origin('y');
+              z = net.origin('z');
+    seed = net.origin('seed');
+    seed.post(0); % Initialize seed with value
+    f1 = @plus; % 
+    f2 = @minus; % 
+    f3 = @times; % 
+    v = scan(x, f1, y, f2, z, f3, seed); % Pars may be signals or no
+    h = v.output();
+
+    x.post(1) % 1
+    x.post(1) % 2
+    x.post(1) % 3
+
+    y.post(1) % 2
+    y.post(1) % 1
+    
+    z.post(2) % 2
+    z.post(2) % 4
+    z.post(2) % 8
 
 %% Demonstration of working values
 % Working values of signals are important for proper signal propagation in

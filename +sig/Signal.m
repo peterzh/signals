@@ -43,11 +43,16 @@ classdef Signal < handle
     % Derive a signal by mapping the values from another
     %
     % m = s.MAP(f, [formatSpec]) returns a new signal m whose values
-    % result from mapping values in this signal s using the function f.
+    % result from mapping values in this signal s using the function f.  If
+    % f is not a function, m takes the value of f each time s updates.
     %
     % Example:
     %   s = sig.SimpleSignal;
     %   ms = s.map(@(v)2*v); % ms will always have twice the value of s
+    %
+    % Example 2:
+    %   s = sig.SimpleSignal;
+    %   tr = s.map(true); % tr will be true each time s updates
     %
     % See also map2, mapn
     m = map(this, f, varargin)

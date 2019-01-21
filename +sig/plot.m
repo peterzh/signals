@@ -1,22 +1,29 @@
-function listener = plot(axh, x, y, varargin)
+function h = plot(varargin)
 %SIG.PLOT Summary of this function goes here
 %   Detailed explanation goes here
 
-pltsig = x.map2(...
-  @(x,y)struct('x',{x},'y',{y}), y, '{x:%s,y:%s}',@(name)sig.Logger(name));
+if ishandle(varargin{1})
+  axh = varargin{1};
+  x = varargin{2};
+  y = varargin{3};
+  varargin(1:3) = [];
+else
+  figure;
+  axh = subplot(1,1,1);
+  x = varargin{1};
+  y = varargin{2};
+  varargin(1:2) = [];
+end
+% xx = x.log();
+% yy = y.log();
+yy = y.scan(@new, [], 'pars', x);
+h = TidyHandle(@()delete(yy));
+% pltsig = xx.map2(yy, @new);
+% listener = pltsig.onValue(@new);
 
-plth = [];
-listener = pltsig.onValue(@new);
-
-  function new(~,~)
-    vals = pltsig.Values;
-    xx = [vals.x];
-    yy = [vals.y];
-    if ~isempty(plth)
-      set(plth, 'XData', xx, 'YData', yy);
-    else
-      plth = plot(axh, xx, yy, varargin{:});
-    end
+  function data = new(acc,y,x)
+    data = [acc [x;y]];
+    plot(axh, data(1,:), data(2,:), varargin{:});
   end
 
 end

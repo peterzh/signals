@@ -34,8 +34,9 @@ if nargin < 2 || isempty(shape)
   shape = 'rectangle';
 end
 
-% Add a new subscriptable origin signal to the same netword as the input
-% signal, t, and use this to store the stimulus texture layer and paramters
+% Add a new subscriptable origin signal to the same network as the input
+% signal, t, and use this to store the stimulus texture layer and
+% parameters
 elem = t.Node.Net.subscriptableOrigin('patch');
 % Set some defaults for the stimulus
 elem.azimuth = 0;

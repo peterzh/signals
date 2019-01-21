@@ -1,6 +1,6 @@
 function elem = grating(t, grating, window)
 %VIS.GRATING Returns a Signals grating stimulus defining a grating texture
-%  Produces a garting element that is either sinusoidal or square-wave, and
+%  Produces a grating element that is either sinusoidal or square-wave, and
 %  may be windowed by a Gaussian stencil, producing a Gabor patch
 %
 %  Inputs:
@@ -47,8 +47,9 @@ if nargin < 2 || isempty(grating)
   grating = 'sinusoid';
 end
 
-% Add a new subscriptable origin signal to the same netword as the input
-% signal, t, and use this to store the stimulus texture layer and paramters
+% Add a new subscriptable origin signal to the same network as the input
+% signal, t, and use this to store the stimulus texture layer and
+% parameters
 elem = t.Node.Net.subscriptableOrigin('gabor');
 % Set some defaults for the stimulus
 elem.grating = grating;

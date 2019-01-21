@@ -1,5 +1,5 @@
 function listeners = timeplot(varargin)
-%SIG.PLOT Summary of this function goes here
+%SIG.TIMEPLOT Summary of this function goes here
 %   TODO Document
 %   TODO Vararg for axes name value args, e.g. LineWidth
 %   TODO Deal with logging signals & registries & subscriptable signals
@@ -30,34 +30,41 @@ end
 
 clf(figh);
 
-sigs = StructRef;
+% Initialize cell array to store all signals and their names
+signals = cell(length(varargin),1);
+names = cell(length(varargin),1);
 
 for i = 1:length(varargin)
   s = varargin{i};
-  name = genvarname(s.Name);
+  % Get the name of the signal.  If Name is empty, use the variable name
+  name = iff(isempty(s.Name), inputname(i), s.Name);
   switch class(s)
     case {'sig.Registry', 'StructRef'}
-      %names = strcat([name '_'], fieldnames(s));
-      names = strcat(fieldnames(s));      
-      values = struct2cell(s);
-      for j = 1:length(names)
-        sigs.(names{j}) = values{j};
-      end
+      % For StructRef objects and their subclasses, exract their signals
+      % and set the names to be the fieldnames of the signal
+      names(i) = strcat([name '.'], fieldnames(s));
+      signals(i) = struct2cell(s);
     case {'sig.Signal', 'sig.node.Signal', ...
         'sig.node.ScanningSignal', 'sig.node.OriginSignal'}
-      sigs.(name) = s;
+      names{i} = name;
+      signals{i} = s;
     otherwise
       error('Unrecognized type')
   end
 end
-names = fieldnames(sigs);
-names{1} = 'Time Signal';
+
+% Flatten cell arrays
+signals = cellflat(signals);
+names = cellflat(names);
+
 n = numel(names);
 tstart = [];
 lastval = cell(n,1);
 
+% Change colour map so that there is the largest possible colour difference
+% between signals as a visual aid
 cmap = colormap(figh, 'hsv');
-skipsInCmap = length(cmap) / n;
+skipsInCmap = ceil(length(cmap) / n);
 cmap = cmap(1:skipsInCmap:end, :);
 
 args = {'linewidth' 2};
@@ -70,16 +77,14 @@ if numel(mode) == 1
   mode = repmat(mode, n, 1);
 end
 
-signals = struct2cell(sigs);
-
 for i = 1:n
   axh(i) = subtightplot(n,1,i,[0.02,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
-  curTitle = title(axh(i), names{i}, 'fontsize', 8, 'interpreter', 'none');
+  title(axh(i), names{i}, 'fontsize', 8, 'interpreter', 'none');
 %   titlePos = get(curTitle, 'Position');
 %   set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
-  if i == n    
+  if i == n
     xlabel(axh(i), 't (s)', 'fontsize',fontsz);
   else
     set(axh(i),'XTickLabel',[]);
@@ -94,12 +99,11 @@ for ii = 1:n
   end
 end
 
+listeners = TidyHandle.empty(n,0);
 for i = 1:n % add listeners to the signals that will update the plots
-  listeners(i,1) = onValue(x_t{i}, @(v)new(i,v));
+  listeners(i) = onValue(x_t{i}, @(v)new(i,v));
 end
 
-%set(axh, 'Xlim', [GetSecs-tWin GetSecs+tWin]);
-set(axh, 'Xlim', [0 1]);
 set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
 
   function new(idx, value)
