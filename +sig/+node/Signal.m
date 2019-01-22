@@ -38,7 +38,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function y = end(this, k, n)
-      warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this));
+      warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this.Name));
       y = expr.End(k, n);
     end
     

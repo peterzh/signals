@@ -1,4 +1,4 @@
-function listeners = timeplot(varargin)
+function axh = timeplot(varargin)
 %SIG.TIMEPLOT Summary of this function goes here
 %   TODO Document
 %   TODO Vararg for axes name value args, e.g. LineWidth
@@ -69,7 +69,7 @@ cmap = cmap(1:skipsInCmap:end, :);
 
 args = {'linewidth' 2};
 
-axh = zeros(n,1);
+axh = matlab.graphics.axis.Axes.empty(n,0);
 x_t = cell(n,1);
 fontsz = 9;
 
@@ -105,6 +105,7 @@ for i = 1:n % add listeners to the signals that will update the plots
 end
 
 set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
+set(figh, 'DeleteFcn', @(~,~)delete(listeners));
 
   function new(idx, value)
     value.x = iff(ischar(value.x), true, value.x);
@@ -132,7 +133,7 @@ set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
         line(tt, xx, 'Parent', axh(idx), 'Color', cmap(idx,:), args{:});
     end
     lastval{idx} = value;
-    set(axh, 'Xlim', [GetSecs-tstart-tWin GetSecs-tstart+tWin]);
+    set(axh, 'Xlim', [GetSecs-tstart-tWin GetSecs-tstart+0.1]);
   end
 
   function cycleMode(src)

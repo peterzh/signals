@@ -5,7 +5,7 @@
 
 %% 
 % Every signal is part of a network, managed through the 'sig.Net' object.
-% The network object holds all the ids of every signals node
+% The network object holds all the ids of every signals node.  (FIXME Note 1 about underlying code)
 
 % Every signal has an underlying node; a sig.node.Node object that contains
 % a number of important properties:
@@ -23,6 +23,14 @@
 % These origin signals are the input nodes to the reactive network, while
 % all other signals are dependent on one another.  Origin signals can be a
 % value of any type, as demonstrated below.
+%
+% In the context of a Signals experiment, the input signals would be the
+% timing signal and the wheel, lever, etc.  These origin Signals should be
+% defined outside of your experiment definition function and be input
+% variables.  More on this later. 
+
+% FIXME you can post to origin signals,
+% naming signals, var and name
 
 net = sig.Net; % Create a new signals network
 originSignal = net.origin('input'); % Create an origin signal
@@ -33,6 +41,16 @@ originSignal.Node.CurrValue % The current value is now 21
 
 post(originSignal, 'hello') % Post a new value to originSignal
 originSignal.Node.CurrValue % The current value is now 'hello'
+
+% You can see there are two names for this signal.  The string identifier
+% ('input') is the Signal object's name, stored in the Name property:
+disp(originSignal.Name)
+
+% Any Signals derived from this will include this identifier in their Name
+% property (an example will follow shortly).  The variable name
+% 'originSignal' is simply a handle to the Signal object and can be changed
+% or cleared without affecting the object it references (See Note 1 at
+% bottom of script).
 
 % Although the value is stored in the Node's CurrValue field, it is not
 % intended that you use this field directly.  Doing so will most likely
@@ -66,33 +84,50 @@ x = net.origin('x'); % Create an origin signal
 a = 5; b = 2; c = 8; % Some constants to use in our equation
 y = a*x^2 + b*x + c; % Define a quadratic relationship between x and y
 
-h = sig.plot(x,y);
+ax = sig.plot(x,y,'b-');
+xlim(ax, [-50 50]);
+
 for i = -50:1:50
+  pause(0.05)
   x.post(i)
 end
 
 %%
 % TODO example using sin & pi
+x = net.origin('x'); % Create an origin signal
+
+y = cos(x * pi);
+sig.timeplot(x, y, 'mode', [0 2]);
+
+for i = 0:0.1:10
+  pause(0.05)
+  x.post(i)
+end
+
 
 %% Logical operations
 % Note that the short circuit operators && and || are not implemented in
 % Signals
+x = net.origin('x'); % Create an origin signal
 bool = x >= 5 & x < 10; 
 
-sig.plot(x, bool, 'o');
+ax = sig.plot(ax, x, bool, 'bx');
+xlim(ax, [0 15]), ylim(ax, [-1 2])
+
 for i = 1:15
   x.post(i)
 end
 
 %% mod, floor, ceil
+x = net.origin('x'); % Create an origin signal
+
 even = mod(floor(x), 2) == 0;
 odd = ~even;
 
-h = sig.timeplot(x, even, odd);
+ax = sig.timeplot(x, even, odd, 'tWin', 1);
 for i = 1:15
   x.post(i)
 end
-clear h
 
 %% Arrays
 % You can create numerical arrays and matricies with Signals in an
@@ -100,6 +135,7 @@ clear h
 % Signals objects, always expect a new Signals object to be returned.  In the
 % below example we create a 1x3 vector Signals, X, which is not an array of
 % Signals but rather a Signal that carries a numrical array as its value
+x = net.origin('x'); 
 X = [x 2*x 3];
 X_sz = size(X);
 
@@ -154,34 +190,33 @@ b = net.origin('b');
 c = net.origin('c');
 
 y = a*x^2 + b*x + c;
-upperBound = max([abs(a), abs(b), abs(c)]) / abs(a) * (1 + sqrt(5))/2;
+% upperBound = max([abs(a), abs(b), abs(c)]) / abs(a) * (1 + sqrt(5))/2;
 
-sig.timeplot(x, a, b, c, y, upperBound);
+sig.timeplot(x, a, b, c, y);
+
+x.post(1), pause(1)
+a.post(pi), pause(1)
+b.post(3), pause(1)
+c.post(8), pause(1)
+
+a.post(5)
 
 %% Indexing with Signals
 A = net.origin('A');
-a = A(1); % index a and assign to b
-a.post(1:10); % assign a vector of values from 1 to 10
+h = output(A);
+a = A(2); % index a and assign to b
+B = A(5:end);
+A.post(1:10); % assign a vector of values from 1 to 10
 
-b.Node.CurrValue % 1
+a.Node.CurrValue % 2
+B.Node.CurrValue
 
-c = a(end);
-d = a(1:5);
-a.post(10:20); % assign new vector with values from 10 to 20
-b.Node.CurrValue % 10
-c.Node.CurrValue % 20
-d.Node.CurrValue % [10 11 12 13 14]
-
-% FIXME: This is for later
-% a(1) = 5; % fail!
-% a = a.subscriptable(); % only for structs
-% a(1) = 1; % also fail
-
-idx = net.origin('index');
-e = a(idx);
-a.post(10:20);
-idx.post(5);
-e.Node.CurrValue % 14
+% An index may be another Signal:
+i = net.origin('index'); % Define a new Signal 
+a = A(i);
+A.post(1:10);
+i.post(5);
+A.post(10:20);
 
 %% Use more complex functions with map
 % It is not possible to call all functions with signals objects as inputs,
@@ -550,3 +585,29 @@ origin.post(3)
 % structSig.C; % Essential
 % structSig.C = 5;
 % structSig.C.Node.CurrValue
+
+%% Notes
+% 1. Signals objects that are entirely out of scope are cleaned up by
+% MATLAB and the underlying C code.  That is, if a Signal is created,
+% assigned to a variable, and that variable is cleared then the underlying
+% node is deleted if there exist no dependent Signals:
+net = sig.Net;
+x = net.origin('orphan');
+networkInfo(net.Id) % Net with 1/4000 active nodes
+clear x
+networkInfo(net.Id) % Net with 0/4000 active nodes
+
+% If the Signal is used by another node that is still in scope, then it
+% will not be cleaned up:
+x = net.origin('x');
+y = x + 2; % y depends of two nodes: 'x' and '2' (a root node)
+networkInfo(net.Id) % Net with 3/4000 active nodes
+clear x % After clearing the handle 'x', the node is still in the network
+networkInfo(net.Id) % Net with 3/4000 active nodes
+% The node still exists because another handle to it is stored in the
+% Inputs property of the node 'y':
+str = sprintf('Inputs to y: %s', strjoin(mapToCell(@(n)n.Name, [y.Node.DisplayInputs]), ', '));
+disp(str)
+disp(['y.Node.DisplayInputs(1) is a ' class(y.Node.DisplayInputs(1))])
+
+% 2.
