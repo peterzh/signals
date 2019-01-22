@@ -1,6 +1,7 @@
 %% Signals Test Script - Introduction
 % The purpose of this script if to introduce Signals, how to wire a network
-% and a few of the important functional methods associated.
+% and a few of the important functional methods associated.  Later, the
+% structure of a Signals experiment will be introduced.
 
 %% 
 % Every signal is part of a network, managed through the 'sig.Net' object.
@@ -33,6 +34,10 @@ originSignal.Node.CurrValue % The current value is now 21
 post(originSignal, 'hello') % Post a new value to originSignal
 originSignal.Node.CurrValue % The current value is now 'hello'
 
+% Although the value is stored in the Node's CurrValue field, it is not
+% intended that you use this field directly.  Doing so will most likely
+% lead to unitended behaviour.
+
 %% Demonstration on sig.Signal/output() method
 % The output method is a useful function for understanding the relationship
 % between signals.  It simply displays a signal's output each time it takes
@@ -45,7 +50,7 @@ net = sig.Net; % Create a new signals network
 clc % Clear previous output for clarity
 
 simpleSignal = net.origin('simpleSignal');
-h = output(simpleSignal.not);
+h = output(simpleSignal);
 class(h)
 
 simpleSignal.post(false)
@@ -58,28 +63,53 @@ simpleSignal.post(true)
 
 net = sig.Net; % Create a new signals network
 x = net.origin('x'); % Create an origin signal
-a = 5; b = 2; c = 8;
+a = 5; b = 2; c = 8; % Some constants to use in our equation
 y = a*x^2 + b*x + c; % Define a quadratic relationship between x and y
-x.post(5)
-y.Node.CurrValue
 
+h = sig.plot(x,y);
+for i = -50:1:50
+  x.post(i)
+end
+
+%%
 % TODO example using sin & pi
 
+%% Logical operations
 % Note that the short circuit operators && and || are not implemented in
 % Signals
 bool = x >= 5 & x < 10; 
-x.post(5)
-bool.Node.CurrValue
 
-% mod, floor, ceil
+sig.plot(x, bool, 'o');
+for i = 1:15
+  x.post(i)
+end
+
+%% mod, floor, ceil
 even = mod(floor(x), 2) == 0;
 odd = ~even;
 
-% array cat
-X = [x 2*x];
-X_sz = size(X) == 2;
+h = sig.timeplot(x, even, odd);
+for i = 1:15
+  x.post(i)
+end
+clear h
+
+%% Arrays
+% You can create numerical arrays and matricies with Signals in an
+% intuitive way.  NB: When ever you perform an operation one or more
+% Signals objects, always expect a new Signals object to be returned.  In the
+% below example we create a 1x3 vector Signals, X, which is not an array of
+% Signals but rather a Signal that carries a numrical array as its value
+X = [x 2*x 3];
+X_sz = size(X);
+
+h = [output(X), output(X_sz)];
+
 x.post(5)
-X.Node.CurrValue
+
+%% Matrix arithmatic
+Xt = X';
+Y = X.^3 ./ 2;
 
 % For a full list see doc sig.Signal.  NB: Sometimes due to limitations of
 % syntax, it's necessary to do away with syntactic sugar.  It is therefore
@@ -117,14 +147,16 @@ b.Name
 % take a new value, cause any equations dependent equations to be
 % re-evaluated.
 
-x = net.origin('x'); % Create an origin signal
-a = net.origin('a'); % Create an origin signal
-b = net.origin('b'); % Create an origin signal
-c = net.origin('c'); % Create an origin signal
+% Create some origin signals to post to
+x = net.origin('x'); 
+a = net.origin('a');
+b = net.origin('b');
+c = net.origin('c');
 
 y = a*x^2 + b*x + c;
 upperBound = max([abs(a), abs(b), abs(c)]) / abs(a) * (1 + sqrt(5))/2;
-% TODO Add a timeplot
+
+sig.timeplot(x, a, b, c, y, upperBound);
 
 %% Indexing with Signals
 A = net.origin('A');
@@ -176,6 +208,11 @@ class(f)
 y = x.map(f);
 y1 = map(1-y, f);
 
+% TODO for more complex anonymous function
+% timeOutTracker = responseType.bufferUpTo(1000);
+% timeOutCount = timeOutTracker.map(@(x) sum(x(find([1 x~=0],1,'last'):end)==0));
+
+
 % Sometimes you want to derive a Signal whose value is always constant but
 % nevertheless updates depending on another Signal, thus acting as a
 % trigger for something.  This can be achieved by using a constant value
@@ -188,7 +225,7 @@ updated = x.map(true);
 % Note that the if it's a value rather than a function handle, it is truely
 % constant, even if it's the output of a function:
 c = x.map(rand);
-rnd = x.map(@(~)rand);
+rnd = x.map(@(~)rand); % The tilda here means... 
 
 %% Map multiple Signals through a function with mapn
 % TODO
@@ -196,6 +233,17 @@ B = A.mapn(n, 1, @repmat);
 
 % NB: Map will only assign the first output argument of the function to the
 % resulting Signal
+
+%% Filtering
+% at, then, setTrigger, skipRepeats, keepWhen
+
+%% More complex conditionals
+% cond, iff, indexOfFirst
+
+%% TODO MOVE SCAN HERE
+
+%% Helpful methods
+% delta, lag, buffer, bufferUpTo
 
 %% Timing in signals
 % Most experiments require things to occur at specific times.  This can be
@@ -288,6 +336,10 @@ disp('... another 5 seconds later...'); pause(5.1)
 % 3.14
 stop(tmr); delete(tmr); clear tmr s frequency h delayedSig
 
+%% TODO SetEpochTrigger
+
+%% FIXME Move subscriptables here
+
 %% Demonstration of sig.Signal/log() method
 % Sometimes you want the values of a signal to be logged and timestamped.
 % The log method returns a signal that carries a structure with the fields
@@ -339,96 +391,102 @@ net = sig.Net;
 x = net.origin('x');
 
 y = x.scan(@plus, 0);
+
+sig.timeplot(x,y, 'tWin', 0)
+for i = 1:10
+  x.post(1)
+end
+
+%% The seed value may be a signal
+x = net.origin('x');
+seed = net.origin('seed');
+y = x.scan(@plus, seed);
+
+sig.timeplot(x, y, seed, 'tWin', 1, 'mode', [0 0 1])
+seed.post(0); % Initialize seed with value
+for i = 1:10
+  if i == 5
+    seed.post(0)
+  end
+  x.post(1)
+end
+
+%% Growing an array with scan
+x = net.origin('x');
+seed = net.origin('seed');
+seed.post('!'); % Initialize seed with value
+f = @(acc,itm) [itm acc]; % Prepend char to array
+y = x.scan(f, seed);
 h = y.output();
-x.post(1);
-x.post(1);
+for i = 1:10
+  x.post('>')
+end
 
-%% 
-    x = net.origin('x');
-    seed = net.origin('seed');
-    seed.post(0); % Initialize seed with value
-    y = x.scan(@plus, seed);
-    h = y.output();
-    
-    x.post(1);
-    x.post(1);
-    x.post(1);
-    seed.post(0);
-    x.post(1);
-    x.post(1);
-    
-    %%
-        x = net.origin('x');
-    seed = net.origin('seed');
-    seed.post('!'); % Initialize seed with value
-    f = @(acc,itm) [itm acc]; % Prepend char to array
-    y = x.scan(f, seed);
-    h = y.output();
+%% Introducing extra parameters
+x = net.origin('x');
+seed = net.origin('seed');
+seed.post('!'); % Initialize seed with value
+f = @(acc,itm,p1) [itm p1 acc]; % Prepend char to array
+y = x.scan(f, seed, 'pars', '.'); % Pars may be signals or no
+h = y.output();
 
-    x.post('>')
-    %% 
-            x = net.origin('x');
-    seed = net.origin('seed');
-    seed.post('!'); % Initialize seed with value
-    f = @(acc,itm,p1) [itm p1 acc]; % Prepend char to array
-    y = x.scan(f, seed, 'pars', 'i'); % Pars may be signals or no
-    h = y.output();
+x.post('>')
 
-    x.post('>')
-    %% 
-            x = net.origin('x');
-    seed = net.origin('seed');
-    seed.post('0'); % Initialize seed with value
-    f = @(acc,itm,delim) strjoin({acc, itm}, delim); % Prepend char to array
-    y = x.scan(f, seed, 'pars', ' + '); % Pars may be signals or no
-    h = y.output();
+%% Paramters may be Signals
 
-    x.post('1')
- x.post('12')
- x.post('18')
- x.post('5')
- x.post('8')
- 
+x = net.origin('x');
+seed = net.origin('seed');
+seed.post('0'); % Initialize seed with value
+f = @(acc,itm,delim) strjoin({acc, itm}, delim); % Prepend char to array
+y = x.scan(f, seed, 'pars', ' + '); % Pars may be signals or no
+h = y.output();
+
+x.post('1')
+x.post('12')
+x.post('18')
+x.post('5')
+x.post('8')
+
  %% When pars take new value accumulator function is not called!
-             x = net.origin('x');
-    seed = net.origin('seed');
-    p = net.origin('delimiter');
-    seed.post('0'); % Initialize seed with value
-    p.post(' + '); % Initialize seed with value
-    f = @(acc,itm,delim) strjoin({acc, itm}, delim); % Prepend char to array
-    y = x.scan(f, seed, 'pars', p); % Pars may be signals or no
-    h = y.output();
+x = net.origin('x');
+seed = net.origin('seed');
+p = net.origin('delimiter');
+seed.post('0'); % Initialize seed with value
+p.post(' + '); % Initialize seed with value
+f = @(acc,itm,delim) strjoin({acc, itm}, delim); % Prepend char to array
+y = x.scan(f, seed, 'pars', p); % Pars may be signals or no
+h = y.output();
 
-    x.post('1')
- x.post('12')
- p.post(' - '); % Updating p doesn't affect scan
- x.post('18')
- x.post('5')
- p.post(' * ');
- x.post('8')
- 
- %%
-              x = net.origin('x');
-              y = net.origin('y');
-              z = net.origin('z');
-    seed = net.origin('seed');
-    seed.post(0); % Initialize seed with value
-    f1 = @plus; % 
-    f2 = @minus; % 
-    f3 = @times; % 
-    v = scan(x, f1, y, f2, z, f3, seed); % Pars may be signals or no
-    h = v.output();
+x.post('1')
+x.post('12')
+p.post(' - '); % Updating p doesn't affect scan
+x.post('18')
+x.post('5')
+p.post(' * ');
+x.post('8')
 
-    x.post(1) % 1
-    x.post(1) % 2
-    x.post(1) % 3
+%% Scan can call any number of functions at the same time
+x = net.origin('x');
+y = net.origin('y');
+z = net.origin('z');
+seed = net.origin('seed');
+seed.post(0); % Initialize seed with value
+f1 = @plus; %
+f2 = @minus; %
+f3 = @times; %
+v = scan(x, f1, y, f2, z, f3, seed); % Pars may be signals or no
+h = v.output();
 
-    y.post(1) % 2
-    y.post(1) % 1
-    
-    z.post(2) % 2
-    z.post(2) % 4
-    z.post(2) % 8
+x.post(1) % 1
+x.post(1) % 2
+x.post(1) % 3
+
+y.post(1) % 2
+y.post(1) % 1
+
+z.post(2) % 2
+z.post(2) % 4
+z.post(2) % 8
 
 %% Demonstration of working values
 % Working values of signals are important for proper signal propagation in

@@ -81,7 +81,7 @@ for i = 1:n
   axh(i) = subtightplot(n,1,i,[0.02,0.2],0.05,0.05,'parent',figh);
   x_t{i} = signals{i}.map(...
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
-  title(axh(i), names{i}, 'fontsize', 8, 'interpreter', 'none');
+  title(axh(i), names{i}, 'interpreter', 'none');
 %   titlePos = get(curTitle, 'Position');
 %   set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
   if i == n
@@ -93,11 +93,11 @@ end
 
 set(axh,'NextPlot','add', 'fontsize',fontsz);
 
-for ii = 1:n
-  if mode(ii) == 1
-    plot(axh(ii), [0 100], [0 0]);
-  end
-end
+% for ii = 1:n
+%   if mode(ii) == 1
+%     plot(axh(ii), [0 100], [0 0]);
+%   end
+% end
 
 listeners = TidyHandle.empty(n,0);
 for i = 1:n % add listeners to the signals that will update the plots
