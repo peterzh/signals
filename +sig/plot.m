@@ -9,6 +9,7 @@ function axh = plot(varargin)
 %
 %   See also SIG.TIMEPLOT
 % TODO Document inline
+% TODO Deal with empty input names
 
 if ishandle(varargin{1})
   axh = varargin{1};

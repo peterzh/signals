@@ -85,19 +85,13 @@ for i = 1:n
 %   titlePos = get(curTitle, 'Position');
 %   set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
   if i == n
-    xlabel(axh(i), 't (s)', 'fontsize',fontsz);
+    xlabel(axh(i), 't (s)', 'fontsize', fontsz);
   else
     set(axh(i),'XTickLabel',[]);
   end
 end
 
-set(axh,'NextPlot','add', 'fontsize',fontsz);
-
-% for ii = 1:n
-%   if mode(ii) == 1
-%     plot(axh(ii), [0 100], [0 0]);
-%   end
-% end
+set(axh,'NextPlot','add', 'fontsize', fontsz);
 
 listeners = TidyHandle.empty(n,0);
 for i = 1:n % add listeners to the signals that will update the plots
@@ -108,9 +102,25 @@ set(axh,'ButtonDownFcn',@(s,~)cycleMode(s))
 set(figh, 'DeleteFcn', @(~,~)delete(listeners));
 
   function new(idx, value)
-    value.x = iff(ischar(value.x), true, value.x);
     if isempty(tstart)
       tstart = GetSecs;
+    end
+    if ischar(value.x)
+      str = value.x;
+      value.x = iff(isempty(value.x),0,1);
+      mode(idx) = 1;
+      text(axh(idx), value.t-tstart, value.x+0.1, str,...
+        'HorizontalAlignment', 'center',...
+        'VerticalAlignment', 'bottom');
+      ylim(axh(idx), [0 1.5])
+    elseif numel(value.x) > 1
+      str = num2str(size(value.x));
+      ylabel(axh(idx),'size')
+      value.x = numel(value.x);
+      mode(idx) = 1;
+      text(axh(idx), value.t-tstart, value.x+0.1, str,...
+        'HorizontalAlignment', 'center',...
+        'VerticalAlignment', 'bottom');
     end
     if isempty(lastval{idx})
       lastval{idx} = value;
