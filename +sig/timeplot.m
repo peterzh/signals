@@ -42,8 +42,8 @@ for i = 1:length(varargin)
     case {'sig.Registry', 'StructRef'}
       % For StructRef objects and their subclasses, exract their signals
       % and set the names to be the fieldnames of the signal
-      names(i) = strcat([name '.'], fieldnames(s));
-      signals(i) = struct2cell(s);
+      names{i} = strcat([name '.'], fieldnames(s));
+      signals{i} = struct2cell(s);
     case {'sig.Signal', 'sig.node.Signal', ...
         'sig.node.ScanningSignal', 'sig.node.OriginSignal'}
       names{i} = name;

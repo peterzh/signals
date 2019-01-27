@@ -1,7 +1,7 @@
 %% Signals Test Script - Introduction
 % The purpose of this script if to introduce Signals, how to wire a network
 % and a few of the important functional methods associated.  Later, the
-% structure of a Signals experiment will be introduced.
+% structure of a Signals Experiment will be introduced.
 
 %% 
 % Every signal is part of a network, managed through the 'sig.Net' object.
@@ -26,7 +26,7 @@ net = sig.Net; % Create a new signals network
 % all other signals are dependent on one another.  Origin signals can be a
 % value of any type, as demonstrated below.
 %
-% In the context of a Signals experiment, the input signals would be the
+% In the context of a Signals Experiment, the input signals would be the
 % timing signal and the wheel, lever, etc.  These origin Signals should be
 % defined outside of your experiment definition function and be input
 % variables.  More on this later. 
@@ -280,10 +280,13 @@ A.post(magic(3));
 f = fun.partial(@sprintf, '%.1f%%'); % Returns a function handle which will call sprintf with the first argument as '%.1f%%' 
 class(f)
 y = x.map(f);
+% y = x.map(@(num)sprintf('%.1f%%',num));
 y1 = map(100-x, f);
 h = [output(y) output(y1)];
 
 x.post(58.4)
+
+% rndDraw = map(evts.newTrial, @(~) sign(rand-0.5)); 
 
 % TODO for more complex anonymous function
 % timeOutTracker = responseType.bufferUpTo(1000);
@@ -298,6 +301,10 @@ x.post(58.4)
 % updates
 updated = x.map(true);
 % NB c.f. with at, then and skipRepeats
+y = net.origin(y);
+updatedAndTrue = x.at(y.map(true));
+updatedAndTrue = x.at(y > 3);
+h = output(updatedAndTrue);
 
 % Note that the if it's a value rather than a function handle, it is truely
 % constant, even if it's the output of a function:
@@ -313,7 +320,7 @@ rnd = x.map(@(~)rand);
 % combination or Signals and normal data types.  It's important to note
 % that the the below 'dot notation' only works if the first input is a
 % Signal, otherwise you must use the traditional syntax e.g. mapn(5, A, @f)
-B = A.mapn(n, 1, @repmat);
+B = A.mapn(n, 1, @repmat); % repmat(A,n,1)
 
 % NB: Map will only assign the first output argument of the function to the
 % resulting Signal
@@ -341,7 +348,10 @@ y = iff(x.map(@ischar), x.map(@str2num), x);
 % order of pred-value pairs is particularly important. Below we use true as
 % the last predicate to ensure that the resulting Signal always has a
 % value.
-y = cond(x > 0 & x < 5, a, x > 5, true, c);
+y = cond(...
+  x > 0 & x < 5, a, ...
+  x > 5, b, ...
+  true, c);
 
 %% Demonstration of scan
 % Scan is a very powerful method that allows one to map a signal's current
@@ -360,7 +370,7 @@ y = cond(x > 0 & x < 5, a, x > 5, true, c);
 net = sig.Net;
 x = net.origin('x');
 
-y = x.scan(@sig.plot, 0);
+y = x.scan(@plus, 0); % plus(y, x)
 
 sig.timeplot(x, y, 'tWin', 0.5);
 for i = 1:10
@@ -376,7 +386,7 @@ x = net.origin('x');
 seed = net.origin('seed');
 y = x.scan(@plus, seed);
 
-sig.timeplot(x, y, seed, 'tWin', 0.5, 'mode', [0 0 1])
+sig.timeplot(x, y, seed, 'tWin', 1, 'mode', [0 0 1])
 seed.post(0); % Initialize seed with value
 
 for i = 1:10
@@ -400,6 +410,12 @@ for i = 1:10
   x.post('>')
 end
 
+% Below, each time the Signal 'correct' takes a new, truthy value, the
+% Signal 'trialSide' updates and scan will call the function horzcat with
+% the values of hist and trialSide like so: horzcat(hist, trialSide), which
+% is syntactically equivalent to [hist trialSide]
+hist = trialSide.at(correct).scan(@horzcat);
+
 %% Introducing extra parameters
 % Some functions require any number of extra inputs.  A function can be
 % called with these extra parameters by defining them after the 'pars' name
@@ -422,6 +438,7 @@ x = net.origin('x');
 seed = net.origin('seed');
 seed.post('0'); % Initialize seed with value
 f = @(acc,itm,delim) strjoin({acc, itm}, delim); % Prepend char to array
+% f = @(acc,itm) strjoin({acc, itm}, ' + '); 
 y = x.scan(f, seed, 'pars', ' + '); % Pars may be signals or no
 h = y.output();
 
@@ -485,7 +502,7 @@ z.post(2) % 8
 % achieved by having a timing signal that has a clock value posted to it
 % periodically.  In the following example we will create a 'time' signal
 % that takes the value returned by 'now' every second.  We achieve this
-% with a fixed-rate timer.  In the context of a Signals experiment the time
+% with a fixed-rate timer.  In the context of a Signals Experiment the time
 % signal has a time in seconds from the experiment start posted every
 % iteration of a while loop.
 
@@ -557,7 +574,9 @@ tmr = timer('TimerFcn', @(~,~)post(time, GetSecs-t0),...
 
 gate = floor(time/5);
 
-sig.timeplot(time, gate, skipRepeats(gate), gate.map(true));
+ax = sig.timeplot(time, gate, skipRepeats(gate), gate.map(true), ...
+  'tWin', 10, 'mode', [0 0 0 1]);
+set(ax, 'ylim', [0 30])
 start(tmr) % Start the timer
 
 %%
@@ -730,6 +749,93 @@ origin.post(3)
 % structSig.C; % Essential
 % structSig.C = 5;
 % structSig.C.Node.CurrValue
+
+%% Running an experiment in Signals
+% Let's look at Signals in the context of an experiment.  Signals is a
+% module of Rigbox, a toolbox that allows the experimentor to parameterize,
+% monitor and log experiments, as well as providing a layer for harware
+% configuration.
+% 
+% Rigbox contains a number of classes that define some sort of experimental
+% structure, within which an individual experiment will run.  These are
+% found in the +exp package.  For a Signals Experiment this is
+% exp.SignalsExp.  SignalsExp imposes the inputs, outputs, timing and trial
+% structure, as well as managing the logging and saving of data.  In
+% setting up a Signals Experiment, the class is given a structure of
+% parameters and a structure of objects that interface with hardware
+% (audio, PsychToolbox, a DAQ, etc.).  One of the parameters, 'expDef' is a
+% path to a Signals Experiment definition; a function that contains the
+% specific 'wire diagram' for that experiment.  An experiment definition
+% should have the following inputs: 
+%
+% t - the timing signal, every iteration of the main experiment loop the
+% Signals Experiment posts the number of seconds elapsed
+%
+% events - a Registry of events to be logged.  All Signals assigned to this
+% structure in your experiment definition are turned into logging Signals
+% and saved to a file at the end of the experiment.
+% 
+% parameters - any Signals referenced from this subscriptable Signal are
+% considered session specific paramters that the experiment will assign
+% values to before every session.  Default values for these paramters may
+% be provided within the experiment definition.  Before each session the
+% experimentor may choose which paramters have fixed values, and which may
+% take a different value each trial.  More on this later.
+% 
+% vs - all visual elements defined in the experiment definition are
+% assigned to this structure to be rendered to the screen.  More on this
+% later.
+%
+% inputs - a Registry of input Signals.  In a Signals Experiment this is
+% currently a rotary encoder (wheel) and the keyboard.
+%
+% outputs - the outputs defined in a hardware structure.
+%
+% audio - any Signals assigned to this Registry have their values outputted
+% to the referenced audio device.  This may also be referenced with a named
+% audio device, returning a structure of paramters about the devices such
+% as number of output channels and sample rate.
+%
+% This experiment definition function called just once before entering the
+% main experiment loop, where values are then posted to the time and input
+% Signals, at which point the values are propergated through the network.
+
+%% Signals Experiment task structure
+% Below is the task structure set up before calling the experiment
+% definition.
+% 
+% obj.Time = net.origin('t');
+% obj.Events.expStart = net.origin('expStart');
+% obj.Events.newTrial = net.origin('newTrial');
+% obj.Events.expStop = net.origin('expStop');
+% advanceTrial = net.origin('advanceTrial');
+% obj.Events.trialNum = obj.Events.newTrial.scan(@plus, 0); % track trial number
+% globalPars = net.origin('globalPars');
+% allCondPars = net.origin('condPars');
+% nConds = allCondPars.map(@numel);
+% nextCondNum = advanceTrial.scan(@plus, 0); % this counter can go over nConds
+% hasNext = nextCondNum <= nConds;
+% % this counter cant go past nConds
+% % todo: current hack using identity to delay advanceTrial relative to hasNext
+% repeatLastTrial = advanceTrial.identity().keepWhen(hasNext);
+% condIdx = repeatLastTrial.scan(@plus, 0);
+% condIdx = condIdx.keepWhen(condIdx > 0);
+% condIdx.Name = 'condIdx';
+% repeatNum = repeatLastTrial.scan(@sig.scan.lastTrue, 0) + 1;
+% repeatNum.Name = 'repeatNum';
+% condPar = allCondPars(condIdx);
+% pars = globalPars.merge(condPar).scan(@mergeStruct, struct).subscriptable();
+% pars.Name = 'pars';
+% [obj.Params, hasNext, obj.Events.repeatNum] = exp.trialConditions(...
+%   globalPars, allCondPars, advanceTrial);
+% lastTrialOver = ~hasNext.then(true);
+% obj.Listeners = [
+%   obj.Events.expStart.map(true).into(advanceTrial) %expStart signals advance
+%   obj.Events.endTrial.into(advanceTrial) %endTrial signals advance
+%   advanceTrial.map(true).keepWhen(hasNext).into(obj.Events.newTrial) %newTrial if more
+%   lastTrialOver.into(obj.Events.expStop) %newTrial if more
+%   onValue(obj.Events.expStop, @(~)quit(obj));];
+
 
 %% Notes
 % 1. Signals objects that are entirely out of scope are cleaned up by
