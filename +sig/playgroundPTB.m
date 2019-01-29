@@ -21,9 +21,10 @@ cp = hw.CursorPosition;
 
 vbox = uiextras.VBox('Parent', parent);
 
-%[vc, vcc] = vis.component(vbox);
-% vc.clearColour([0.5 0.5 0.5 1]);
-vc = Screen('OpenWindow', 1, 0, [50,50,850,650], 32);
+% Get number of available screens
+nScreens = Screen('Screens');
+screenNum = iff(max(nScreens) > 2, 1, 0);
+vc = Screen('OpenWindow', 2, 0, [0,0,1280,600], 32);
 Screen('FillRect', vc, 255/2);
 Screen('Flip', vc);
 
@@ -35,6 +36,7 @@ btnh = uicontrol('Parent', btnbox, 'Style', 'pushbutton',...
 sn = sig.Net;
 dt = sn.origin('dt');
 t = dt.scan(@plus, 0);
+t.Name = 'time';
 curser = sn.origin('curser');
 
 tlast = [];
@@ -42,12 +44,14 @@ listhandle = [];
 textureById = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
 layersByName = containers.Map();
 model = vis.init(vc);
-screen = vis.screen([0 0 10], 0, [21.5 16], [0 0 800 600]);        % left screen
-% screens(1) = vis.screen([0 0 9.5], -90, [8 6], [0 0 800 600]);        % left screen
-% screens(2) = vis.screen([0 0 10],  0 , [8 6], [800 0 2*800 600]);    % ahead screen
-% screens(3) = vis.screen([0 0 9.5],  90, [8 6], [2*800  0 3*800 600]); % right screen
-model.screens = screen;
 
+screenDimsCm = [20 25]; %[width_cm heigh_cm]
+pxW = 1280/3;
+pxH = 600;
+screens(1) = vis.screen([0 0 9.5], -90, screenDimsCm, [0 0 pxW pxH]);        % left screen
+screens(2) = vis.screen([0 0 10],  0 , screenDimsCm, [pxW 0 2*pxW pxH]);    % ahead screen
+screens(3) = vis.screen([0 0 9.5],  90, screenDimsCm, [2*pxW  0 3*pxW pxH]); % right screen
+model.screens = screens;
 invalid = false;
 
 setgraphic = @setElements;

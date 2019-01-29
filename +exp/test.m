@@ -8,7 +8,7 @@ persistent defdir lastParams;
 
 
 if isempty(defdir)
-  defdir = '\\zserver\code\Rigging\ExpDefinitions';
+  defdir = getOr(dat.paths, 'expDefinitions'); %FIXME If we decide to keep Signals independent of Rigbox this should change
 end
 
 if isempty(lastParams)
@@ -131,7 +131,7 @@ sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 60);
 
   function startExp(~,~)
     applyPars();
-    evts.expStart.post(parsStruct.expRef);
+    evts.expStart.post(globalPars.expRef);
     inputs.wheel.post(get(wheelslider, 'Value'));
   end
 

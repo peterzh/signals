@@ -718,6 +718,64 @@ origin.post(3)
 
 
 %% Demonstration of subscriptable signals
+% If you have a signal that holds a value that is either an object or a
+% struct, you can make that value subscriptable with the method below:
+net = sig.Net;
+s = struct('A', now, 'B', rand);
+x = net.origin('struct');
+
+% The below would not work:
+x.post(s); A = x.A; % No appropriate method, property, or field 'A' for class 'sig.node.OriginSignal'.
+% Deriving a subscriptable Signal allows us to subscript:
+x_sub = x.subscriptable(); % TODO Add note about subsref
+a = x_sub.A;
+h = output(a);
+% We must repost our structure as there are new Signals which won't have
+% had the value propergated to them:
+x.post(s); 
+
+% Note that with subscriptable Signals the returned value is a new Signal,
+% whose value will be updated each time any field is updated in the
+% source Signal.  You can subscript such a Signal even if the field doesn't
+% exist:
+c = x_sub.C;
+h = output(c);
+x.post(s);
+% Note that c never updates as the underlying value in x has no field 'C'. 
+
+%% You can not post to subscriptable Signals, nor assign values to them
+% Even if the Signal is derived from an origin Signal:
+x_sub.post(s); % Returns a Signal for the subscript of a 'post' field.
+post(x_sub, s); % Undefined function 'post' for input arguments of type 'sig.node.SubscriptableSignal'.
+% Instead, we use another class of Signal called a Subscriptable Origin
+% Signal.  With these Signals we do not post structures, instead one can
+% assign individual values to each subscript, which may themselves be
+% Signals or otherwise.
+
+x_sub = net.subscriptableOrigin('x');
+a = x_sub.A; b = x_sub.B; %c = scan(x_sub.A, @plus, []);
+h = [output(a), output(b)] %, output(c)];
+x_sub.A = 5;
+x_sub.B = x;
+x_sub.A = 10;
+% TODO Add timeplot
+% To repeat, using the post method on any subscripatble Signal, origin or
+% otherwise will not have the desired effect.  Instead, simply assign your
+% values directly to a subscripatble origin Signal.
+
+% Note again that all Signals update each time any of the subscriptable origin
+% Signal's subscripts update.  Thus if we assign a new value to x_sub.B,
+% x_sub.A will update but with the same value it had before.
+
+% If you wish to return a plain structure each time a subscriptable Signal
+% updates, use the flattenStruct method:
+flat = x_sub.flattenStruct();
+h = output(flat);
+x_sub.A = 10;
+x_sub.B = pi;
+x_sub.C = true;
+
+%
 % net = sig.Net;
 % A = net.origin('A');
 % B = net.origin('B');
@@ -730,6 +788,7 @@ origin.post(3)
 % structSig = structSig.subscriptable;
 % post(A, 5)
 % sigA = structSig.A;
+% h = sigA.output();
 % 
 % % The below is equivilent
 % structSig = net.subscriptableOrigin('structSig');
@@ -836,6 +895,7 @@ origin.post(3)
 %   lastTrialOver.into(obj.Events.expStop) %newTrial if more
 %   onValue(obj.Events.expStop, @(~)quit(obj));];
 
+% TODO: mention that endTrial must be defined
 
 %% Notes
 % 1. Signals objects that are entirely out of scope are cleaned up by
