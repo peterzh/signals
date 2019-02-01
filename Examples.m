@@ -775,7 +775,9 @@ x_sub.A = 10;
 x_sub.B = pi;
 x_sub.C = true;
 
-%
+% Cache subscripts caches subscripts (not subassigns)
+
+%%
 % net = sig.Net;
 % A = net.origin('A');
 % B = net.origin('B');

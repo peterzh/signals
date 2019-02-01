@@ -131,8 +131,8 @@ sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 60);
 
   function startExp(~,~)
     applyPars();
-    evts.expStart.post(globalPars.expRef);
-    inputs.wheel.post(get(wheelslider, 'Value'));
+    evts.expStart.post(parsEditor.Parameters.Struct.expRef);
+%     inputs.wheel.post(get(wheelslider, 'Value'));
   end
 
   function wheelSliderChanged(src, ~)

@@ -24,7 +24,7 @@ vbox = uiextras.VBox('Parent', parent);
 % Get number of available screens
 nScreens = Screen('Screens');
 screenNum = iff(max(nScreens) > 2, 1, 0);
-vc = Screen('OpenWindow', 2, 0, [0,0,1280,600], 32);
+vc = Screen('OpenWindow', screenNum, 0, [0,0,1280,600], 32);
 Screen('FillRect', vc, 255/2);
 Screen('Flip', vc);
 
