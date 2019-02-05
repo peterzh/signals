@@ -23,10 +23,10 @@ This 'tutorials' folder contains files that are useful for learning how to use *
 - Run 'mc' in MATLAB on the 'mc' computer
 - When the 'MC' gui appears, from the dropdown menus in the upper left, select:
 
-a) Subject: 'default'
-b) Type: '<custom...>' (then select the file 'signalsExperimentTutorial' when the file explorer opens)
-c) Rig: Choose the rig on which you are currently running 'expServer'
-d) Saved sets: <defaults> (then click the 'Load' push button)
+  - Subject: 'default'
+  - Type: '<custom...>' (then select the file 'signalsExperimentTutorial' when the file explorer opens)
+  - Rig: Choose the rig on which you are currently running 'expServer'
+  - Saved sets: <defaults> (then click the 'Load' push button)
 
 - Click the 'Start' push button to start the experiment. 
 - (If you are on the final section of the tutorial, parameters will appear as editable fields that you can click on to edit)
