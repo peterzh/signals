@@ -74,7 +74,7 @@ os3.post([1 2 3; 4 5 6; 7 8 9]); % and even arrays
 
 % Let's use some common MATLAB functions to create new signals from our
 % origin signals:
-dsAdd = os1 + 1; dsPlusOut = dsAdd.output;
+dsAdd = os1 + 1; dsAddOut = dsAdd.output;
 dsMult = os3 * os3'; dsMultOut = dsMult.output;
 dsNot = not(os2); dsNotOut = dsNot.output;
 dsAnd = os2 & os2'; dsAndOut = dsAnd.output; %*note, the short-circuit '&&' and '||' operators do not work on signals
@@ -96,7 +96,7 @@ os3.post([1 2 3; 4 5 6; 7 8 9]); % first value displayed is 'os3', second is 'ds
 % Let's first clear all our old output signals for clarity's sake, so the
 % only display in the command line will be from the new dependent signals
 % we will create
-clear dsPlusOut dsMultOut dsNotOut dsAndOut dsGEOut os1Out os2Out os3Out
+clearvars -except net os1 os2 os3
 
 % *Note: In the below examples, the signals-specific functions get used 
 % exclusively as signals-object method calls 
@@ -137,8 +137,8 @@ clear dsToOut
 % takes the value resulting from mapping function 'f' onto the value
 % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value.
 f = @(x) x.^2 + x; % the function to be mapped
-dsMap = os1.map(f); dsMapOut = output(dsMap);
-os1.post([1 2 3]); % '[2 6 12]' will be displayed
+dsMap = os3.map(f); dsMapOut = output(dsMap);
+os3.post([1 2 3]); % '[2 6 12]' will be displayed
 clear dsMapOut
 
 % 'scan': 'ds = s1.scan(f, init)' returns a dependent signal 'ds' which
@@ -149,7 +149,7 @@ clear dsMapOut
 % overwrite the current value of 'ds' whenever it updates.
 f = @plus;
 dsScan = os1.scan(f, 5); dsScanOut = output(dsScan);
-os1.post([1 2 3]); % '[6 7 8]' will be displayed
+os3.post([1 2 3]); % '[6 7 8]' will be displayed
 clear dsScanOut
 
 % 'delay': 'ds = s1.delay(n)' returns a dependent signal 'ds' which takes

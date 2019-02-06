@@ -580,7 +580,7 @@ try
   params.LeftVisStimContrast = [1 0.75 0.5 0.25 0]; % signal as a vector of possible values for left grating contrast
   params.RightVisStimContrast = [0 0.25 0.5 0.75 1]; % signal as a vector of possible values for right grating contrast
 catch ex
-  disp(getReport(ex, 'extended', 'hyperlinks', 'on'))
+  disp(getReport(ex))
 end
 
 % To run this version of the experiment, follow the instructions in the
