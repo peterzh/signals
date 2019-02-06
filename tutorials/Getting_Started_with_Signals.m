@@ -116,7 +116,7 @@ dsAt = os1.at(os2); ds1At2Out = dsAt.output;
 os1.post(1);
 os2.post(0); % nothing will be displayed
 os2.post(2); % '1' will be displayed
-os2.post(false); % nothing will be displayed (but value of 'ds1' remains 1)
+os2.post(false); % nothing will be displayed (but value of 'dsAt' remains 1)
 clear ds1At2Out
 
 % 'to': 'ds = s1.to(s2)' returns a dependent signal 'ds' which can only
@@ -137,7 +137,7 @@ clear dsToOut
 % takes the value resulting from mapping function 'f' onto the value
 % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value.
 f = @(x) x.^2 + x; % the function to be mapped
-dsMap = os1.map2(os2, f); dsMapOut = output(dsMap);
+dsMap = os1.map(f); dsMapOut = output(dsMap);
 os1.post([1 2 3]); % '[2 6 12]' will be displayed
 clear dsMapOut
 
