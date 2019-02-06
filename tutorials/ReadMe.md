@@ -12,7 +12,7 @@ This 'tutorials' folder contains files that are useful for learning how to use *
 
 - 'signalsExperimentTutorialAnswers': A script containing answers to questions posed in 'signalsExperimentTutorial'
 
-- 'signalsExamplesScript': This script contains additional examples of *Signals-y* things which may not have been covered in the above files, and things which an experimenter can incorporate into their Experiment Definitions.
+- 'signalsExamplesScript': This script contains additional information on how *Signals* works. It also contains examples of *Signals-y* things which may not have been covered in the above files, and which an experimenter may be able incorporate into their Experiment Definitions.
 
 ## Instructions on Running Exp Defs from 'signalsExperimentTutorial'
 
