@@ -32,4 +32,7 @@ This 'tutorials' folder contains files that are useful for learning how to use *
 - (If you are on the final section of the tutorial, parameters will appear as editable fields that you can click on to edit)
 
 2) On a personal PC:
+
+- Run 'expTestPanel' in MATLAB
+- Select 'signalsExperimentTutorial' when the file explorer appears, then click the 'Apply Parameters', followed by the 'Play' push buttons in the GUI. The computer mouse will be set to emulate the wheel, controlling the visual stimulus.
  

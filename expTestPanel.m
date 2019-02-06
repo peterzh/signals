@@ -2,26 +2,12 @@ function expTestPanel(expdef)
 %UNTITLED Summary of this function goes here
 %   Input: Handle to experiment definition function
 
-%% Questions:
-
-% - why have defFunction as parameter field?
-% - why construct ExpRef parameter (as opposed to any other)?
-%     - avoiding redundant cases of this construction?
-% - if isempty(defFunction), set it to file name? (like in MC)
-% - remove default paths to zserver?
-
-% - new layer values?
-% - setElements?
-% - vc, vcc?
-% - VBL syncing and DWM compositor issues?
-
-
-% setExpDefPanel;
-% parsInPanel;
-% ctrlgridInPanel; 
-% setExp;
-% plotSigs;
-
+%% Questions/TODO:
+% - allow for making global parameters conditional
+% - save 'block' file
+% - delete 'Wheel Position' slider and improve behavior of unsetting cursor as wheel
+% - PTB 'Screen' stuff: vc, vcc? & VBL syncing and DWM compositor issues? & get screen resolution right for PTB 'Screen'
+% - add support for multiple screens
 %% Panel UI set-up
 % initialize global/persistent variables and graphics
 addSignalsJava(); % adds necessary Java files (classes)
@@ -45,9 +31,9 @@ end
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,... 
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,... 
       hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,... 
-      signalsFig, expStarted] = setExpr; %local function
+      signalsFig, expStarted] = setExp; %local function
 
-%% main local functions (setExpDefPanel, setPars, setExpr)
+%% main local functions (setExpDefPanel, setPars, setExp)
 
   function [parsFig, mainbox, ctrlgrid, applyParsBtn, startExpBtn, reRunExpBtn,... 
   runAnotherExpBtn, trialNumCount, rewardCount, wheelslider] = setExpDefPanel
@@ -124,7 +110,7 @@ end
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,... 
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,... 
       hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,... 
-      signalsFig, expStarted] = setExpr
+      signalsFig, expStarted] = setExp
     % set up parameter editor in panel
     parsEditor = eui.ParamEditor(exp.Parameters(parsStruct), mainbox);
     
@@ -139,7 +125,13 @@ end
     % PTB Screen Args: (open, monitor, color, position=[L,T,R,B], pixelSz)
     % *note: position is different than MATLAB default: [L,B,R,T]
     Screen('CloseAll') % close any other open screens
-    [vc, rect] = Screen('OpenWindow', 1, 40, [1,40,840,601], 32);
+    gInfo = groot;
+    numMonitors = size(gInfo.MonitorPositions, 1);
+    if numMonitors > 1
+      [vc, rect] = Screen('OpenWindow', 1, 40, [1,40,840,601], 32);
+    else
+      [vc, rect] = Screen('OpenWindow', 0, 40, [1,40,840,601], 32);
+    end
     Screen('FillRect', vc, 255/2);
     Screen('Flip', vc);
     
@@ -165,13 +157,11 @@ end
     isRunning = false;
     tLast = [];
     renderCount = 0;
-    %cursorPos = hw.CursorPosition;
     
     sn = sig.Net;
     dt = sn.origin('dt');
     t = dt.scan(@plus, 0);
-    %cursor = sn.origin('cursor');
-    
+  
     net = t.Node.Net;
     % inputs & outputs
     inputs = sig.Registry; % create inputs as logging signals
@@ -195,15 +185,15 @@ end
     
     [pars, hasNext, repeatNum] = exp.trialConditions(...
       globalPars, allCondPars, advanceTrial);
-    expdef(t, evts, pars, vs, inputs, outputs, audio); %run expdef with origin signals
+    expdef(t, evts, pars, vs, inputs, outputs, audio); % run expdef with origin signals
     
     setCtrlStr = @(h)@(v)set(h, 'String', toStr(v)); % @h = handle, @v = value
     
     cursor = sn.origin('cursor');
     
     listeners = [
-      evts.expStart.into(advanceTrial) %expStart signals advance
-      evts.endTrial.into(advanceTrial) %endTrial signals advance
+      evts.expStart.into(advanceTrial) % expStart signals advance
+      evts.endTrial.into(advanceTrial) % endTrial signals advance
       advanceTrial.map(true).keepWhen(hasNext).into(evts.newTrial) %newTrial if more
       evts.trialNum.onValue(setCtrlStr(trialNumCount))
       cursor.into(inputs.wheel)
@@ -241,8 +231,10 @@ disp('Mouse cursor as wheel input emulator has been set')
     if strcmp(get(src, 'SelectionType'), 'extend')
       cursorAsWheel = not(cursorAsWheel);
       if cursorAsWheel
+        % set last position of mouse=0
         disp('Mouse cursor as wheel input emulator has been set')
       else
+        % get the last position of the mouse
         disp('Mouse cursor as wheel input emulator unset')
       end
     end
@@ -250,17 +242,11 @@ disp('Mouse cursor as wheel input emulator has been set')
 
   function process(~,~)
     tnow = GetSecs;
-    %tic
     post(dt, tnow - tLast);
     % use mouse cursor as wheel input if it has been user selected
-    %post(cursor, GetMouse());
-    %cursorAsWheel = true;
     if cursorAsWheel
-      post(cursor, GetMouse());
+      post(cursor, GetMouse()); % - last position of mouse
     end
-    %post(cursor, GetMouse());
-    %post(cursor, readAbsolutePosition(cp));
-    %fprintf('%.0f\n', 1000*toc);
     tLast = tnow;
     runSchedule(sn);
     if invalid
@@ -271,6 +257,17 @@ disp('Mouse cursor as wheel input emulator has been set')
       Screen('Flip', vc, 0);
       renderCount = renderCount + 1;
       invalid = false;
+    end
+    if evts.expStop.Node.CurrValue % end experiment
+      stop(tmr);
+      fprintf(2, '\nExperiment Ended.\n\n');
+      
+      % below: alternate way to display end of experiment using dialog box
+%       hd = dialog('Name','Experiment Ended'); %, 'Position', [300 300 250 150]);
+%       endText = uicontrol('Parent', hd, 'Style', 'text', ...
+%         'Position',[20 150 200 40], ...
+%         'String', 'Your experiment has ended. Close this box to continue.',...
+%         'fontsize', 12); 
     end
   end
 
@@ -396,7 +393,7 @@ disp('Mouse cursor as wheel input emulator has been set')
       screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
       inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
       hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
-      signalsFig, expStarted] = setExpr;
+      signalsFig, expStarted] = setExp;
   end
 
   function runXExpDef(~,~)
@@ -414,7 +411,7 @@ disp('Mouse cursor as wheel input emulator has been set')
 %           screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
 %           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
 %           hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
-%           signalsFig, expStarted] = setExpr;
+%           signalsFig, expStarted] = setExp;
 %         
 %       case 'Select A Different Exp Def'
         delete(mainboxChldrn(1)); %delete parameter editor before loading a different
@@ -425,7 +422,7 @@ disp('Mouse cursor as wheel input emulator has been set')
           screen, invalid, tmr, isRunning, tLast, renderCount, sn, dt, t, net,...
           inputs, outputs, vs, audio, evts, globalPars, allCondPars, pars,...
           hasNext, repeatNum, advanceTrial, setCtrlStr, listeners, cursor,...
-          signalsFig, expStarted] = setExpr;
+          signalsFig, expStarted] = setExp;
   end
 
  function wheelSliderChanged(src, ~)
