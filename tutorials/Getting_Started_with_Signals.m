@@ -154,7 +154,7 @@ clear dsMapOut
 % total, whenever 's1' takes a value. If 'init' is a signal, it will
 % overwrite the current value of 'ds' whenever it updates.
 f = @plus;
-dsScan = os1.scan(f, 5); dsScanOut = output(dsScan);
+dsScan = os3.scan(f, 5); dsScanOut = output(dsScan);
 os3.post([1 2 3]); % '[6 7 8]' will be displayed
 clear dsScanOut
 
