@@ -14,22 +14,20 @@ dsStr = horzcat(os4, ', I am a signal');
 dsStrOut = dsStr.output;
 os4.post('Hello, *signals*');
 
-% 4) 
-
-% a)
+% 4a) 
 expStart = net.origin('expStart');
 newTrial = net.origin('newTrial');
 
-% b)
+% 4b)
 endTrial = newTrial.delay(3)+1;
 
-% c)
+% 4c)
 trialNum = newTrial.scan(@plus, 0);
 trialNumFunc = trialNum.map(@(x) x.^3-1);
 % in this case, you could also create 'trialNumFunc' without using 'map':
 % trialNumFunc = trialNum.^3-1;
 
-% d)
+% 4d)
 trialRunning = to(newTrial, endTrial);
 trialStr = net.origin('trialStr'); trialStr.post('Trial is Running');
 dispTrialStr = trialStr.at(trialRunning);
@@ -37,7 +35,7 @@ dispTrialStr = trialStr.at(trialRunning);
 % create 'dispTrialStr' without needing to explicitly create 'trialRunning':
 % dispTrialStr - trialStr.at.to(newTrial, endTrial);
 
-% e)
+% 4e)
 expStartOut = expStart.output;
 newTrialOut = newTrial.output;
 endTrialOut = endTrial.output;

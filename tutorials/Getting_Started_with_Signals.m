@@ -1,15 +1,21 @@
+%GETTINGSTARTEDWITHSIGNALS A script for learning how *Signals* works
+
+%% Todos:
+% - add to section 'Part 4'
+
 %% Notes:
 % Author: Jai Bhagat - j.bhagat@ucl.ac.uk (w/inspiration from Miles Wells
 % and Andy Peters)
-
+%
 % *Note 1: Before beginning, please make sure this entire 'tutorials'
 % folder is added to your MATLAB path. 
 % 
 % *Note 2: Code files that are mentioned in this file will be written 
 % within (not including) closed angluar brackets (<...>). Highlight, 
 % right-click and select "Open" or "Help on" to view these code files. 
-% Try it out here: <sig.Signal>
-
+% Try it out here: <sig.Signal> <sig.Node.Signal> (it may be useful to keep
+% these Class files open for reference documentation of *Signals* methods)
+%
 % *Note 3: It is convenient and sometimes necessary to use anonymous
 % functions with some *signals* methods. If you are unfamiliar with using 
 % anonymous functions in MATLAB, run 'doc Anonymous Functions' for a MATLAB 
@@ -50,7 +56,7 @@
 %% Part 1: Create signals in a *signals* network
 
 % Let's create a signals network and three origin signals:
-clear all; %#ok<CLALL> clear all workspace, hidden & global vars that might interfere with *signals* 
+clear all %#ok<*CLALL> clear all workspace, hidden & global vars that might interfere with *signals* 
 net = sig.Net;
 os1 = net.origin('os1');
 os2 = net.origin('os2');
@@ -62,7 +68,7 @@ os1Out = os1.output;
 os2Out = os2.output;
 os3Out = os3.output;
 
-% origin signals initialize with empty values, so let's post to them 
+% all signals initialize with empty values, so let's post to them 
 os1.post(1); % our signals can hold single values,
 os2.post([0 1 2]); % vectors,
 os3.post([1 2 3; 4 5 6; 7 8 9]); % and even arrays
@@ -112,7 +118,7 @@ clearvars -except net os1 os2 os3
 % 'at': 'ds = s1.at(s2)' returns a dependent signal 'ds' which takes the
 % current value of 's1' whenever 's2' takes any "truthy" value
 % (that is, a value not false or zero).
-dsAt = os1.at(os2); ds1At2Out = dsAt.output;
+dsAt = os1.at(os2); ds1At2Out = dsAt.output; %#ok<*NASGU>
 os1.post(1);
 os2.post(0); % nothing will be displayed
 os2.post(2); % '1' will be displayed
@@ -221,7 +227,7 @@ disp('End Experiment');
 % implement live-plotting of the signals we've created in 4).
 
 % Let's clear our current workspace and re-create our signals from 4)
-clear all %#ok<CLALL>
+clear all
 net = sig.Net;
 expStart = net.origin('expStart');
 newTrial = net.origin('newTrial');
@@ -259,6 +265,7 @@ loopNum.post(1);
 
 % for each signal: create an axis handle, prettify, and add a listener that
 % will do the actually plotting of updates
+listeners = TidyHandle.empty(n,0); % initialize 'listeners' as a 'TidyHandle' vector
 for i = 1:n
   axh(i) = subplot(6,1,i, 'parent', sigsFig);
   hold(axh(i), 'on');
