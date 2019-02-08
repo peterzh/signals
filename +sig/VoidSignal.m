@@ -2,7 +2,12 @@ classdef VoidSignal < sig.Signal
   % sig.VoidSignal Summary of this class goes here
   %   Detailed explanation goes here
   
-  properties
+  properties (Hidden)
+    CacheSubscripts = false
+  end
+  
+  properties (Access = private)
+    Subscripts
   end
   
   methods
@@ -18,7 +23,7 @@ classdef VoidSignal < sig.Signal
       mapped = this;
     end
     
-    function scanning = scan(this, f, seed)
+    function scanning = scan(this, f, seed, varargin)
       scanning = this;
     end
     
@@ -35,8 +40,13 @@ classdef VoidSignal < sig.Signal
     end
     
     function s = at(this, when)
+      s = iff(isa(this, 'sig.VoidSignal'), @()this, @()when);
+    end
+    
+    function s = then(when, this)
       s = this;
     end
+
     
     function s = keepWhen(this, when)
       s = this;
@@ -93,20 +103,67 @@ classdef VoidSignal < sig.Signal
     function s = selectFrom(this, varargin)
       s = this;
     end
+    
+    function s = flattenStruct(this)
+      s = this;
+    end
+    
+    function c = iff(this, that, theother)
+      c = this;
+    end
+    
+    function s = subscriptable(this)
+      s = this;
+    end
+    
+    function s = into(this, that)
+      s = this;
+    end
+    
+    function [varargout] = subsref(a, s)
+      dotname = s(1).subs;
+      if ismember(dotname, [{'Subscripts'}; methods(a)])
+        [varargout{1:nargout}] = builtin('subsref', a, s);
+%         varargout = {builtin('subsref', a, struct('type', '.', 'subs', 'Subscripts'))};
+        return
+%       elseif ismemebr(dotname, methods(a))
+%         
+      end
+      if a.CacheSubscripts && ~ismember(dotname, fieldnames(a.Subscripts))
+        a.Subscripts.(dotname) = [];
+      end
+      [varargout{1:nargout}] = deal(a);
+    end
+    
+    function A = subsasgn(this, s, varargin)
+%       if strcmp(s(1).type,'.') && strcmp(s(1).subs,'CacheSubscripts')
+%         this.CacheSubscripts = varargin{:};
+      if this.CacheSubscripts && strcmp(s(1).type,'.')
+        dotname = s(1).subs;
+        this.Subscripts.(dotname) = varargin{1};
+      end
+        A = this;
+    end
   end
   
   methods (Access = private)
     function this = VoidSignal()
-    end
+      this.Subscripts = struct;
+    end    
   end
 
   methods (Static)
-    function s = instance()
+    function s = instance(cache)
       persistent inst;
-      if isempty(inst)
-        inst = sig.VoidSignal;
+      if cache
+        s = sig.VoidSignal;
+        s.CacheSubscripts = true;
+      else
+        if isempty(inst)
+          inst = sig.VoidSignal;
+        end
+        s = inst;
       end
-      s = inst;
     end
   end
   
