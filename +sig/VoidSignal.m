@@ -16,11 +16,11 @@ classdef VoidSignal < sig.Signal
     end
     
     function mapped = map2(this, other, f, varargin)
-      mapped = this;
+      mapped = iff(isa(this, 'sig.VoidSignal'), @()this, @()other);
     end
     
     function mapped = mapn(this, varargin)
-      mapped = this;
+      mapped = sig.VoidSignal.instance(0);
     end
     
     function scanning = scan(this, f, seed, varargin)
@@ -85,7 +85,7 @@ classdef VoidSignal < sig.Signal
     end
     
     function m = merge(varargin)
-      m = varargin{1};
+      m = sig.VoidSignal.instance(0);
     end
     
     function b = bufferUpTo(this, nSamples)
@@ -97,7 +97,7 @@ classdef VoidSignal < sig.Signal
     end
     
     function f = indexOfFirst(varargin)
-      f = varargin{1};
+      f = sig.VoidSignal.instance(0);
     end
     
     function s = selectFrom(this, varargin)
@@ -109,7 +109,7 @@ classdef VoidSignal < sig.Signal
     end
     
     function c = iff(this, that, theother)
-      c = this;
+      c = sig.VoidSignal.instance(0);
     end
     
     function s = subscriptable(this)
@@ -149,7 +149,7 @@ classdef VoidSignal < sig.Signal
   methods (Access = private)
     function this = VoidSignal()
       this.Subscripts = struct;
-    end    
+    end
   end
 
   methods (Static)
