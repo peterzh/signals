@@ -58,13 +58,23 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % to center to result in a reward; 5) create task parameters that can be
 % changed in real-time during the experiment.
 
-%% Part 1: Define experiment: 
-% For this experiment, imagine the subject is a head-fixed rodent in a
-% four-wall enclosed rig. A visual stimulus will be presented to the
-% rodent, and the rodent will have to turn a wheel to move the visual 
-% stimulus to the center to get a water reward from a reward valve. To see 
-% how this experiment can be created in a *Signals* Exp Def, let's first go
-% over the Exp Def input arguments.
+%% Part 1: Define a *Signals* experiment:
+%
+% *Signals* structures experiments in trials: each trial continues
+% indefinitely until an experimenter defined end trial occurs. An
+% experimenter defines an end trial as when some condition is met (e.g. a 
+% correct move is made, an incorrect move is made, a certain duration 
+% elapses, etc...). As soon as the end trial condition has been met, the
+% next new trial starts.
+%
+% For this experiment, we will create our own version of the Burgess
+% Steering Wheel Task: a visual stimulus will be presented to a subject
+% and the subject will have to turn a wheel to move the visual stimulus 
+% to the center of its environment to get a water reward from a reward
+% valve. 
+%
+% To see how this experiment can be created in a *Signals* Exp Def, let's 
+% first go over the Exp Def input arguments.
 %
 % Exp Defs are functions defined as: 
 % 'ExpDef(t, events, params, visStim, inputs, outputs, audio)'. (This file
@@ -108,6 +118,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % experiment. This object also contains a field, 'Devices', which contains
 % information about the actual audio device(s) that emit the audio stimuli.
 %
+% *Signals* structures experiments in trials,
 % *Note: 'events', 'params', 'inputs', and 'outputs' are all saved by
 % default in a 'block' .mat file when the experiment ends.
 
@@ -140,9 +151,9 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % 
 % newTrial = events.newTrial;
 % trialNum = events.trialNum;
-% interactiveStart = newTrial.delay(1); % signal defining interactive period (where wheel can be moved) 1 s after a new trial starts
-% wheel = inputs.wheel.skipRepeats; % signal for wheel (use 'skipRepeats' to only update when wheel moves)
-% wheel0 = wheel.at(interactiveStart); % signal that gets wheel value at onset of each trial
+% interactiveStart = newTrial.delay(1); % signal defining interactive period (where wheel can be moved) 1 s after a new trial starts (see <sig.Signal/delay> for more info)
+% wheel = inputs.wheel; % signal for wheel, only updates when wheel moves
+% wheel0 = wheel.at(interactiveStart); % signal that gets wheel value at onset of each trial (see <sig.Signal/at> for more info)
 % deltaWheel = 1/3 * (wheel - wheel0); % signal for how much wheel has moved within a trial, scaled down by a factor of 3 
 % 
 % % 2) Let's layout the experiment and trial framework:
@@ -153,7 +164,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % azimuthDefault = newTrial.then(-45); % signal for azimuth at start of each new trial (45 degrees left of center)
 % azimuthPos = deltaWheel + azimuthDefault; % signal for current azimuth position (i.e. how much wheel has moved azimuth since start of trial)
 % correctMove = azimuthPos >= 0; % signal for correctly moving stim to center
-% reward = interactiveStart.setTrigger(correctMove); % signal for reward only at first time of correct move
+% reward = interactiveStart.setTrigger(correctMove); % signal for reward only at first time of correct move (see <sig.Signal/setTrigger> for more info)
 % 
 % % -- 2) Using the 'scan' method, insert a variable 'totalReward' that
 % % tracks the total reward delivered in this session (i.e. it adds 1 to its
@@ -181,7 +192,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % 
 % firstVisStim = vis.grating(t); % signal as gabor patch grating (see <vis.grating> for more info)
 % firstVisStim.azimuth = deltaWheel + azimuthDefault; % signal to link azimuth to wheel 
-% firstVisStim.show = interactiveStart.to(endTrial); % signal to display the stimulus only during trial interactive phase
+% firstVisStim.show = interactiveStart.to(endTrial); % signal to display the stimulus only during trial interactive phase (see <sig.Signal/to> for more info)
 % visStim.first = firstVisStim; % store this visual stimulus in our visStim StructRef
 % 
 % % 4) Let's create an auditory stimulus that will signify the trial 
@@ -194,7 +205,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % 
 % % 5) Let's set the 'outputs' (i.e. the reward valve)
 % 
-% outputs.reward = reward.then(1); % the output must be of type 'double', not signal
+% outputs.reward = reward.then(1);
 % 
 % % 6) Let's add to the 'events' structure the signals that we want to plot
 % % and save
@@ -230,7 +241,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % newTrial = events.newTrial;
 % trialNum = events.trialNum;
 % interactiveStart = newTrial.delay(1); 
-% wheel = inputs.wheel.skipRepeats; 
+% wheel = inputs.wheel; 
 % wheel0 = wheel.at(interactiveStart);
 % deltaWheel = 1/3 * (wheel - wheel0);
 % 
@@ -242,16 +253,16 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % % either a) after a correct move, b) after an incorrect move, or c) after
 % % some duration. 
 % 
-% defaultSide = newTrial.map(@(x) randi(2)); % signal for randomly assigning side vis stim appears on
+% defaultSide = newTrial.map(@(x) randi(2)); % signal for randomly assigning side vis stim appears on (see <sig.Signal/map> for more info)
 % 
 % % -- 3) Why wouldn't the following assignment for 'defaultSide' work?
 % % defaultSide = randi(2); --
 % 
 % azimuthDefault = iff(defaultSide == 1, interactiveStart.then(-45),... 
-%   interactiveStart.then(45)); % signal for default vis stim position at start of each trial: left if 'defaulSide'=1, right otherwise
+%   interactiveStart.then(45)); % signal for default vis stim position at start of each trial: left if 'defaultSide'=1, right otherwise
 % azimuthPos = deltaWheel + azimuthDefault;
 % correctMove = iff(defaultSide == 1, azimuthPos >= 0, ...
-%   azimuthPos <= 0); % signal for correct move, which depends on vis stim starting position
+%   azimuthPos <= 0); % signal for correct move, which depends on vis stim starting position (see <iff> for more info)
 % reward = interactiveStart.setTrigger(correctMove);
 % totalReward = reward.scan(@plus, 0);
 % trialTimeout = (t - t.at(interactiveStart)) > 3; % signal indicating trial end if more than 3 seconds from start of interactive phase
@@ -272,7 +283,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % 
 % % -- 6) Why wouldn't the following assignments for 'endTrial' work?
 % % endTrial = response.then(1); --
-% % endTrial = cond(correctMove, 1, trialTimeout, 1, incorrectMove, 1)
+% % endTrial = cond(correctMove, 1, trialTimeout, 1, incorrectMove, 1) (see <cond> for more info)
 % 
 % stop = trialNum > 10;
 % expStop = stop.then(1);
@@ -298,8 +309,8 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 %   audioDev.NrOutputChannels);
 % audio.default = reward.then(0.1*rewardTone);
 % 
-% % The 'incorrectTone' will be low pitch a noise burst and 2x as long in
-% % duration as 'rewardTone'
+% % The 'incorrectTone' will be a noise burst and 2x as long in duration
+% % as 'rewardTone'
 % incorrectTone = randn(audioDev.NrOutputChannels,... 
 %   0.2 * audioDev.DefaultSampleRate); % generate noise burst via 'randn'
 % 
@@ -341,7 +352,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % newTrial = events.newTrial;
 % trialNum = events.trialNum;
 % interactiveStart = newTrial.delay(1); 
-% wheel = inputs.wheel.skipRepeats; 
+% wheel = inputs.wheel; 
 % wheel0 = wheel.at(interactiveStart);
 % deltaWheel = 1/3 * (wheel - wheel0);
 % 
@@ -477,7 +488,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % newTrial = events.newTrial;
 % trialNum = events.trialNum;
 % interactiveStart = newTrial.delay(1); 
-% wheel = inputs.wheel.skipRepeats; 
+% wheel = inputs.wheel; 
 % wheel0 = wheel.at(interactiveStart);
 % deltaWheel = 1/3 * (wheel - wheel0);
 % 
@@ -609,4 +620,3 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % questions regarding this tutorial, or *Signals* in general! 
 
 end
-
