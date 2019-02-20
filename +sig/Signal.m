@@ -1,23 +1,19 @@
 classdef Signal < handle
-  % SIG.SIGNAL: A class defining operations on signals.
-  %   This class contains the methods that define how a *signals* object
-  %   can be manipulated. The abstract methods are mostly commonly used
-  %   functional programming functions. The overriden methods are mostly 
-  %   overridden builtin MATLAB functions (using CONTAINERS.MAP with a 
-  %   format spec to allow for straightforward syntax). The principle
-  %   subclass to this is SIG.NODE.SIGNAL.
+  % SIG.SIGNAL A class defining operations on signals.
+  %   This class contains the methods for connecting Signals within a
+  %   network. The abstract methods are include some commonly used
+  %   functional programming methods. Some builtin MATLAB functions are
+  %   also overloaded for this class. The principle subclass to this is
+  %   SIG.NODE.SIGNAL.
   %
   %   Running Example: 
-  %     create a *signals* network and three origin signals
+  %     create a Signals network and three origin signals
   %     net = sig.Net;
   %     os1 = net.origin('os1'); 
   %     os2 = net.origin('os2'); 
   %     os3 = net.origin('os3'); 
   %       
   % See also SIG.NODE.SIGNAL, SIG.NET
-  %
-  % *Note: when running the example code for the below methods, continue
-  % from the 'Running Example' code written above
   
   %% Abstract methods
   methods (Abstract)
@@ -349,7 +345,7 @@ classdef Signal < handle
     
   end
   
-  %% Overridden MATLAB Methods
+  %% Overloaded MATLAB Methods
   methods
     function b = floor(a)
       % New signal carrying the input signal rounded down to the nearest

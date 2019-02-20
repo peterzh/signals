@@ -1,4 +1,4 @@
-function [t, setgraphic, curser] = playgroundPTB(title, parent)
+function [t, setgraphic] = playgroundPTB(title, parent)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 %equivalent to exp.SignalsExp
@@ -23,7 +23,7 @@ vbox = uiextras.VBox('Parent', parent);
 
 % Get number of available screens
 nScreens = Screen('Screens');
-screenNum = iff(max(nScreens) > 2, 1, 0);
+screenNum = iff(max(nScreens) > 1, 1, 0);
 vc = Screen('OpenWindow', screenNum, 0, [0,0,1280,600], 32);
 Screen('FillRect', vc, 255/2);
 Screen('Flip', vc);
@@ -37,7 +37,6 @@ sn = sig.Net;
 dt = sn.origin('dt');
 t = dt.scan(@plus, 0);
 t.Name = 'time';
-curser = sn.origin('curser');
 
 tlast = [];
 listhandle = [];
@@ -80,8 +79,6 @@ renderCount = 0;
     tnow = GetSecs;
 %     tic
     post(dt, tnow - tlast);
-    post(curser, GetMouse());
-%     post(curser, readAbsolutePosition(cp));
 %     fprintf('%.0f\n', 1000*toc);
     tlast = tnow;
     runSchedule(sn);

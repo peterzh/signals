@@ -31,8 +31,18 @@ net = sig.Net; % Create a new signals network
 % defined outside of your experiment definition function and be input
 % variables.  More on this later. 
 
-% FIXME you can post to origin signals,
-% naming signals, var and name
+% You can post values to an origin Signal by using the post method.  This
+% is not possible with other classes of Signals as their values instead
+% depend on the values of thier source Signals. 
+
+% It is worth noting that every Signal has a Name property which may be set
+% manually or be be set based on its inputs.  The name of a Signal may be
+% used by visualization functions to describe its functional relationship
+% within the network.  The name property of an origin Signal is set as
+% its second input (FIXME).  Signals are handle objects and therefore may
+% be assigned to any variable name.  Hence there are two means to identify
+% a Signal: it's true name (the string held in the Name property) and the
+% name of the variable or variables to which it is assigned. Below a Signal
 
 originSignal = net.origin('input'); % Create an origin signal
 originSignal.Node.CurrValue % The current value is empty
@@ -289,6 +299,7 @@ x.post(58.4)
 % rndDraw = map(evts.newTrial, @(~) sign(rand-0.5)); 
 
 % TODO for more complex anonymous function
+% In the following example the response type is 
 % timeOutTracker = responseType.bufferUpTo(1000);
 % timeOutCount = timeOutTracker.map(@(x) sum(x(find([1 x~=0],1,'last'):end)==0));
 
@@ -899,6 +910,17 @@ x_sub.C = true;
 
 % TODO: mention that endTrial must be defined
 
+%% Visual stimuli
+[t, setgraphic] = sig.playgroundPTB;
+grating = vis.grating(t);    % we want a gabor grating patch
+grating.phase = 2*pi*t*3; % with it's phase cycling at 3Hz
+grating.show = true;
+
+elements = StructRef;
+elements.grating = grating;
+
+setgraphic(elements);
+
 %% Notes
 % 1. Signals objects that are entirely out of scope are cleaned up by
 % MATLAB and the underlying C code.  That is, if a Signal is created,
@@ -923,4 +945,4 @@ str = sprintf('Inputs to y: %s', strjoin(mapToCell(@(n)n.Name, [y.Node.DisplayIn
 disp(str)
 disp(['y.Node.DisplayInputs(1) is a ' class(y.Node.DisplayInputs(1))])
 
-% 2.
+% 2. Rule exceptions: merge and scan pars

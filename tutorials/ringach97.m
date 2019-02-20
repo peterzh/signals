@@ -7,7 +7,7 @@ winlen = 10; % length of histogram window, frames
 figh = figure('Name', 'Press ctrl on horizontal grating',...
   'Position', [680 250 560 700], 'NumberTitle', 'off');
 vbox = uiextras.VBox('Parent', figh);
-[t, setElemsFun] = sig.playground([], vbox);
+[t, setElemsFun] = sig.playgroundPTB([], vbox);
 sigbox = t.Node.Net;
 axh = axes('Parent', vbox, 'NextPlot', 'replacechildren', 'XTick', oris);
 xlabel(axh, 'Orientation');
