@@ -95,7 +95,7 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
     imgLayer.interpolation = 'linear';
     imgLayer.maxColour = [newelem.colour 1];
     
-    if isobject(newelem.sourceImage)
+    if isa(newelem.sourceImage, 'sig.Signal')
       if newelem.rescale
         imgLayer.rgba = map(newelem.sourceImage,...
           @(img)vis.rgbaFromUint8(rescale(img),1));
