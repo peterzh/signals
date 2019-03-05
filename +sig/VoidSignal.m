@@ -136,10 +136,9 @@ classdef VoidSignal < sig.Signal
     end
     
     function A = subsasgn(this, s, varargin)
-%       if strcmp(s(1).type,'.') && strcmp(s(1).subs,'CacheSubscripts')
-%         this.CacheSubscripts = varargin{:};
-      if this.CacheSubscripts && strcmp(s(1).type,'.')
-        dotname = s(1).subs;
+      dotname = s(1).subs;
+      if this.CacheSubscripts && strcmp(s(1).type,'.') ...
+          && isfield(this.Subscripts, dotname)
         this.Subscripts.(dotname) = varargin{1};
       end
         A = this;
