@@ -38,6 +38,7 @@ function axh = timeplot(varargin)
 % TODO Vararg for axes name value args, e.g. LineWidth
 % TODO Deal with logging signals & registries & subscriptable signals
 % TODO Deal with strings, arrays, structures, cell arrays
+% TODO Prettify labels/titles (create listeners for them to reset position each time a signal is updated?)
 
 %% Process inputs
 % Find the 'parent' named value
@@ -48,6 +49,10 @@ if present
 else % If no handle provided, create new figure
   figh = figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w');
 end
+% set figure position to be lower right-hand corner
+g = groot;
+scrnSz = g.ScreenSize(3:4);
+figh.Position = [scrnSz(1)-550, 50, 500, 700];
 % Find 'mode' named value
 [present, value, idx] = namedArg(varargin, 'mode');
 if present
@@ -64,6 +69,15 @@ if present
 else % Default time window is 5 seconds
   tWin = 5;
 end
+% Find 'xlabelOff' named value
+[present, value, idx] = namedArg(varargin, 'xlabelOff');
+if present
+  xlabelOff = value;
+  varargin(idx:idx+1) = [];
+  else % Default is to keep xlabels off
+  xlabelOff = 0;
+end
+
 % Clear the figure
 clf(figh);
 
@@ -106,12 +120,12 @@ lastval = cell(n,1); % Initialize array to store the previous 1 value
 % Change colour map so that there is the largest possible colour difference
 % between signals as a visual aid
 cmap = colormap(figh, 'hsv');
-skipsInCmap = ceil(length(cmap) / n);
+skipsInCmap = floor(length(cmap) / n);
 cmap = cmap(1:skipsInCmap:end, :);
 
 % Set some default values
 args = {'linewidth' 2};
-fontsz = 9;
+fontsz = 7;
 
 % Initialize an empty array of Axes handle
 axh = matlab.graphics.axis.Axes.empty(n,0);
@@ -130,18 +144,16 @@ for i = 1:n
     @(x)struct('x',{x},'t',{GetSecs}), '%s(t)');
   % Set the title of the subplot to be the Signal's name
   title(axh(i), names{i}, 'interpreter', 'none');
-%   titlePos = get(curTitle, 'Position');
-%   set(curTitle, 'Position', [titlePos(1), titlePos(2)-0.4, titlePos(3)]);
-  if i == n
-    % If this is the last subplot, add an x axis
-    xlabel(axh(i), 't (s)', 'fontsize', fontsz);
-  else % Otherwise hide the label to reduce clutter
-    set(axh(i),'XTickLabel',[]);
+  if ~xlabelOff % if we're not hiding the xlabels
+    if i < n % hide xlabels for all but final subplot
+      set(axh(i),'XTickLabel',[]);
+    end
   end
 end
 % Set the default font size and set the axes to add new plots without
 % clearing the old
 set(axh,'NextPlot','add', 'fontsize', fontsz);
+xlabel(axh(end), 't (s)', 'fontsize', fontsz); % set xlabel for final subplot
 % Initialize an array of listener handles for the Signal updates
 listeners = TidyHandle.empty(n,0);
 for i = 1:n % add listeners for the Signals that will update the plots

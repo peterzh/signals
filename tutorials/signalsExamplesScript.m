@@ -1,19 +1,20 @@
-%% Signals Test Script - Introduction
-% The purpose of this script if to introduce Signals, how to wire a network
-% and a few of the important functional methods associated.  Later, the
-% structure of a Signals Experiment will be introduced.
+%% Signals Examples Script - Introduction
+% The purpose of this script is to introduce Signals, how a *Signals* 
+% network is wired, and a few of the important functional methods 
+% associated with *Signals*. Later, the structure of a Signals Experiment 
+% will be introduced.
 
 %% 
-% Every signal is part of a network, managed through the 'sig.Net' object.
-% The network object holds all the ids of every signals node.  (FIXME Note 1 about underlying code)
+% Every signal is part of a network, managed through a <sig.Net> object.
+% The network object holds all the ids of all signals' nodes.  (FIXME Note 1 about underlying code)
 
-% Every signal has an underlying node; a sig.node.Node object that contains
-% a number of important properties:
-% Net: a handle to the parent network (sig.Net)
-% Inputs: an array of input nodes
-% Id: an integer ID used by the low level C code
-% NetId: an integer ID for the parent network, used by the low level C code
-% CurrValue: the current value that the node holds
+% Every signal has an underlying node - a <sig.node.Node> object that
+% contains a number of important properties:
+% 'Net': a handle to the parent network (sig.Net)
+% 'Inputs': an array of input nodes
+% 'Id': an integer ID used by the low level C code
+% 'NetId': an integer ID for the parent network, used by the low level C code
+% 'CurrValue': the current value that the node holds
 
 net = sig.Net; % Create a new signals network
 
