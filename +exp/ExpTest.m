@@ -4,18 +4,19 @@ classdef ExpTest < handle
 % See also: SIGNALSEXPTEST, EUI.MCONTROL
 %
 % Usage:
-% 1) Run the command 'expTestPanel' to launch the 'ExpTestPanel' GUI
+% 1) Run the command 'expTestPanel = exp.ExpTest;' to launch the 
+% 'ExpTestPanel' GUI
 % 2) (Optional) Use the 'Select Subject...' drop-down menu if you want to
-% load a parameter set from a particular subject (see '4)' below) and
+% load a parameter set from a particular subject (see '4)' below), and/or
 % save a 'block' .mat file
 % 3) Click the 'Select Signals Exp Def' button to choose the *Signals* Exp
 % Def to be run
 % 4) (Optional) Use the 'Select parameters...' drop-down menu if you want
 % to load a specific parameter set
-% 5) (Optional) Click the 'Options' button to select which options you
-% to enable when running the Exp Def:
-%   a) Live-Plotting
-%   b) Save a 'block' file
+% 5) (Optional) Click the 'Options' button to select which options to
+% enable when running the Exp Def. Currently, these are:
+%   a) Live-Plotting of signals
+%   b) Saving a 'block' file
 % 6) Click the 'Start' button to run the Exp Def. This button will turn
 % into a 'Stop' button after the experiment starts running - click it again
 % to end the experiment (alternatively, press the 'q' keyboard key to
@@ -30,7 +31,7 @@ classdef ExpTest < handle
   
 %% properties (Exposed)
   
-  properties % can be set by 'exp.SignalsExpTest', or in command line to improve visualization 
+  properties % can be chosen in GUI, in command line to improve visualization, or set by 'exp.SignalsExpTest'
     ScreenH % handle to PTB Screen which displays visual stimuli
     LivePlotFig % handle to figure for live-plotting signals
     SignalsExpTest % 'SignalsExpTest' object which contains info for running the *Signals* experiment
@@ -64,6 +65,7 @@ classdef ExpTest < handle
     RewardCount % uicontrol text object for reward delivered
     TrialNumCount % uicontrol text object for trial number
     IsRunning = 0 % flag for if Exp Def is running
+    QuitKey = KbName('q') % Keyboard key for quitting experiment and closing 'ScreenH'
   end
   
 %% methods (Exposed)
@@ -117,13 +119,11 @@ classdef ExpTest < handle
       
       if obj.IsRunning %  stop experiment
         fprintf('<strong> ExpTestPanel Experiment Ending </strong>\n');
-        obj.IsRunning = false;
         obj.SignalsExpTest.quit;
+        obj.SignalsExpTest = [];
+        obj.IsRunning = false;
       else % start experiment
-        % if the ExpTest Panel has just initialized, or if another ExpDef
-        % has yet to be selected since stopping the last experiment: 
-        if isempty(obj.SignalsExpTest) || ...
-            ~strcmp(obj.TrialNumCount.String, '0')
+        if isempty(obj.SignalsExpTest)
           error('Select Signals Exp Def Before Starting Experiment.');
         end
         livePlotH = findobj('Type', 'Figure', 'Name', 'LivePlot');
@@ -142,10 +142,10 @@ classdef ExpTest < handle
       % callback for when this object (and 'PanelH') have been deleted:
       % makes sure to delete 'ScreenH' PTB Screen and 'LivePlot' figure
       
-      if ~isempty(obj.LivePlotFig)
+      if ~isempty(findobj('Type', 'figure', 'Name', 'LivePlot'))
         close('LivePlot')
       end
-      if ~isempty(obj.SignalsExpTest)
+      if isequal(obj.ScreenH, Screen('Windows'))
         Screen('Close', obj.SignalsExpTest.ScreenH)
       end
     end
@@ -324,7 +324,9 @@ classdef ExpTest < handle
     function setPTB(obj)
       % sets necessary PsychToolBox and visual element settings for running Exp Def
       
-      if isempty(obj.ScreenH)
+      % if the ScreenH has yet to be initialized, or it doesn't correspond
+      % to any currently open Screens
+      if isempty(obj.ScreenH) || ~isequal(obj.ScreenH, Screen('Windows'))
         addSignalsJava; % add paths for necessary java classes
         InitializeMatlabOpenGL; % initialize MOGL for PTB use
         global GL GLU AGL %#ok<*TLEV,NUSED> initialize vars needed by MOGL subroutines

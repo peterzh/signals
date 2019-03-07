@@ -83,8 +83,8 @@ classdef SignalsExpTest < handle
         obj.GlobalPars, obj.CondPars, advanceTrial);
       obj.Events.trialNum = obj.Events.newTrial.scan(@plus, 0); % track trial number
       lastTrialOver = then(~hasNext, true);
-      expDefFun = fileFunction(obj.ExpTest.Parameters.Struct.expDefFunction);
-      obj.Data.expDef = obj.ExpTest.Parameters.Struct.expDefFunction;
+      expDefFun = fileFunction(obj.ExpTest.Parameters.Struct.defFunction);
+      obj.Data.expDef = obj.ExpTest.Parameters.Struct.defFunction;
       expDefFun(obj.T, obj.Events, obj.Params, obj.VisStim, obj.Inputs,...
         obj.Outputs, obj.Audio)
       % set listeners which will proceed experiment after 'expStart' is
@@ -301,7 +301,7 @@ classdef SignalsExpTest < handle
       [pressed, keysPressed] = KbQueueCheck();
       if pressed
         if any(keysPressed(obj.QuitKey))
-            obj.quit();
+            obj.ExpTest.startStopExp;
         elseif any(keysPressed(obj.CursorAsWheelKey))
           if ~obj.CursorAsWheel % if we're re-enabling CursorAsWheel
             obj.CursorDelta = obj.CursorDelta -... 
