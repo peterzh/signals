@@ -23,8 +23,12 @@ function [layer, img] = squareWaveLayer(azimuth, spatialFreq, phase,...
 % Square wave grating unit wavelength, from 0 to 1
 img = [0 1];
 
-w = 1/spatialFreq; % width is dependent on spatial frequency (SF)
-azi = (180*mod(phase - pi/2, 2*pi)/pi)/(spatialFreq*360) + azimuth;% azimuth is depdent on SF & phase
+% width is dependent on spatial frequency (SF)
+w = 1/spatialFreq;
+
+% azimuth is dependent on SF, phase, and orientation
+azi = (180*mod(phase - pi/2, 2*pi)/pi)/(spatialFreq*360) +... 
+  azimuth*cos(deg2rad(orientation));
 
 layer = vis.emptyLayer();
 layer.interpolation = 'nearest';

@@ -32,8 +32,11 @@ np = 37;
 p = single(linspace(-0.5, 0.5 - 1/np, np));
 img = 0.5*cos(2*pi*p) + 0.5;
 
-w = 1/spatialFreq; % width is dependent on spatial frequency (SF)
-azi = (180*mod(phase,2*pi)/pi)/(spatialFreq*360) + azimuth*cos(deg2rad(orientation));% azimuth is dependent on SF, phase, and orientation
+% width is dependent on spatial frequency (SF)
+w = 1/spatialFreq;
+% azimuth is dependent on SF, phase, and orientation
+azi = (180*mod(phase,2*pi)/pi)/(spatialFreq*360) +... 
+  azimuth*cos(deg2rad(orientation));
 
 layer = vis.emptyLayer();
 % layer.image = img;

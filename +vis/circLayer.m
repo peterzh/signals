@@ -36,10 +36,8 @@ y = round(dims(2) * (0.9^(dims(2)-23)+1));
 % Create meshgrid with which to produce curve
 [xx, yy] = meshgrid(1:radius, 1:y);
 dd = sqrt(xx.^2 + yy.^2);
-% Apply tapering function
-img = taper(dd) + taper(-dd) - 1;
-% Put curves together to produce the full ellipse
-img = [rot90(img,2), flipud(img); fliplr(img), img]; 
+img = taper(dd) + taper(-dd) - 1; % Border anti-aliasing
+img = single([rot90(img,2), flipud(img); fliplr(img), img]); % Put quarters together
   function y = taper(x)
     % Applies a tapering function to the matrix x
     %  Creates a normalized image containing a curve of a given radius and
