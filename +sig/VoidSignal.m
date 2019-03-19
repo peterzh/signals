@@ -122,14 +122,14 @@ classdef VoidSignal < sig.Signal
     
     function [varargout] = subsref(a, s)
       dotname = s(1).subs;
-      if ismember(dotname, [{'Subscripts'}; methods(a)])
+      if ischar(dotname) && ismember(dotname, [{'Subscripts'}; methods(a)])
         [varargout{1:nargout}] = builtin('subsref', a, s);
 %         varargout = {builtin('subsref', a, struct('type', '.', 'subs', 'Subscripts'))};
         return
 %       elseif ismemebr(dotname, methods(a))
 %         
       end
-      if a.CacheSubscripts && ~ismember(dotname, fieldnames(a.Subscripts))
+      if ischar(dotname) && a.CacheSubscripts && ~ismember(dotname, fieldnames(a.Subscripts))
         a.Subscripts.(dotname) = [];
       end
       [varargout{1:nargout}] = deal(a);
