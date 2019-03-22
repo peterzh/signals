@@ -24,7 +24,7 @@ layer = elem.Node.CurrValue.layers.Node.CurrValue;
 assert(isequal(img, elem.Node.CurrValue.sourceImage), ...
   'Source image incorrectly assigned')
 assert(layer.textureId(1) ~= '~', 'Texture should be static')
-assert(isequal(layer.rgbaSize, size(img)), 'Size incorrect') %FIXME Check size dims in correct order
+assert(isequal(layer.rgbaSize, fliplr(size(img))), 'Size incorrect')
 assert(isa(layer.rgba, 'uint8'), 'incorrect data type')
 assert(isequal(size(layer.rgba), [prod([size(img) 4]) 1]), 'incorrect size')
 
