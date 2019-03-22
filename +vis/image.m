@@ -41,13 +41,14 @@ function elem = image(t, sourceImage, window)
 %  See Also VIS.GRATING, VIS.CHECKER6, VIS.GRID
 
 % Define our default inputs
+alpha = [];
 if nargin < 2
   sourceImage = [];
 else
   % If the image is a char array, assume it is a path and attempt to load
   % the image
   if isa(sourceImage, 'char')
-    sourceImage = imread(sourceImage);
+    [sourceImage, ~, alpha] = imread(sourceImage);
   end
 end
 if nargin < 3 || isempty(window)
@@ -90,17 +91,19 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
     imgLayer.texAngle = newelem.orientation;
     imgLayer.size = newelem.dims;
     imgLayer.isPeriodic = newelem.repeat;
-    imgLayer.textureId = '~image';
     imgLayer.interpolation = 'linear';
     imgLayer.maxColour = [newelem.colour 1];
     
     if isobject(newelem.sourceImage)
       % FIXME Make vis.rgba a Signal method or define new image subclass? 
+      imgLayer.textureId = '~image';
       imgLayer.rgba = map(newelem.sourceImage, @(img)vis.rgba(img,1));
       imgLayer.rgbaSize = map(newelem.sourceImage,...
         @(img)[size(img,2), size(img,1)]);
     else
-      [imgLayer.rgba, imgLayer.rgbaSize] = vis.rgba(newelem.sourceImage,1);
+      imgLayer.textureId = 'image';
+      [imgLayer.rgba, imgLayer.rgbaSize] = ...
+        vis.rgba(newelem.sourceImage, iff(isempty(alpha),1,alpha));
     end
     
     imgLayer.show = newelem.show;
