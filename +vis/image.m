@@ -31,6 +31,8 @@ function elem = image(t, sourceImage, window)
 %      1 1]
 %    contrast - the normalized contrast of the grating (between 0 and 1).
 %      Default 1
+%    repeat - boolean to indicate whether to tile the image accross the
+%      entire visual field.  Default false
 %    show - a logical indicating whether or not the stimulus is visible.
 %      Default false
 %
@@ -60,6 +62,7 @@ elem.azimuth = 0;
 elem.altitude = 0;
 elem.dims = [50,50];
 elem.orientation = 0;
+elem.repeat = false;
 elem.sourceImage = sourceImage;
 elem.colour = [1 1 1];
 elem.show = false;
@@ -86,7 +89,7 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
     imgLayer.texOffset = [newelem.azimuth, newelem.altitude];
     imgLayer.texAngle = newelem.orientation;
     imgLayer.size = newelem.dims;
-    imgLayer.isPeriodic = newelem.isPeriodic;
+    imgLayer.isPeriodic = newelem.repeat;
     imgLayer.textureId = '~image';
     imgLayer.interpolation = 'linear';
     imgLayer.maxColour = [newelem.colour 1];
