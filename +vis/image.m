@@ -1,4 +1,4 @@
-function elem = image(t, sourceImage, window)
+function elem = image(t, sourceImage, alpha)
 % VIS.IMAGE Returns visual element for image presentation in Signals
 %  Produces a visual element for parameterizing the presentation of an
 %  image
@@ -7,8 +7,9 @@ function elem = image(t, sourceImage, window)
 %    t - any signal with which to derive the network ID.  By convetion we
 %      use the t signal
 %    sourceImage - either an image or path to an image
-%    window - char array defining the type of windowing applied.  Options
-%      are 'none' (default) or 'gaussian'
+%    alpha - the alpha value(s) for the image.  Maybe a single value or
+%      array the size of sourceImage.  If no alpha value is provided and
+%      sourceImage is a char
 %
 %  Outputs:
 %    elem - a subscriptable signal containing paramter fields for the
@@ -16,7 +17,8 @@ function elem = image(t, sourceImage, window)
 %      be a signal.
 %
 %  Stimulus (elem) parameters:
-%    window - see above
+%    window - char array defining the type of windowing applied.  Options
+%      are 'none' (default) or 'gaussian'
 %    dims - the dimentions of the image in visual degrees.  Must be an 
 %      array of the form [width height]. Default [10 10]
 %    azimuth - the position of the shape in the azimuth (position of the
@@ -26,9 +28,6 @@ function elem = image(t, sourceImage, window)
 %      degrees.  Must be an array of the form [width height].
 %      Default [10 10]
 %    orientation - the orientation of the grating in degrees. Default 0
-%    colour - an array defining the intensity of the red, green and blue
-%      channels respectively.  Values must be between 0 and 1.  Default [1
-%      1 1]
 %    contrast - the normalized contrast of the grating (between 0 and 1).
 %      Default 1
 %    repeat - boolean to indicate whether to tile the image accross the
@@ -37,23 +36,14 @@ function elem = image(t, sourceImage, window)
 %      Default false
 %
 %  TODO Add contrast parameter
+%  @body Add parameter to set overall contrast of the image, effectively
+%  scaling it?  Would need to know the range of the source image...
+%
+%  TODO Add colour parameter
+%  @body Add parameter to set the intensity of each channel. How would this
+%  work for none-greyscale source images?
 %
 %  See Also VIS.GRATING, VIS.CHECKER6, VIS.GRID
-
-% Define our default inputs
-alpha = [];
-if nargin < 2
-  sourceImage = [];
-else
-  % If the image is a char array, assume it is a path and attempt to load
-  % the image
-  if isa(sourceImage, 'char')
-    [sourceImage, ~, alpha] = imread(sourceImage);
-  end
-end
-if nargin < 3 || isempty(window)
-  window = 'none';
-end
 
 % Add a new subscriptable origin signal to the same network as the input
 % signal, t, and use this to store the stimulus texture layer and
@@ -64,11 +54,26 @@ elem.altitude = 0;
 elem.dims = [50,50];
 elem.orientation = 0;
 elem.repeat = false;
-elem.sourceImage = sourceImage;
-elem.colour = [1 1 1];
+elem.sourceImage = [];
+elem.alpha = 1;
 elem.show = false;
-elem.window = window;
+elem.window = 'none';
 elem.sigma = [5,5];
+
+% If source image is given as an input, update the visual element
+if nargin > 1
+  % If the image is a char array, assume it is a path and attempt to load
+  % the image.  If there's a transparency layer, use it.
+  if isa(sourceImage, 'char')
+    [elem.sourceImage, ~, srcAlpha] = imread(sourceImage);
+    if ~isempty(srcAlpha); elem.alpha = srcAlpha; end
+  else
+    elem.sourceImage = sourceImage;
+  end
+end
+% If input alpha is none-empty, overwrite whatever was returned by imread.
+if nargin > 2 && ~isempty(alpha); elem.alpha = alpha; end
+
 
 % Map the visual element signal through the below function 'makeLayer' and
 % assign it to the layers field.  When any of the above parameters takes a
@@ -92,7 +97,6 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
     imgLayer.size = newelem.dims;
     imgLayer.isPeriodic = newelem.repeat;
     imgLayer.interpolation = 'linear';
-    imgLayer.maxColour = [newelem.colour 1];
     
     if isobject(newelem.sourceImage)
       % FIXME Make vis.rgba a Signal method or define new image subclass? 
@@ -103,7 +107,7 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
     else
       imgLayer.textureId = 'image';
       [imgLayer.rgba, imgLayer.rgbaSize] = ...
-        vis.rgba(newelem.sourceImage, iff(isempty(alpha),1,alpha));
+        vis.rgba(newelem.sourceImage, newelem.alpha);
     end
     
     imgLayer.show = newelem.show;

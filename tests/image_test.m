@@ -41,7 +41,7 @@ assert(isequal(layer.rgbaSize, size(img.Node.CurrValue)), 'Size incorrect')
 assert(isa(layer.rgba, 'uint8'), 'incorrect data type')
 assert(isequal(size(layer.rgba), [prod([size(img.Node.CurrValue) 4]) 1]), 'incorrect size')
 
-%% Test 4: Check alpha loaded corrected
+%% Test 4: Check alpha loaded correctly
 % Loads an RGBA file where sourceImage is an m by n by 3 array
 pth = fullfile(matlabroot,'toolbox','images','icons','ruler_24.png');
 [img,~,alpha] = imread(pth);
@@ -58,10 +58,11 @@ assert(isequal(size(layer.rgba), [prod([sz 4]) 1]), 'incorrect size')
 test_alpha = reshape(layer.rgba(4:4:length(layer.rgba)), size(alpha));
 assert(isequal(alpha, test_alpha), 'alpha incorrectly set')
 
-%% Test 5: Test windowing & postion parameters
+%% Test 5: Test windowing & position parameters
 pars = num2cell(rand(1,3));
 dims = randi(100,1,2);
-elem = vis.image(t, 'cell.tif', 'gauss');
+elem = vis.image(t, 'cell.tif');
+elem.window = 'gauss';
 [elem.azimuth, elem.altitude, elem.orientation] = pars{:};
 elem.dims = dims;
 l = elem.Node.CurrValue.layers.Node.CurrValue;
