@@ -16,17 +16,15 @@ function elem = image(t, sourceImage, window)
 %      be a signal.
 %
 %  Stimulus (elem) parameters:
-%    grating - see above
 %    window - see above
+%    dims - the dimentions of the image in visual degrees.  Must be an 
+%      array of the form [width height]. Default [10 10]
 %    azimuth - the position of the shape in the azimuth (position of the
 %      centre pixel in visual degrees).  Default 0
 %    altitude - the position of the shape in the altitude. Default 0
 %    sigma - if window is Gaussian, the size of the window in visual
 %      degrees.  Must be an array of the form [width height].
 %      Default [10 10]
-%    phase - the phase of the grating in visual degrees.  Default 0
-%    spatialFreq - the spatial frequency of the grating in cycles per
-%      visual degree.  Default 1/15
 %    orientation - the orientation of the grating in degrees. Default 0
 %    colour - an array defining the intensity of the red, green and blue
 %      channels respectively.  Values must be between 0 and 1.  Default [1
@@ -38,7 +36,7 @@ function elem = image(t, sourceImage, window)
 %
 %  TODO Add contrast parameter
 %
-%  See Also VIS.GRATING, VIS.CHECKER6, VIS.GRID, VIS.IMAGE
+%  See Also VIS.GRATING, VIS.CHECKER6, VIS.GRID
 
 % Define our default inputs
 if nargin < 2
@@ -64,9 +62,7 @@ elem.dims = [50,50];
 elem.orientation = 0;
 elem.sourceImage = sourceImage;
 elem.colour = [1 1 1];
-elem.rescale = false;
 elem.show = false;
-elem.isPeriodic = false;
 elem.window = window;
 elem.sigma = [5,5];
 
@@ -91,27 +87,17 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
     imgLayer.texAngle = newelem.orientation;
     imgLayer.size = newelem.dims;
     imgLayer.isPeriodic = newelem.isPeriodic;
-    imgLayer.textureId = 'image';
+    imgLayer.textureId = '~image';
     imgLayer.interpolation = 'linear';
     imgLayer.maxColour = [newelem.colour 1];
     
     if isobject(newelem.sourceImage)
-      if newelem.rescale
-        imgLayer.rgba = map(newelem.sourceImage,...
-          @(img)vis.rgbaFromUint8(rescale(img),1));
-      else
-        imgLayer.rgba = map(newelem.sourceImage, @(img)vis.rgba(img,1));
-      end
+      % FIXME Make vis.rgba a Signal method or define new image subclass? 
+      imgLayer.rgba = map(newelem.sourceImage, @(img)vis.rgba(img,1));
       imgLayer.rgbaSize = map(newelem.sourceImage,...
         @(img)[size(img,2), size(img,1)]);
     else
-      if newelem.rescale
-        [imgLayer.rgba, imgLayer.rgbaSize] = ...
-          vis.rgbaFromUint8(rescale(newelem.sourceImage),1);
-      else
-        [imgLayer.rgba, imgLayer.rgbaSize] = ...
-          vis.rgba(newelem.sourceImage,1);
-      end
+      [imgLayer.rgba, imgLayer.rgbaSize] = vis.rgba(newelem.sourceImage,1);
     end
     
     imgLayer.show = newelem.show;
@@ -133,11 +119,6 @@ elem.layers = elem.map(@makeLayers).flattenStruct();
     else % no window
       winLayer = [];
     end
-    %
     layers = [winLayer, imgLayer];
-  end
-  function img = rescale(img)
-    img = max(img,-1); img = min(img, 1);
-    img = uint8(img*128+128);
   end
 end

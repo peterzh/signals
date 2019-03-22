@@ -13,8 +13,8 @@ layer.show = false;
 % TEXTUREID a char array used by VIS.DRAW to identify the texture layer. 
 % Layers within a visual element must have unique IDs in order to be loaded
 % seperately.  Preceeding the ID with '~' indicated that it is a dynamic
-% texture to be loaded anew each time. FIXME Clarify what this means in
-% practice.
+% texture to be loaded anew each time. Dynamic textures are those where the
+% underlying image array changes.
 layer.textureId = [];
 % POS TODO
 layer.pos = [0 0];
