@@ -74,3 +74,16 @@ assert(isequal(l(1).texOffset, [pars{1:2}]'), 'unexpected stencil offset') % TOD
 % Check parameters were set correctly
 correct = isequal([l(2).texOffset l(2).texAngle l(2).size], [pars{:} dims]);
 assert(correct, 'inconsistent layer parameters')
+
+%% Test 6: Test texture id names
+clear image
+elem1 = vis.image(t, 'cell.tif');
+elem2 = vis.image(t, magic(6));
+elem3 = vis.image(t);
+elem3.sourceImage = randi(240);
+elem4 = vis.image(t, t.map(@(i)randi(floor(i))));
+
+names = cellfun(@(n)n.Node.CurrValue.layers.Node.CurrValue.textureId, ...
+  {elem1, elem2, elem3, elem4}, 'UniformOutput', false);
+expected = {'cell', 'image1', 'image2', '~testNode.map(@(i)randi(floor(i)))'};
+assert(isequal(names, expected), 'unexpected texture ids')

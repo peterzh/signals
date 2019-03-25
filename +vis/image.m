@@ -79,9 +79,9 @@ if nargin > 1
   % If the image is a char array, assume it is a path and attempt to load
   % the image.  If there's a transparency layer, use it.
   if isa(sourceImage, 'char')
-    [elem.sourceImage, ~, srcAlpha] = imread(sourceImage);
     [~,filename,~] = fileparts(sourceImage);
     name = sprintf('%s',filename); 
+    [elem.sourceImage, ~, srcAlpha] = imread(sourceImage);
     if ~isempty(srcAlpha); elem.alpha = srcAlpha; end
   elseif isobject(sourceImage) % Assume Signal
     name = sourceImage.Name;
