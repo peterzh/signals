@@ -1,12 +1,20 @@
 classdef VoidSignal < sig.Signal
-  % sig.VoidSignal Summary of this class goes here
-  %   Detailed explanation goes here
+  % SIG.VOIDSIGNAL Signal mock class
+  %   A mock Signal class with all methods subclassed so that they return
+  %   the same object instance.  This is used as input arguments when
+  %   calling Signals definition functions without requiring a network.  If
+  %   the CacheSubscripts flag has been set to true, all subscript
+  %   references are stored in the Subscripts property.
+  %
+  % See also exp.inferParameters
   
   properties (Hidden)
+    % Flag indicating whether to record object subscript references
     CacheSubscripts = false
   end
   
   properties (Access = private)
+    % Struct containing field names corresponding to subscript references
     Subscripts
   end
   
@@ -52,7 +60,7 @@ classdef VoidSignal < sig.Signal
       s = this;
     end
     
-    function h = onValue(this, fun)
+    function h = onValue(this, fun, varargin)
       h = TidyHandle.empty;
     end
     
