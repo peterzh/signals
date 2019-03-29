@@ -1,4 +1,4 @@
-classdef Signals_test < matlab.perftest.TestCase
+classdef Signals_perftest < matlab.perftest.TestCase
   
   properties
     net
@@ -69,6 +69,7 @@ classdef Signals_test < matlab.perftest.TestCase
       
       list = res.onValue(@store);
       res = res.buffer(4); %#ok<NASGU>
+      networkInfo(testCase.net.Id)
       while(testCase.keepMeasuring)
         for i = 1:testCase.reps
           post(x, i);
