@@ -3,7 +3,7 @@
 % and a few of the important functional methods associated.  Later, the
 % structure of a Signals Experiment will be introduced.
 
-%% 
+%% Network architecture
 % Every signal is part of a network, managed through the 'sig.Net' object.
 % The network object holds all the ids of every signals node.  (FIXME Note 1 about underlying code)
 
@@ -33,16 +33,19 @@ net = sig.Net; % Create a new signals network
 
 % You can post values to an origin Signal by using the post method.  This
 % is not possible with other classes of Signals as their values instead
-% depend on the values of thier source Signals. 
+% depend on the values of their input nodes. 
 
 % It is worth noting that every Signal has a Name property which may be set
 % manually or be be set based on its inputs.  The name of a Signal may be
 % used by visualization functions to describe its functional relationship
 % within the network.  The name property of an origin Signal is set as
-% its second input (FIXME).  Signals are handle objects and therefore may
+% its second input.  Signals are handle objects and therefore may
 % be assigned to any variable name.  Hence there are two means to identify
 % a Signal: it's true name (the string held in the Name property) and the
 % name of the variable or variables to which it is assigned. Below a Signal
+% whose name is 'input' is created and assigned to the variable
+% 'originSignal'.  Two values are posted to it, first a double, then a char
+% array.
 
 originSignal = net.origin('input'); % Create an origin signal
 originSignal.Node.CurrValue % The current value is empty
@@ -65,16 +68,16 @@ disp(originSignal.Name)
 
 % Although the value is stored in the Node's CurrValue field, it is not
 % intended that you use this field directly.  Doing so will most likely
-% lead to unitended behaviour.
+% lead to unexpected behaviour.
 
 %% Demonstration on sig.Signal/output() method
 % The output method is a useful function for understanding the relationship
 % between signals.  It simply displays a signal's output each time it takes
 % a value.  The output method returns an object of the class TidyHandle,
-% which is like a normal handle, however when it's lifecyle ends it will
-% delete itself.  What this means is that when the handle is no longer
-% referenced anywhere (i.e. stored as a variable), the callback will no
-% longer function.
+% which is like a normal listener handle, however when it's lifecyle ends
+% it will delete itself.  What this means is that when the handle is no
+% longer referenced anywhere (i.e. stored as a variable), the callback will
+% no longer function.
 net = sig.Net; % Create a new signals network
 clc % Clear previous output for clarity
 
@@ -120,9 +123,10 @@ x = net.origin('x');
 y = iff(x > 360, x - 360*floor(x/360), x);
 
 ax = sig.plot(ax, x, y, 'b-');
+xlim([0 1080]); ylim([0 360])
 
-for i = 1:1080
-  pause(0.05)
+for i = 1:4:1080
+  pause(0.005)
   x.post(i)
 end
 
