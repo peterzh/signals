@@ -13,7 +13,7 @@
 %% Parameters
 oris = 0:18:162; % set of orientations, deg
 phases = 90:90:360; % set of phases, deg
-presentationRate = 30; % Hz
+presentationRate = 10; % Hz
 sf = 0.2; %spatial frequency, cyc/deg
 winlen = 10; % length of histogram window, frames
 
@@ -32,7 +32,7 @@ ylim([0 winlen] + 0.5);
 % Create a signal of WindowKeyPressFcn events from the figure
 keyPresses = sigbox.fromUIEvent(figh, 'WindowKeyPressFcn'); 
 % Create a filtered version, only keeping Ctrl presses. Turn each into 'true'
-reports = keyPresses.keepWhen(strcmp(keyPresses.Key, 'control')).map(true);
+reports = keyPresses.keepWhen(strcmp(keyPresses.Key, 'space')).map(true);
 % Sample the current time at presentationRate
 sampler = skipRepeats(floor(presentationRate*t));
 % Randomly sample orientations and phases using sampler
