@@ -528,7 +528,7 @@ time = net.origin('t'); % Create a time signal
 % you to define any callback function to be called each time the signal
 % takes a value (so long as the handle is still around).  Here we are using
 % it to display the farmatted value of our 't' signal.  Again, the output
-% and onValue methods are not suitable for use withing an experiment as the
+% and onValue methods are not suitable for use within an experiment as the
 % handle is deleted.
 handle = time.onValue(@(t)fprintf('%.3f sec\n', t*10e4)); %#ok<*NASGU>
 
@@ -579,7 +579,7 @@ pause(1)% ...
 % Signals becomes very useful when you want to define a relationship
 % between two events in time.  As well as viewing Signals as values that
 % change over time, they can also be treated as a series of discrete
-% values used to gate or trigger other Signals.
+% values or events used to gate and trigger other Signals.
 net = sig.Net;
 time = net.origin('t'); % Create a time signal
 t0 = GetSecs; % Record current time
@@ -590,13 +590,24 @@ tmr = timer('TimerFcn', @(~,~)post(time, GetSecs-t0),...
 gate = floor(time/5);
 
 ax = sig.timeplot(time, gate, skipRepeats(gate), gate.map(true), ...
-  'tWin', 10, 'mode', [0 0 0 1]);
-set(ax, 'ylim', [0 30])
+  'tWin', 20, 'mode', [0 0 0 1]);
+% set(ax, 'ylim', [0 30])
 start(tmr) % Start the timer
 
 %%
 theta = sin(time);
-sig.timeplot(time, theta, theta.keepWhen(theta > 0), 'mode', [0 2 2]);
+sig.timeplot(time, theta, theta.keepWhen(theta > 0), 'mode', [0 2 2], 'tWin', 20);
+
+%%
+x = -1 + delta(time);
+y = 2*x.^2 - x.^3;
+y.Name = 'y'; % Change the name of this Signal to something more readable
+arm = skipRepeats(y < 1);
+trig = arm.setTrigger(y > 1);
+% Reset timer
+% time = time - GetSecs;
+sig.timeplot(x, arm, y, trig, 'tWin', 60); %'mode', [0 2 3 2],
+
 %%
 a = mod(floor(time),3) == 0;
 b = a.lag(1);
@@ -610,9 +621,9 @@ x = net.origin('x'); % Create an origin signal
 a = 5; b = 2; c = 8; % Some constants to use in our equation
 y = a*x^2 + b*x + c; % Define a quadratic relationship between x and y
 
-sig.timeplot(x,y,y.delta,'mode',[0 2 0]);
+sig.timeplot(x,y,y.delta,'mode',[0 2 0],'tWin',6);
 
-for i = -50:1:50
+for i = -50:2:50
   pause(0.01)
   x.post(i)
 end
