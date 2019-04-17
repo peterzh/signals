@@ -3,7 +3,7 @@
 % and a few of the important functional methods associated.  Later, the
 % structure of a Signals Experiment will be introduced.
 
-%% 
+%% Network architecture
 % Every signal is part of a network, managed through the 'sig.Net' object.
 % The network object holds all the ids of every signals node.  (FIXME Note 1 about underlying code)
 
@@ -31,8 +31,21 @@ net = sig.Net; % Create a new signals network
 % defined outside of your experiment definition function and be input
 % variables.  More on this later. 
 
-% FIXME you can post to origin signals,
-% naming signals, var and name
+% You can post values to an origin Signal by using the post method.  This
+% is not possible with other classes of Signals as their values instead
+% depend on the values of their input nodes. 
+
+% It is worth noting that every Signal has a Name property which may be set
+% manually or be be set based on its inputs.  The name of a Signal may be
+% used by visualization functions to describe its functional relationship
+% within the network.  The name property of an origin Signal is set as
+% its second input.  Signals are handle objects and therefore may
+% be assigned to any variable name.  Hence there are two means to identify
+% a Signal: it's true name (the string held in the Name property) and the
+% name of the variable or variables to which it is assigned. Below a Signal
+% whose name is 'input' is created and assigned to the variable
+% 'originSignal'.  Two values are posted to it, first a double, then a char
+% array.
 
 originSignal = net.origin('input'); % Create an origin signal
 originSignal.Node.CurrValue % The current value is empty
@@ -55,16 +68,16 @@ disp(originSignal.Name)
 
 % Although the value is stored in the Node's CurrValue field, it is not
 % intended that you use this field directly.  Doing so will most likely
-% lead to unitended behaviour.
+% lead to unexpected behaviour.
 
 %% Demonstration on sig.Signal/output() method
 % The output method is a useful function for understanding the relationship
 % between signals.  It simply displays a signal's output each time it takes
 % a value.  The output method returns an object of the class TidyHandle,
-% which is like a normal handle, however when it's lifecyle ends it will
-% delete itself.  What this means is that when the handle is no longer
-% referenced anywhere (i.e. stored as a variable), the callback will no
-% longer function.
+% which is like a normal listener handle, however when it's lifecyle ends
+% it will delete itself.  What this means is that when the handle is no
+% longer referenced anywhere (i.e. stored as a variable), the callback will
+% no longer function.
 net = sig.Net; % Create a new signals network
 clc % Clear previous output for clarity
 
@@ -110,9 +123,10 @@ x = net.origin('x');
 y = iff(x > 360, x - 360*floor(x/360), x);
 
 ax = sig.plot(ax, x, y, 'b-');
+xlim([0 1080]); ylim([0 360])
 
-for i = 1:1080
-  pause(0.05)
+for i = 1:4:1080
+  pause(0.005)
   x.post(i)
 end
 
@@ -289,6 +303,7 @@ x.post(58.4)
 % rndDraw = map(evts.newTrial, @(~) sign(rand-0.5)); 
 
 % TODO for more complex anonymous function
+% In the following example the response type is 
 % timeOutTracker = responseType.bufferUpTo(1000);
 % timeOutCount = timeOutTracker.map(@(x) sum(x(find([1 x~=0],1,'last'):end)==0));
 
@@ -513,7 +528,7 @@ time = net.origin('t'); % Create a time signal
 % you to define any callback function to be called each time the signal
 % takes a value (so long as the handle is still around).  Here we are using
 % it to display the farmatted value of our 't' signal.  Again, the output
-% and onValue methods are not suitable for use withing an experiment as the
+% and onValue methods are not suitable for use within an experiment as the
 % handle is deleted.
 handle = time.onValue(@(t)fprintf('%.3f sec\n', t*10e4)); %#ok<*NASGU>
 
@@ -564,7 +579,7 @@ pause(1)% ...
 % Signals becomes very useful when you want to define a relationship
 % between two events in time.  As well as viewing Signals as values that
 % change over time, they can also be treated as a series of discrete
-% values used to gate or trigger other Signals.
+% values or events used to gate and trigger other Signals.
 net = sig.Net;
 time = net.origin('t'); % Create a time signal
 t0 = GetSecs; % Record current time
@@ -575,13 +590,24 @@ tmr = timer('TimerFcn', @(~,~)post(time, GetSecs-t0),...
 gate = floor(time/5);
 
 ax = sig.timeplot(time, gate, skipRepeats(gate), gate.map(true), ...
-  'tWin', 10, 'mode', [0 0 0 1]);
-set(ax, 'ylim', [0 30])
+  'tWin', 20, 'mode', [0 0 0 1]);
+% set(ax, 'ylim', [0 30])
 start(tmr) % Start the timer
 
 %%
 theta = sin(time);
-sig.timeplot(time, theta, theta.keepWhen(theta > 0), 'mode', [0 2 2]);
+sig.timeplot(time, theta, theta.keepWhen(theta > 0), 'mode', [0 2 2], 'tWin', 20);
+
+%%
+x = -1 + delta(time);
+y = 2*x.^2 - x.^3;
+y.Name = 'y'; % Change the name of this Signal to something more readable
+arm = skipRepeats(y < 1);
+trig = arm.setTrigger(y > 1);
+% Reset timer
+% time = time - GetSecs;
+sig.timeplot(x, arm, y, trig, 'tWin', 60); %'mode', [0 2 3 2],
+
 %%
 a = mod(floor(time),3) == 0;
 b = a.lag(1);
@@ -595,9 +621,9 @@ x = net.origin('x'); % Create an origin signal
 a = 5; b = 2; c = 8; % Some constants to use in our equation
 y = a*x^2 + b*x + c; % Define a quadratic relationship between x and y
 
-sig.timeplot(x,y,y.delta,'mode',[0 2 0]);
+sig.timeplot(x,y,y.delta,'mode',[0 2 0],'tWin',6);
 
-for i = -50:1:50
+for i = -50:2:50
   pause(0.01)
   x.post(i)
 end
@@ -899,6 +925,17 @@ x_sub.C = true;
 
 % TODO: mention that endTrial must be defined
 
+%% Visual stimuli
+[t, setgraphic] = sig.playgroundPTB;
+grating = vis.grating(t);    % we want a gabor grating patch
+grating.phase = 2*pi*t*3; % with it's phase cycling at 3Hz
+grating.show = true;
+
+elements = StructRef;
+elements.grating = grating;
+
+setgraphic(elements);
+
 %% Notes
 % 1. Signals objects that are entirely out of scope are cleaned up by
 % MATLAB and the underlying C code.  That is, if a Signal is created,
@@ -923,4 +960,4 @@ str = sprintf('Inputs to y: %s', strjoin(mapToCell(@(n)n.Name, [y.Node.DisplayIn
 disp(str)
 disp(['y.Node.DisplayInputs(1) is a ' class(y.Node.DisplayInputs(1))])
 
-% 2.
+% 2. Rule exceptions: merge and scan pars
