@@ -109,13 +109,10 @@ elem.Name = name;
     imgLayer.isPeriodic = newelem.repeat;
     imgLayer.interpolation = 'linear';
     
-    if isa(newelem.sourceImage, 'sig.Signal')
-      if newelem.rescale
-        imgLayer.rgba = map(newelem.sourceImage,...
-          @(img)vis.rgbaFromUint8(rescale(img),1));
-      else
-        imgLayer.rgba = map(newelem.sourceImage, @(img)vis.rgba(img,1));
-      end
+    if isobject(newelem.sourceImage)
+      % FIXME Make vis.rgba a Signal method or define new image subclass? 
+      imgLayer.textureId = ['~',name];
+      imgLayer.rgba = map(newelem.sourceImage, @(img)vis.rgba(img,1));
       imgLayer.rgbaSize = map(newelem.sourceImage,...
         @(img)[size(img,2), size(img,1)]);
     else
