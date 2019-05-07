@@ -1,43 +1,47 @@
 function elem = image(t, sourceImage, alpha)
-% VIS.IMAGE Returns visual element for image presentation in Signals
+% VIS.IMAGE Returns a visual element for image presentation in Signals
 %  Produces a visual element for parameterizing the presentation of an
-%  image
+%  image.
 %
 %  Inputs:
-%    t - any signal with which to derive the network ID.  By convetion we
-%      use the t signal
-%    sourceImage - either an image, path to an image or a Signal
-%    alpha - the alpha value(s) for the image.  Maybe a single value or
-%      array the size of sourceImage.  If no alpha value is provided and
+%    't' - The "time" signal. Used to obtain the Signals network ID.
+%      (Could be any signal within the network - 't' is chosen by
+%      convention).
+%    'sourceImage' - Either a standard image file, or path to a '.mat' file
+%      containing an image represented as a numeric array, or a signal 
+%      whose value is an image represtented as a numeric array.
+%    'alpha' - the alpha value(s) for the image.  Can be a single value or
+%      array the size of 'sourceImage.'  If no alpha value is provided and
 %      sourceImage is a char
 %
 %  Outputs:
-%    elem - a subscriptable signal containing paramter fields for the
-%      stimulus along with the processed texture layers.  Any parameter may
-%      be a signal.
+%    'elem' - a subscriptable signal containing fields which parametrize
+%      the stimulus, and a field containing the processed texture layer. 
+%      Any of the fields may be a signal.
 %
-%  Stimulus (elem) parameters:
-%    window - char array defining the type of windowing applied.  Options
-%      are 'none' (default) or 'gaussian'
-%    dims - the dimentions of the image in visual degrees.  Must be an 
-%      array of the form [width height]. Default [10 10]
-%    azimuth - the position of the shape in the azimuth (position of the
-%      centre pixel in visual degrees).  Default 0
-%    altitude - the position of the shape in the altitude. Default 0
-%    sigma - if window is Gaussian, the size of the window in visual
-%      degrees.  Must be an array of the form [width height].
-%      Default [10 10]
-%    orientation - the orientation of the grating in degrees. Default 0
-%    contrast - the normalized contrast of the grating (between 0 and 1).
-%      Default 1
-%    repeat - boolean to indicate whether to tile the image accross the
-%      entire visual field.  Default false
-%    show - a logical indicating whether or not the stimulus is visible.
+%  Stimulus parameters (fields belonging to 'elem'):
+%    'sourceImage' - see above
+%    'window' - see above
+%    'azimuth' - the azimuth of the image (position of the centre pixel in 
+%      visual degrees).  Default 0
+%    'altitude' - the altitude of the image (position of the centre pixel 
+%      in visual degrees). Default 0
+%    'dims' - the dimensions of the shape in visual degrees. May be an
+%      array of the form [width height] or a scalar if these dimensions are
+%      equal. Default [10 10]
+%    'orientation' - the orientation of the image in degrees. Default 0
+%    'repeat' - a logical indicating whether or not to repeat the image
+%      over the entire visual field. Default false
+%    'show' - a logical indicating whether or not the stimulus is visible.
 %      Default false
+%    'sigma' - the size of the gaussian window in visual degrees [w h].
+%      Default [5 5]
 %
-%  NB: If loading multiple visual elements with different image paths
+%  NB: If loading multiple visual elements with different image paths,
 %  ensure that the images themselves have unique filenames.
 %
+%  See Also VIS.EMPTYLAYER, VIS.PATCH, VIS.GRATING, VIS.CHECKER6, VIS.GRID, IMREAD
+%  
 %  TODO Add contrast parameter
 %  @body Add parameter to set overall contrast of the image, effectively
 %  scaling it?  Would need to know the range of the source image...
@@ -45,8 +49,6 @@ function elem = image(t, sourceImage, alpha)
 %  TODO Add colour parameter
 %  @body Add parameter to set the intensity of each channel. How would this
 %  work for none-greyscale source images?
-%
-%  See Also VIS.GRATING, VIS.CHECKER6, VIS.GRID
 
 % Add a new subscriptable origin signal to the same network as the input
 % signal, t, and use this to store the stimulus texture layer and
@@ -54,14 +56,14 @@ function elem = image(t, sourceImage, alpha)
 elem = t.Node.Net.subscriptableOrigin('image');
 elem.azimuth = 0;
 elem.altitude = 0;
-elem.dims = [50,50];
+elem.dims = [50,50]';
 elem.orientation = 0;
 elem.repeat = false;
 elem.sourceImage = [];
 elem.alpha = 1;
 elem.show = false;
 elem.window = 'none';
-elem.sigma = [5,5];
+elem.sigma = [5,5]';
 
 % Map the visual element signal through the below function 'makeLayer' and
 % assign it to the layers field.  When any of the above parameters takes a
@@ -130,7 +132,7 @@ elem.Name = name;
             [newelem.azimuth; newelem.altitude], newelem.sigma);
           winLayer.textureId = 'gaussianStencil';
         otherwise
-          error('Invalid window type ''%s''', newelem.window);
+          error('window:error', 'Invalid window type ''%s''', newelem.window);
       end
       [winLayer.rgba, winLayer.rgbaSize] = vis.rgba(0, winImg);
       winLayer.blending = 'none';

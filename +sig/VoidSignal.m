@@ -52,10 +52,9 @@ classdef VoidSignal < sig.Signal
     end
     
     function s = then(when, this)
-      s = this;
+      s = at(when, this);
     end
 
-    
     function s = keepWhen(this, when)
       s = this;
     end

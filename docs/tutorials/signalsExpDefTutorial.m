@@ -1,13 +1,14 @@
-function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, audio)
-%SIGNALSEXPERIMENTTUTORIAL *Signals* Experiment Definition Tutorial
-%% Todos: 
-% - mention how to repeat incorrect trials?
+function signalsExpDefTutorial(t, events, params, visStim, inputs, outputs, audio)
+%SIGNALSEXPDEFTUTORIAL *Signals* Experiment Definition Tutorial
+
+% see also: exp.ExpTest
+% todo: mention repeating incorrect trials?
 %% Notes:
 % Author: Jai Bhagat - j.bhagat@ucl.ac.uk (w/inspiration from Miles Wells
 % and Andy Peters)
 
-% *Note 1: Before beginning, please make sure this entire 'tutorials'
-% folder is added to your MATLAB path. 
+% *Note 1: Before beginning, please make sure that within MATLAB you are
+% currently in the 'tutorials' folder containing this file.
 
 % *Note 2: Code files that are mentioned in this file will be written 
 % within (not including) closed angluar brackets (<...>). Highlight, 
@@ -23,15 +24,18 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 
 % *Note 4: It is convenient and sometimes necessary to use anonymous
 % functions with some *signals* methods. If you are unfamiliar with using 
-% anonymous functions in MATLAB, run 'doc Anonymous Functions' for a MATLAB 
-% primer. Similarly, it may also be helpful to understand the basics of 
-% object-oriented programming. Run 'doc Object-Oriented Programming' for a
-% MATLAB primer.
+% anonymous functions in MATLAB, run 'doc Anonymous Functions' for a 
+% primer. Similarly, if you are unfamiliar with object-oriented programming
+% in MATLAB, run 'doc Object-Oriented Programming' for a primer.
 
-% *Note 5: Along the way, you will encounter questions/assignments, some of
+% *Note 5: At the end of 'Part 2' of this tutorial, and for every section
+% that follows, you should run this exp def via <exp.ExpTest>. See the
+% directions in the header of that file for more information.
+
+% *Note 6: Along the way, you will encounter questions/assignments, some of
 % which you MUST solve in order to create a functional Exp Def. These will 
 % be marked by closed double dashes (--...--). Answers to these questions 
-% can be found in the <signalsExperimentTutorialAnswers> file.
+% can be found in the 'Answers' section at the bottom of this file.
 %
 % -- 1) Who created *signals*? --
 
@@ -39,9 +43,9 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % Welcome to this tutorial on running a *Signals* Experiment Definition
 % (also referred to as an "Exp Def" or "*Signals* Protocol") within Rigbox. 
 % For an introduction to *Signals* before running an experiment, open 
-% <Getting_Started_with_Signals>. In this tutorial, we will go step-by-step
-% to create a version of the "Burgess Steering Wheel Task" the CortexLab 
-% uses to probe rodent behaviour and decision-making. (See 
+% <GettingStartedWithSignals>. In this tutorial, we will go step-by-step
+% to create different version of the "Burgess Steering Wheel Task" the 
+% CortexLab uses to probe rodent behaviour and decision-making. (See 
 % 1) https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5603732/pdf/main.pdf and
 % 2) https://www.ucl.ac.uk/cortexlab/tools/wheel for more information on
 % this task). 
@@ -55,17 +59,20 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % result in a reward; 4) create a third version of the task where two
 % stimuli will appear on both left and right simultaneously, and 
 % certain properties of the stimuli will dictate which one has to be moved
-% to center to result in a reward; 5) create task parameters that can be
-% changed in real-time during the experiment.
+% to center to result in a reward; 5) create experiment parameters that can
+% be changed in the GUI that launches the experiment.
 
 %% Part 1: Define a *Signals* experiment:
 %
 % *Signals* structures experiments in trials: each trial continues
-% indefinitely until an experimenter defined end trial occurs. An
+% indefinitely until an experimenter-defined end trial occurs. An
 % experimenter defines an end trial as when some condition is met (e.g. a 
 % correct move is made, an incorrect move is made, a certain duration 
 % elapses, etc...). As soon as the end trial condition has been met, the
-% next new trial starts.
+% next new trial starts. The experiment ends when a pre-defined criterion
+% is met (e.g. a certain number of total trials occurs, a certain number of
+% correct trials occurs, etc...), or when the experimenter stops the
+% experiment manually in the GUI.
 %
 % For this experiment, we will create our own version of the Burgess
 % Steering Wheel Task: a visual stimulus will be presented to a subject
@@ -84,33 +91,36 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 %
 % 't' - This is the origin signal ( <sig.Net/origin> / 
 % <sig.node.OriginSignal> ) that will track time during the experiment.
-% *Signals* will create this (along with a few other initial origin 
-% signals) at experiment onset.
+% This gets created (along with a few other initial origin signals) at 
+% experiment onset.
 %
-% 'events' - This is a <sig.Registry> object (which is a subclass of 
-% <sig.StructRef>, essentially a MATLAB 'struct' for signals) containing
+% 'events' - This is a <sig.Registry> object which contains, as fields,
 % the signals to be saved when the experiment ends. It contains by default 
-% the origin signals *Signals* creates at experiment onset (these are
-% 'events.expStart', 'events.expStop', 'events.newTrial', and 
+% some of the origin signals which are created at experiment onset (these
+% are 'events.expStart', 'events.expStop', 'events.newTrial', and 
 % 'events.trialNum' -the roles of these signals should be obvious by name-) 
 % plus new signals added to it by the experimenter (e.g. 
 % 'events.correctTrial').
 %
-% 'params' - This is a <sig.SubscriptableSignal> object that *Signals* 
-% turns into a Struct, containing experimenter defined parameters as
-% signals, which will be used during the experiment. These parameters will
-% be given a default value, but can be changed by the experimenter in 
-% real-time during the experiment.
+% 'params' - This is a <sig.SubscriptableSignal> object which contains the 
+% experimenter defined parameters as signals, which will be used during the 
+% experiment. These parameters are assigned default values in an exp def, 
+% but can be changed by the experimenter in a GUI before launching the 
+% experiment.
 %
 % 'visStim' - This is a <sig.StructRef> object containining fields as
 % signals that define the visual stimuli that will be presented during
 % the experiment. 
 %
 % 'inputs' - This is a <sig.Registry> object containing hardware inputs as 
-% signals. It contains by default the wheel as 'inputs.wheel'.
+% signals. It can contain signal representations of things like a computer
+% mouse, keyboard, lick detector, steering wheel, and other hardware input 
+% sensors an experimenter may wish to use.
 %
 % 'outputs' - This is a <sig.Registry> object containing hardware outputs
-% as signals. It contains by default the reward valve as 'outputs.reward'.
+% as signals. It can contain signal representations of things like a 
+% reward valve, galvanometer, and other hardware output devices an 
+% experimenter may wish to use. 
 %
 % 'audio' - This is an <audstream.Registry> object (similar to
 % <sig.Registry>, but specifically for audio stimuli) containing fields as
@@ -222,8 +232,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % % the task we'll create, until we get to the final section of this
 % % tutorial.
 % %
-% % To run this Exp Def, follow the instructions in the 'ReadMe' file in
-% % this folder.
+% % Now, run this version of this exp def via <exp.ExpTest>
 
 %% Part 3: Second version of task
 % % Comment out all other sections and uncomment this section.
@@ -336,8 +345,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % events.incorrectMove = incorrectMove; % add 'incorrectMove' to 'events'
 % events.trialTimeout = trialTimeout; % add 'trialTimeout' to 'events'
 % 
-% % To run this version of the Exp Def, follow the instructions in the 
-% % 'ReadMe' file in this folder.
+% % Now, run this version of this exp def via <exp.ExpTest>
 
 %% Part 4: Third version of task
 % % Comment out all other sections and uncomment this section.
@@ -438,12 +446,10 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % events.incorrectMove = incorrectMove;
 % events.trialTimeout = trialTimeout; 
 % 
-% % To run this version of the Exp Def, follow the instructions in the 
-% % 'ReadMe' file in this folder.
+% % Now, run this version of this exp def via <exp.ExpTest>
 
 %% Part 5: Fourth version of task and using parameters
-% % Comment out all other sections besides 'Part 4', and uncomment this 
-% % section.
+% % Comment out all other sections, and uncomment this section.
 % 
 % % In this section, we'll build off of the third version of the task, and
 % % create a fourth and final version in which the visual stimuli will vary
@@ -481,7 +487,7 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % % (instead of 1) because it is a dependent signal (on 'params.x'), and all 
 % % dependent signals initialize with empty values - they only update after
 % % the signal they depend on updates. (See Section 'Part 2' in
-% % <Getting_Started_With_Signals> if this is unclear).
+% % <GettingStartedWithSignals> if this is unclear).
 % 
 % % 1) The inputs will be the same as in the previous section
 % 
@@ -527,13 +533,13 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % leftVisStim = vis.grating(t);
 % leftVisStim.azimuth = deltaWheel + azimuthDefault;
 % leftVisStim.orientation = defaultOriLeft; % our signal with the randomly chosen orientation for the left stimulus
-% leftVisStim.contrast = defaultContrastLeft(1); % for vector assigments to signal visual stimuli elements, we must index with '(1)'
+% leftVisStim.contrast = defaultContrastLeft;
 % leftVisStim.show = interactiveStart.to(endTrial);
 % 
 % rightVisStim = vis.grating(t);
 % rightVisStim.azimuth = deltaWheel + -azimuthDefault;
 % rightVisStim.orientation = defaultOriRight; % our signal with the randomly chosen orientation for the right stimulus
-% rightVisStim.contrast = defaultContrastRight(1); % for vector assigments to signal visual stimuli elements, we must index with '(1)'
+% rightVisStim.contrast = defaultContrastRight;
 % rightVisStim.show = interactiveStart.to(endTrial);
 % 
 % visStim.left = leftVisStim; visStim.right = rightVisStim;
@@ -580,9 +586,11 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % events.trialTimeout = trialTimeout; 
 % events.timeoutInstant = timeoutInstant;
 % 
-% % 7) Let's now add parameters to our Exp Def. Parameters are typically
-% % written at the end of an Exp Def in a 'try...catch...end' statement to
-% % allow for exception handling
+% % 7) Let's now add parameters to our Exp Def. Parameters are written at
+% % the end of an Exp Def in a 'try...catch...end'. This must be done
+% % because otherwise an error occurs due to the way that parameters are
+% % loaded before an experiment runs.
+% % 
 % 
 % try
 %   % Vis Stim Orientation as global parameters assigned to 'params'
@@ -595,16 +603,15 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 %   % must have the same number of columns.
 %   params.LeftVisStimContrast = [1 0.75 0.5 0.25 0]; % signal as a vector of possible values for left grating contrast
 %   params.RightVisStimContrast = [0 0.25 0.5 0.75 1]; % signal as a vector of possible values for right grating contrast
-% catch ex
-%   disp(getReport(ex))
+% catch
 % end
 % 
-% % To run this version of the experiment, follow the instructions in the
-% % 'ReadMe' file in this folder. Additionally, while the experiment is 
-% % running, try editing the parameter values for both grating orientation 
-% % (in the "Global" panel) and grating contrast (in the "Conditional" panel) 
-% % by clicking on them directly in the GUI. Feel free to add additional 
-% % parameters to this Exp Def after you are comfortable - check the stimulus 
+% % Now, run this version of this exp def via <exp.ExpTest>. 
+% % Additionally, before starting the experiment via the GUI, try editing the 
+% % parameter values for both grating orientation (in the "Global" panel) and 
+% % grating contrast (in the "Conditional" panel) by clicking on them 
+% % directly in the GUI. Feel free to add additional parameters to this 
+% % Exp Def after you are comfortable - for inspiration, check the stimulus 
 % % parameters in <vis.grating> to see all the visual stimuli properties you 
 % % could add/edit as *Signals* parameters.
 
@@ -617,6 +624,56 @@ function signalsExperimentTutorial(t, events, params, visStim, inputs, outputs, 
 % allows for is well worth the cost (and keep in mind that less than half
 % of the all signals-specific functions defined in <sig.Signal> were used
 % in this tutorial). Please feel free to contact the author with any
-% questions regarding this tutorial, or *Signals* in general! 
+% questions regarding this tutorial, or *Signals* in general!
+
+%% Answers:
+
+% % 1) 
+% % Chris Burgess!
+% 
+% % 2) 
+% totalReward = reward.scan(@plus, 0); % signal to track total reward
+% 
+% % 3)
+% % This wouldn't work because this assignment would only evaluate
+% % 'randi(2)', once, at the start of the experiment, and so 'defaultSide'
+% % would have the same value for each trial in the experiment
+% 
+% % 4)
+% incorrectMove = iff(defaultSide ==1, azimuthPos <= -55,...
+%   azimuthPos >= 55); % signal for incorrect move, (more than 10 visual degrees in wrong direction) 
+% 
+% % 5)
+% % When using either the '|' or '&' logical operators on signals, the
+% % resulting signal will only update when all of the signals involved in the
+% % logical operation update. In this case, we want only one of
+% % 'correctMove', 'trialTimeout', or 'incorrectMove' to update each trial,
+% % so 'response' would never take a value.
+% 
+% % 6) Both of these cases would cause infinite recursion because they will
+% % result in 'endTrial' taking and keeping a value, so 'endTrial' will
+% % update, which will cause 'newTrial' to update, which will cause
+% % 'endTrial' to update, etc... What we really want is an "instantaneous"
+% % update of 'endTrial', which is why we use the 'setTrigger' method
+% 
+% % 7)
+% audio.default = incorrectInstant.then(0.1*incorrectTone);
+% audio.default = timeoutInstant.then(0.1*incorrectTone); % we'll use the same 'incorrectTone' for trial timeouts
+% 
+% % 8)
+% defaultOriLeft = newTrial.map(@(x) randi([0 90]));
+% defaultOriRight = newTrial.map(@(x) randi([0 90]));
+% 
+% % 9)
+% leftVisStim = vis.grating(t);
+% leftVisStim.azimuth = deltaWheel + azimuthDefault;
+% leftVisStim.orientation = defaultOriLeft; % our signal with the randomly chosen orientation for the left stimulus
+% leftVisStim.show = interactiveStart.to(endTrial);
+% 
+% rightVisStim = vis.grating(t);
+% rightVisStim.azimuth = deltaWheel + -azimuthDefault;
+% rightVisStim.orientation = defaultOriRight; % our signal with the randomly chosen orientation for the right stimulus
+% rightVisStim.show = interactiveStart.to(endTrial);
+
 
 end

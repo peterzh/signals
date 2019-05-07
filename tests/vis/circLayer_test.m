@@ -2,7 +2,9 @@
 
 % preconditions
 net = sig.Net;
-load('circle.mat', 'circle');
+load(fullfile(fileparts(which('addSignalsPaths')), '\tests\fixtures\data\circle.mat'), 'circle');
+
+% @todo Test two fails b/c the 'dims' field cannot currently be a signal  
 
 %% Test one: standard inputs
 pos = [10 5];

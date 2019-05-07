@@ -19,7 +19,8 @@ classdef Signal < handle
   % *Note: when running the example code for the below methods, continue
   % from the 'Running Example' code written above
   %
-  % todo: @body move long method examples/descriptions from here to
+  % @todo edit method descriptions
+  % @body move long method examples/descriptions from here to
   % tutorials section, then reset examples/descriptions to something
   % similar Chris' originals
   
@@ -511,6 +512,29 @@ classdef Signal < handle
       % input signal
       x = map(strSig, @str2num, 'str2num(%s)');
     end
+    
+    function b = round(a,N,type)
+      if nargin < 2
+        b = map(a, @round, 'round(%s)');
+      elseif nargin < 3
+        b = map2(a, N, @round, 'round(%s) to %s digits');
+      else
+        b = mapn(a, N, type, @round, 'round(%s) to %s digits by %s');
+      end
+    end
+    
+    function b = sum(a, dim)
+      if nargin < 2
+        b = map(a, @sum, 'sum(%s)');
+      else
+        b = map2(a, dim, @sum, 'sum(%s) over dim %s');
+      end
+    end
+    
+    function a = colon(i,j)
+      a = map2(i,j, @colon, '%s : %s');
+    end
+      
   end
   
 end

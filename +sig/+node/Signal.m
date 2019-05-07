@@ -181,7 +181,7 @@ classdef Signal < sig.Signal & handle
     
     function b = bufferUpTo(this, nSamples)
       
-      % todo: implement as a transfer function
+      % @todo implement as a transfer function
       b = scan(this, sig.scan.buffering(nSamples), []);
       b.Node.FormatSpec = sprintf('%%s.bufferUpTo(%i)', nSamples);
     end
@@ -249,8 +249,7 @@ classdef Signal < sig.Signal & handle
     
     function l = lag(this, n)
       b = buffer(this, n + 1);
-      l = b.map(@(v)v(1), sprintf('%%s.lag(%i)', n));
-      l.Node.DisplayInputs = this.Node;
+      l = b.map(@(v)v(1), sprintf('%%s.lag(%s)', n));
     end
     
     function d = delta(this)
