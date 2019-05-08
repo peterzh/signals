@@ -324,12 +324,12 @@ classdef SignalsExpTest < handle
           if ~obj.CursorAsWheel % if we're re-enabling CursorAsWheel
             obj.CursorDelta = obj.CursorDelta -... 
               (obj.CursorGain * GetMouse());
-            fprintf('Mouse Cursor as Wheel Emulator has been re-set\n');
+            obj.ETest.log('Mouse Cursor as Wheel Emulator has been re-set');
             obj.CursorAsWheel = ~obj.CursorAsWheel;
           else % we're disabling CursorAsWheel
             obj.CursorAsWheel = ~obj.CursorAsWheel;
             obj.CursorDelta = obj.Inputs.cursor.Node.CurrValue;
-            fprintf('Mouse Cursor as Wheel Emulator has been unset\n');
+            obj.ETest.log('Mouse Cursor as Wheel Emulator has been unset');
           end
         end
       end

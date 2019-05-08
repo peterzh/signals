@@ -135,3 +135,7 @@ The "mex network" subdirectories contain code with mex compilations of underlyin
 ### util
 
 The "utilities" subdirectory contains assorted helper functions, mex files, and classes which provide auxiliary services to the rest of *signals*, and don't schematically fit into any of the other packages or subdirectories.
+
+## Running Experiments
+
+*Signals* is used as a submodule within [Rigbox](https://github.com/cortex-lab/Rigbox). Best practice is to clone the Rigbox repository and use the *Signals* submodule within Rigbox, rather than using this repository as a standalone. For more information on running *Signals* experiments in Rigbox, see the Rigbox repository. For more information on using *Signals*, see [docs](https://github.com/cortex-lab/signals/tree/dev/docs).
