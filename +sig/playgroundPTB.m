@@ -129,7 +129,7 @@ renderCount = 0;
 %       listhandle = [listhandle; layerSig.onValue(@(v)newLayers(fn, v))];
 % %       elems.(fn).post(elems.(fn).Node.CurrValue); % ugly hack to refresh
     end
-    rfgrid.show = true;
+    %rfgrid.show = true;
   end
 
   function newLayerValues(name, l)
