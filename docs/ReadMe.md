@@ -20,6 +20,12 @@ Contains files that are useful for learning how to use *Signals*:
 
 Contains example exp defs and standalone experiment scripts:
 
+- 'advancedChoiceWorld': This exp def runs a 2 Alternate Unforced Choice version of the Burgess Steering Wheel Task.
+
+- 'mouseTheremin': This function maps the current horizontal cursor position to a given
+frequency, and as the mouse is moved the frequency changes much like a
+theremin. 
+
 - 'ringach98': This script launches an orientation detection/discrimination task based on a [task created by Dario Ringach](https://www.sciencedirect.com/science/article/pii/S0042698997003222?via%3Dihub) 
 
 - 'signalsPong': This exp def runs the classic computer game, Pong.

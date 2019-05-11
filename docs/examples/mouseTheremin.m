@@ -1,9 +1,8 @@
 function mouseTheremin()
 % 'Mouse Theremin' implemented using signals. 
-%   The function maps the current horizontal curser position to a given
-%   frequency.  As the mouse is moved the frequency changes much like a
-%   theremin.  Press any key to end the demonstration. Requires
-%   PsychToolbox
+%   The function maps the current horizontal cursor position to a given
+%   frequency. As the mouse is moved the frequency changes much like a
+%   theremin. Press any key to end the demonstration.
 
 audioSR = 96e3; %sample rate of audio device
 minSamples = round(0.0075*audioSR); %minimum number of samples to output
