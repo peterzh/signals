@@ -30,7 +30,7 @@ classdef Signals_perftest2 < matlab.perftest.TestCase
         @plus, @minus, @times, @rdivide} % logical/arithmetical subset of functions to test
   end
   
-  methods (TestClassSetup)
+  methods (TestMethodSetup)
     
     function createNetwork(testCase)
       % creates the signals network in which we will run the tests
