@@ -25,15 +25,15 @@ switch transFun
         case 'mrdivide'
           code = 6; % /
         case 'gt'
-          code = 10;% >
+          code = 10; % >
         case 'ge'
-          code = 11;% >=
+          code = 11; % >=
         case 'lt'
-          code = 12;% <
+          code = 12; % <
         case 'le'
-          code = 13;% <=
+          code = 13; % <=
         case 'eq'
-          code = 14;% ==
+          code = 14; % ==
       end
     end
   case 'sig.transfer.flattenStruct'

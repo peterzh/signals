@@ -96,14 +96,14 @@ classdef Signal < sig.Signal & handle
       seed = varargin{end};
       elems = varargin(1:2:end-1);
       funcs = varargin(2:2:end-1);
-      %% formatting
+      % formatting
       funStrs = mapToCell(@toStr, funcs);
       elemStrs = mapToCell(@(e)'%s', elems);
       formatSpec = ['%s.scan(' strJoin(reshape([elemStrs; funStrs], 1, []), ', ') ')'];
       if ~isempty(pars)
         formatSpec = [formatSpec '[' strJoin(mapToCell(@(e)'%s', pars), ', ') ']'];
       end
-      %% derive the scanning signal
+      % derive the scanning signal
       inps = sig.node.from([elems {seed} pars]); % input signals & values -> nodes
       node = sig.node.Node(inps, 'sig.transfer.scan', funcs);
       node.FormatSpec = formatSpec;
@@ -416,6 +416,69 @@ classdef Signal < sig.Signal & handle
       for ii = 1:n
         callbacks{ii}(newValue);
       end
+    end
+    
+    function qevt = setEpochTrigger(newPeriod, t, x, threshold)
+      % returns a signal that is triggered ('qevt') when another signal
+      % ('x') doesn't change over some time period signified by a third
+      % signal ('newPeriod')
+      %
+      % Inputs:
+      %   'newPeriod' - a signal containing the period of time over which
+      %   to check if signal 'x' has had its value changed more than
+      %   'threshold'
+      %   't' - a signal for time-keeping
+      %   'x' - a signal that triggers 'qevt' when its value doesn't change
+      %   by more than 'threshold' over 'newPeriod'
+      %   'threshold' - a numeric value that sets the maximum amount 'x'
+      %   can change by within 'newPeriod' to trigger 'qevt'
+      %
+      % Outputs:
+      %   'qevt' - a signal that is triggered when 'x' changes by less than
+      %   'threshold' over 'newPeriod'
+      
+      if nargin < 4
+        threshold = 0;
+      end
+      
+      newState = newPeriod.map(@initState);
+      
+      state = scan(t.delta(), @tUpdate,... scan time increments
+        x.delta(), @xUpdate,... scan x deltas
+        newState,... initial state on arming trigger
+        'pars', threshold); % parameters
+      state = state.subscriptable(); % allow field subscribting on state
+      % event signal is derived by monitoring the 'armed' field of state for new
+      % false values (i.e. when the armed trigger is released).
+      qevt = state.armed.skipRepeats().not().then(true);
+      
+      % helper functions
+      function state = initState(dur)
+        state = struct('win', dur, 'remaining', dur, 'mvmt', 0, 'armed', true);
+      end
+      
+      function state = tUpdate(state, dt, ~)
+        % update trigger state based on a time increment
+        if state.armed % decrement time remaining until quiescent period met
+          state.remaining = max(state.remaining - dt, 0);
+          if state.remaining == 0 % time's up, trigger can be released
+            state.armed = false; % state is now released
+          end
+        end
+      end
+      
+      function state = xUpdate(state, dx, thresh)
+        % update trigger state based on a delta in the signal that must stay below
+        % threshold
+        if state.armed
+          state.mvmt = state.mvmt + abs(dx); % accumulate the delta
+          if state.mvmt > thresh % reached threshold, so reset
+            state.mvmt = 0;
+            state.remaining = state.win;
+          end
+        end
+      end
+      
     end
     
     function n = node(this)
