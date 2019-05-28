@@ -1,262 +1,456 @@
 classdef Signal < handle
-  % sig.Signal Abstract class defining how Signals objects can interact
-  % with one another
-  %   This class contains the methods that define how a Signals object can
-  %   be manipulated.  The principle subclass to this is SIG.NODE.SIGNAL,
-  %   which inherhits these methods.  All concrete methods defined here 
-  %   effectively overload builtin functions using the map function with a
-  %   format spec to allow straightforward syntax.
+  % SIG.SIGNAL A class defining operations on signals.
+  %   This class contains the methods for connecting signals within a
+  %   network. These methods create a new signal or a TidyHandle object 
+  %   (which acts as a listener for a signal). The abstract methods are
+  %   mostly functional/reactive programming methods. The concrete methods
+  %   are mostly overloaded builtin MATLAB functions. The principle 
+  %   subclass to this is SIG.NODE.SIGNAL.
   %
-  %     Example: 
-  %       net = sig.Net; % Create network
-  %       simpleSignal = net.origin('simpleSignal'); % Create signal one
-  %       simpleSignal2 = output(simpleSignal^2); % display result
-  %       simpleSignal.post(5);
-  %       >> 25
-  %       simpleSignal.post(2);
-  %       >> 4
-  %       
+  %   Running Example: 
+  %     create a Signals network and three origin signals
+  %     net = sig.Net;
+  %     os1 = net.origin('os1'); 
+  %     os2 = net.origin('os2'); 
+  %     os3 = net.origin('os3'); 
   %
-  % See also sig.node.Signal, sig.node.Signal/mapn
+  % See also SIG.NODE.SIGNAL, SIG.NET
+  %
+  % *Note: when running the example code for the below methods, continue
+  % from the 'Running Example' code written above
+  %
+  % @todo edit method descriptions
+  % @body move long method examples/descriptions from here to
+  % tutorials section, then reset examples/descriptions to something
+  % similar Chris' originals
   
+  %% Abstract methods
   methods (Abstract)
-    % New signal that samples the value from this signal when another updates
-    %
-    % [s] = what.at(when) returns a new signal s that takes the current
-    % value of signal 'what' at the moment signal 'when' gets a new, truthy
-    % value (that is, a value not false or zero).
+    
+    % 'th = s1.onValue(f)' returns a TidyHandle 'th' which executes a
+    % callback function 'f' whenever 's1' takes a value.
     %
     % Example:
-    %   x = sig.SimpleSignal;
-    %   t = sig.sampler(true, 0.010); % a new 'true' every 10ms
-    %   sx = x.at(t); % sc will sample x's value every 10ms
-    %
-    % See also keepWhen
-    s = at(this, when)
-    
-    % New signal that tracks another signal when a gating signal is true
-    %
-    % [s] = what.keepWhen(when) returns a new signal s that takes the
-    % values of what whenever the signal when is currently not false.
-    s = keepWhen(what, when)
-    
-    % Derive a signal by mapping the values from another
-    %
-    % m = s.MAP(f, [formatSpec]) returns a new signal m whose values
-    % result from mapping values in this signal s using the function f.
-    %
-    % Example:
-    %   s = sig.SimpleSignal;
-    %   ms = s.map(@(v)2*v); % ms will always have twice the value of s
-    %
-    % See also map2, mapn
-    m = map(this, f, varargin)
-    
-    % Derive a signal by mapping the values from two signals
-    m = map2(this, other, f, varargin)
-    
-    % Derive a signal by mapping the values from n signals
-    %
-    % m = s1.MAPN([s2], [s3], ..., f, [formatSpec]) returns a new signal
-    % m whose values result from mapping values in this and an arbitrary
-    % number of other signals by applying function f.
-    %
-    % Example:
-    %   s = sig.SimpleSignal;
-    %   ms = s.map(@(v)2*v); % ms will always have twice the value of s
-    %
-    % See also map, map2
-    m = mapn(this, varargin)
-    
-    % Create a signal updated iteratively from scanning this signal.
-    %
-    % acc = items.scan(f, init) returns a new signal acc whose values
-    % result from applying each new value from signal items together with
-    % the previous value in acc to function f, called as newacc = f(itemval,
-    % accval). init sets the initial value of acc, and can be a value or a
-    % signal. If a signal, init will overwrite the current value of acc
-    % whenever it changes.
-    %
-    % Example:
-    %   y = x.scan(@plus, 0); % y will contain running total of values in x
-    %
-    % See also total
-    s = scan(this, f, seed)
-    
-    % New signal carrying the value associated with the first currently true predicate
-    %
-    % [c] = cond(pred1, value1, [pred2], [value2],...)
-    c = cond(pred1, value1, varargin)
-    
-    % Returns the value of the input signal indexed by this
-    % The resulting signal samples a new value if either the index signal
-    % (this) or the indexed signal changes
-    s = selectFrom(this, varargin)
-    
-    % Returns the index of the first input to evaluate true
-    %
-    % [idx] = indexOfFirst(a, b, [...], n) Returns number of first truthy
-    % input in list.  If no match is found, then idx = n+1.  NB: The order
-    % of inputs is important, e.g. if a is undefined (has no value) but b
-    % is true, idx = n+1.  Vice versa would yeild idx = 1.
-    f = indexOfFirst(varargin)
-    
-    % New signal carrying the last n samples from another
-    %
-    % [sc] = s.bufferUpTo(n) returns a new signal sc whoes values are
-    % the last n values signal s took.  Unlike buffer, bufferUpTo immediately
-    % returns new signal even if n samples have not yet been collected.
-    % 
-    % See also buffer
-    b = bufferUpTo(this, nSamples)
-    
-    % New signal carrying the last n samples from another
-    %
-    % [sc] = s.buffer(n) returns a new signal sc whoes values are
-    % the last n values signal s took.  Unlike bufferUpTo, buffer only 
-    % returns new signal when n samples have been collected.
-    % See also bufferUpTo
-    b = buffer(this, nSamples)
-    
-    % New signal that gets all values from n signals
-    %
-    % This signal takes the value of the last input signal to update.
-    % Note: if multiple signals update during the same transaction, the
-    % merged signal will only get one signal's value (and which it will be
-    % is undefined).
-    m = merge(this, varargin)
-    
-    % New signal that's true when one signal is true until another is true
-    p = to(a, b)
-    
-    % New signal that's true when a 'release' signal is true, given that a
-    % third signal 'arm' was true
-    %
-    % tr = setTrigger(arm, release) samples true once and only once when
-    % release is true, given that arm was true.  This signal doesn't sample
-    % another value until 'armed' again.
-    tr = setTrigger(arm, release)
-    
-    % New signal that only updates its values when the new value is
-    % different from its current one
-    nr = skipRepeats(this)
-    
-    % New signal that follows another, but is always n samples behind
-    %
-    % See also delay
-    d = lag(this, n)
-    
-    % New signal with the difference between the last two source samples
-    d = delta(this)
-    
-    % New signal that follows another, but delayed in time
-    %
-    %
-    d = delay(this, period)
-    
-    % Mathmematical identity function, i.e. output == input
-    % 
-    % When two signals update at the same time, the order is undefined.
-    % Sometimes it is required that one signal updates first, in which case
-    % the use of identity can help.
-    % 
-    % Example:
-    %   endTrial = repeat.at(stimOff) 
-    %   % endTrial and stimOff update during the same propagation through 
-    %   % the network.  stimOff may update AFTER endTrial, which is
-    %   % undesirable.
-    %   endTrial = repeat.at(stimOff.identity())
-    %   % Now endTrial is likely to update just after stimOff takes a value
-    id = identity(this)
-    
-    % Returns a struct with a timestamp and value for every update
-    l = log(this)
-    
-    % Define a callback function for when signal takes a value
+    %   dispValLong = os1.onValue(@(x)... 
+    %     fprintf('The value of this signal is %d\n',x));
+    %   os1.post(5);
+
     h = onValue(this, fun)
     
-    % Display the current value each time a signal updates
+    % 'th = s1.output' returns a TidyHandle object 'th' which displays the
+    % output of the signal 's1' whenever it takes a value (equivalent to 
+    % 'th = s1.onValue(@disp)').
+    % 
+    % Example:
+    %   dispValShort = os1.output;
+    %   os1.post(1); % '1' will be displayed
+    %
+    % See also SIG.SIGNAL.ONVALUE
+    
     h = output(this)
+    
+    % 'ds = s1.identity()' returns a dependent signal 'ds' which takes as
+    % value the value of 's1' whenever 's1' updates.
+    %
+    % *Note: If a signal 's2' is dependent on 's1', but both update during
+    % the same propagation through the network, it may be hard to determine
+    % which signal will update first. Since 's1' is required to update
+    % first, we can create an identity signal 'dsI = s1.identity()', and
+    % now force 's2' to be dependent on 'dsI' to ensure it will only ever
+    % update after 's1'.
+    %
+    % Example:
+    %   ds1 = os1.identity;
+    %   ds1Out = output(ds1);
+    %   os1.post(1); %'1' will be displayed
+    
+    id = identity(this)
+    
+    % 'ds = s1.at(s2)' returns a dependent signal 'ds' which takes the
+    % current value of 's1' whenever 's2' takes any "truthy" value
+    % (that is, a value not false or zero).
+    %
+    % Example:
+    %   ds2 = os1.at(os2);
+    %   ds2Out = output(ds2);
+    %   os1.post(1);
+    %   os2.post(0); % nothing will be displayed
+    %   os2.post(2); % '1' will be displayed
+    %   os2.post(false); % nothing will be displayed (though 'ds1' remains 1)
+    
+    s = at(this, when)
+    
+    % 'ds = s1.keepWhen(s2)' returns a dependent signal 'ds' which takes
+    % the value of 's1' whenever 's1' takes a value, given that 's2' holds
+    % a truthy value.
+    %
+    % Example:
+    %   ds3 = os1.keepWhen(os2);
+    %   ds3Out = output(ds3);
+    %   os1.post(1); % nothing will be displayed
+    %   os2.post(true); 
+    %   os1.post(0); % '0' will be displayed
+    
+    s = keepWhen(what, when)
+    
+    % 'ds = s1.to(s2)' returns a dependent signal 'ds' which can only ever
+    % take a value of 1 or 0. 'ds' initially takes a value of 1 when 's1'
+    % takes a truthy value. 'ds' then alternates between updating to '0'
+    % the first time 's2' updates to a truthy value after 's1' has updated
+    % to a truthy value, and updating to '1' the first time 's1' updates
+    % to a truthy value after 's2' has updated to a truthy value.
+    %
+    % Example:
+    %   ds4 = os1.to(os2);
+    %   ds4Out = output(ds4);
+    %   os1.post(1); % '1' will be displayed
+    %   os1.post(2); % nothing will be displayed
+    %   os2.post(1); % '0' will be displayed
+    %   os1.post(0); % nothing will be displayed
+    %   os1.post(1); % '1' will be displayed
+    
+    p = to(a, b)
+    
+    % 'ds = s1.setTrigger(s2)' returns a dependent signal 'ds' which can
+    % only ever take a value of 1. 'ds' initially updates to 1 when 's2' is
+    % set to a truthy value, given that 's1' has a truthy value.
+    % Additional updates of 'ds' take place whenever 's2' is set to a
+    % truthy value, given that 's1' has been "reset" to a truthy value.
+    %
+    % Example:
+    %   ds5 = os1.setTrigger(os2);
+    %   ds5Out = output(ds5);
+    %   os2.post(1); % nothing will be displayed
+    %   os1.post(1); os2.post(2); % '1' will be displayed
+    %   os2.post(3); % nothing will be displayed (value of 'ds13' remains 1)
+    %   os1.post(2); os2.post(4); % '1' will be displayed
+    
+    tr = setTrigger(arm, release)
+    
+    % 'ds = s1.map(f, formatSpec)' returns a dependent signal 'ds' which
+    % takes the value resulting from mapping function 'f' onto the value 
+    % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value. If 'f' is not a
+    % function, 'map' acts like 'at': 'ds' simply takes the value of 'f' 
+    % whenever 's1' takes a value.
+    %
+    % Example:
+    %   f = @(x) x.^2; % the function to be mapped
+    %   ds6 = os1.map(f);
+    %   ds6Out = output(ds6); 
+    %   os1.post([1 2 3]); % '[1 4 9]' will be displayed
+    
+    m = map(this, f, varargin)
+    
+    % 'ds = s1.map2(s2, f, formatSpec)' returns a dependent signal 'ds'
+    % which takes the value resulting from "mapping" the function 'f' onto
+    % the values in 's1' and 's2' (i.e. 'f(s1, s2)') whenever 's1' or 's2'
+    % takes a value. If 'f' is not a function, 'ds' simply takes the value 
+    % of 'f' whenever 's1' or 's2' takes a value.
+    %
+    % Example:
+    %   f = @(x,y) x.*y + x; % the function to be mapped
+    %   ds7 = os1.map2(os2, f);
+    %   ds7Out = output(ds7);
+    %   os2.post([4 5 6]);
+    %   os1.post([1 2 3]); % '[5 12 21]' will be displayed
+    
+    m = map2(this, other, f, varargin)
+    
+    % 'ds = s1.mapn(s2..., sN, f, formatSpec)' is an extension of 'map2'. 
+    % The dependent signal 'ds' takes the value resulting from mapping 
+    % function 'f' onto the values of an arbitrary 'n' number of other 
+    % signals (i.e. 'f(s2,..., sN)') whenever any of 's1...sN' takes a
+    % value. If 'f' is not a function, 'ds' simply takes the value of 'f' 
+    % whenever any of 's2...sN' takes a value.
+    %
+    % Example:
+    %   f = @(x,y,z) x+y-z;
+    %   ds8 = os1.mapn(os2, os3, f);
+    %   ds8Out = output(ds8);
+    %   os1.post(1);
+    %   os2.post(2);
+    %   os3.post(3); % '0' will be displayed
+    %
+    % See also SIG.SIGNAL.MAP2
+    
+    m = mapn(this, varargin)
+
+    % 'ds = s1.scan(f, init)' returns a dependent signal 'ds' which applies
+    % an initial value 'init' to the first element in 's1' via the function 
+    % 'f', and then applies each subsequent element in 's1' to the 
+    % previous element, again via the function 'f', resulting in a running
+    % total, whenever 's1' takes a value. If 'init' is a signal, it will
+    % overwrite the current value of 'ds' whenever it updates.
+    %
+    % Example:
+    %   f = @plus;
+    %   ds9 = os1.scan(f, 5);
+    %   ds9Out = output(ds9);
+    %   os1.post([1 2 3]); % '[6 7 8]' will be displayed
+
+    s = scan(this, f, seed)
+    
+    % 'ds = s1.skipRepeats' returns a dependent signal 'ds' which takes the
+    % value of 's1' only when 's1' updates to a value different from
+    % its current value.
+    %
+    % Example:
+    %   ds10 = os1.skipRepeats;
+    %   ds10Out = output(ds10);
+    %   os1.post(1); % '1' will be displayed
+    %   os1.post(1); % nothing will be displayed (value of 'ds14' remains 1)
+    %   os1.post(2); % '2' will be displayed
+    
+    nr = skipRepeats(this)
+    
+    % 'ds = s1.delta' returns a dependent signal 'ds' which takes the value
+    % of the difference between the current value of 's1' and its previous
+    % value.
+    %
+    % Example:
+    %   ds11 = os1.delta;
+    %   ds11Out = output(ds11);
+    %   os1.post(1);
+    %   os1.post(10); % '9' will be displayed
+    %   os1.post(5); % '-5' will be displayed
+    
+    d = delta(this)
+    
+    % 'ds = s1.bufferUpTo(n)' returns a dependent signal 'ds' which takes 
+    % as value the last 'n' values 's1' took. When the number of updates
+    % of 's1' is fewer than 'n', 'ds' takes as value all of those updates.
+    % 
+    % Example:
+    %   ds12 = os1.bufferUpTo(3);
+    %   ds12Out = output(ds12);
+    %   os1.post(1); % '1' will be displayed
+    %   os1.post(2); % '[1 2]' will be displayed
+    %   os1.post(3); % '[1 2 3]' will be displayed
+    %   os1.post(4); % '[2 3 4]' will be displayed
+    %
+    % See also SIG.SIGNAL.BUFFER
+    
+    b = bufferUpTo(this, nSamples)
+    
+    % 'ds = s1.buffer(n)' returns a dependent signal 'ds' which takes as
+    % value the last 'n' values 's1' took. When the number of updates of
+    % 's1' is fewer than 'n', 'ds' takes no value.
+    %
+    % Example:
+    %   ds13 = os1.buffer(3);
+    %   ds13Out = output(ds13);
+    %   os1.post(1); % nothing will be displayed
+    %   os1.post(2); % nothing will be displayed
+    %   os1.post(3); % '[1 2 3]' will be displayed
+    %   os1.post(4); % '[2 3 4]' will be displayed
+    
+    b = buffer(this, nSamples)
+    
+    % 'ds = s1.lag(n)' returns a dependent signal 'ds' which takes as value
+    % the value of 's1' 'n+1' updates prior. In other words, 'ds'
+    % "lags" behind 's1' by 'n' updates.
+    %
+    % Example:
+    %   ds14 = os1.lag(2)
+    %   ds14Out = output(ds14);
+    %   os1.post(1); nothing will be displayed
+    %   os1.post(2); nothing will be displayed
+    %   os1.post(3); '3' will be displayed
+    %
+    % See also SIG.SIGNAL.BUFFER, SIG.SIGNAL.DELAY
+    
+    d = lag(this, n)
+    
+    % 'ds = s1.delay(n)' returns a dependent signal 'ds' which takes as 
+    % value the value of 's1' after a delay of 'n' seconds, whenever 
+    % 's1' updates.
+    %
+    % Example:
+    %   ds15 = os1.delay(2);
+    %   ds15Out = output(ds15);
+    %   % 'runSchedule' is a 'Net' method that checks for and applies
+    %   updates to signals that are being updated via a delay.
+    %   os1.post(1); pause(2); net.runSchedule; % '1' will be displayed
+    %
+    %   See also SIG.NET.RUNSCHEDULE
+    
+    d = delay(this, period)
+    
+    % 'ds = s1.log' returns a dependent signal, 'ds' which takes as value a
+    % structure with two fields, 'time' and 'value'. Each element in 'time'
+    % is the time of the last update of 's1' (in seconds, via the PTB
+    % GETSECS function), and the corresponding element in 'value' is the
+    % value of that update. 'ds2' updates whenever 's1' takes a value.
+    %
+    % Example:
+    %   ds16 = os1.log;
+    %   ds16Out = output(ds16);
+    %   os1.post(1); os1.post(2); os1.post(3); % a 1x3 struct array will be displayed
+    
+    l = log(this)
+    
+    % 'ds = s1.merge(s2...sN)' returns a dependent signal 'ds' which takes
+    % as value the value of the most recent input signal to update. If 
+    % multiple signals update during the same transaction, 'ds' will update
+    % to the signal which is earlier in the input argument list 
+    %
+    % Example:
+    %   ds1 = os1.at(os3);
+    %   ds17 = os1.merge(os2,ds1,os3);
+    %   ds17Out = output(ds17);
+    %   os1.post(1); % '1' will be displayed
+    %   os2.post(2); % '2' will be displayed
+    %   os3.post(3); % '1' will be displayed
+    
+    m = merge(this, varargin)
+    
+    % 'ds = idx.selectFrom(option1...optionN)' returns a dependent signal
+    % 'ds' which, whenever the signal 'idx' takes an integer value, takes
+    % a value based on 1 of 3 cases. Case 1: When 'idx >= 1 && idx <= N', 
+    % 'ds' takes the value of the input argument signal (in the input 
+    % argument list) indexed with the value of 'idx.' Case 2: When 
+    % 'idx == 0', 'ds = 0'. Case 3: When 'idx > N', 'ds' is not updated.
+    % 
+    % Example: 
+    %   ds18 = os1.selectFrom(os2, os3);
+    %   ds18Out = output(ds18);
+    %   os2.post(2); os3.post(3);
+    %   os1.post(1); % '2' will be displayed
+    %   os1.post(2); % '3' will be displayed
+    %   os1.post(3); % nothing will be displayed (value of 'ds7' remains 3)
+    
+    s = selectFrom(this, varargin)
+    
+    % 'ds = indexOfFirst(s1, ..., sN)' returns a dependent signal 'ds'
+    % which takes as value the index of the first signal with a truthy
+    % value in the input argument list of size 'N'. If no signal has a
+    % truthy node value, then the node value of 'ds' = N+1.
+    %
+    % Example:
+    %   ds19 = indexOfFirst(os1, os2, os3);
+    %   ds19 = output(ds19);
+    %   os1.post(0); % '4' will be displayed
+    %   os3.post(1); % '3' will be displayed
+    
+    f = indexOfFirst(varargin)
+    
+    % 'ds = cond(pred1, val1, pred2, val2,...predN, valN)' returns a
+    % dependent signal 'ds' which takes the corresponding value, 'val',
+    % of the first true predicate, 'pred', in the 'pred, val' pair list
+    % which 'cond' takes as arguments, whenever any signal in any predicate
+    % in the predicate list takes a value ('pred1, val1' can be thought of
+    % as a typical MATLAB name-value pair). If no predicates are true, 'ds'
+    % does not take a value.
+    %
+    % Example:
+    %   ds20 = cond(os1>0, 1, os2>0, 2);
+    %   ds20Out = output(ds20);
+    %   os1.post(0); % nothing will be displayed
+    %   os1.post(1); % '1' will be displayed
+    %   os2.post(1); % '1' will be displayed again
+    %   os1.post(0); % '2' will be displayed
+    
+    c = cond(pred1, value1, varargin)
+    
   end
   
+  %% Overloaded MATLAB Methods
   methods
     function b = floor(a)
+      % New signal carrying the input signal rounded down to the nearest
+      % less than or equal to integer
       b = map(a, @floor, 'floor(%s)');
     end
     
     function a = abs(x)
+      % New signal carrying the absolute value of the input signal
       a = map(x, @abs, '|%s|');
     end
     
     function a = sign(x)
+      % New signal carrying the sign function of the input signal
       a = map(x, @sign, 'sgn(%s)');
     end
     
     function c = sin(a)
+      % New signal carrying the sine function of the input signal
       c = map(a, @sin, 'sin(%s)');
     end
     
     function c = cos(a)
+      % New signal carrying the cosine function of the input signal
       c = map(a, @cos, 'cos(%s)');
     end
     
     function c = uminus(a)
+      % New signal carrying the negation of the input signal
       c = map(a, @uminus, '-%s');
     end
     
     function c = not(a)
+      % New signal carrying the logical NOT of the input signal
       c = map(a, @not, '~%s');
     end
     
     function c = plus(a, b)
+      % New signal carrying the addition between signals
       c = map2(a, b, @plus, '(%s + %s)');
     end
     
     function c = minus(a, b)
+      % New signal carrying the subtraction between signals
       c = map2(a, b, @minus, '(%s - %s)');
     end
     
-    function c = mtimes(a, b)
-      c = map2(a, b, @mtimes, '%s*%s');
-    end
-    
     function c = times(a, b)
+      % New signal carrying the multiplication between signals
       c = map2(a, b, @times, '%s.*%s');
     end
     
+    function c = mtimes(a, b)
+      % New signal carrying the matrix multiplication between signals
+      c = map2(a, b, @mtimes, '%s*%s');
+    end
+    
     function c = mrdivide(a, b)
+      % New signal carrying the right-matrix division between signals
       c = map2(a, b, @mrdivide, '%s/%s');
     end
     
     function c = rdivide(a, b)
+      % New signal carrying the right-array division between signals
       c = map2(a, b, @rdivide, '%s./%s');
     end
     
     function c = mpower(a, b)
+      % New signal carrying the matrix power of 'a' to the 'b'
       c = map2(a, b, @mpower, '%s^%s');
     end
     
     function c = power(a, b)
+      % New signal carrying the element-wise power of 'a' to the 'b'
       c = map2(a, b, @power, '%s.^%s');
     end
     
     function c = mod(a, b)
+      % New signal carrying the modulo operation between signals
       c = map2(a, b, @mod, '%s %% %s');
     end
     
     function y = vertcat(varargin)
+      % New signal carrying the vertical concatenation of signals
       formatSpec = ['[' strJoin(repmat({'%s'}, 1, nargin), '; ') ']'];
       y = mapn(varargin{:}, @vertcat, formatSpec);
     end
     
     function y = horzcat(varargin)
+      % New signal carrying the horizontal concatenation of signals
       formatSpec = ['[' strJoin(repmat({'%s'}, 1, nargin), ' ') ']'];
       y = mapn(varargin{:}, @horzcat, formatSpec);
     end
     
     function c = eq(a, b, handleComparison)
       % New signal carrying the current equality (==) between signals
-      
       if nargin < 3 || ~handleComparison
         c = map2(a, b, @eq, '%s == %s');
       else
@@ -266,31 +460,26 @@ classdef Signal < handle
     
     function c = ge(a, b)
       % New signal carrying the current inequality (>=) between signals
-      
       c = map2(a, b, @ge, '%s >= %s');
     end
     
     function c = gt(a, b)
       % New signal carrying the current inequality (>) between signals
-      
       c = map2(a, b, @gt, '%s > %s');
     end
     
     function c = le(a, b)
-      % New signal carrying the current inequality (<=) between signals
-      
+      % New signal carrying the current inequality (<=) between signals     
       c = map2(a, b, @le, '%s <= %s');
     end
     
     function c = lt(a, b)
-      % New signal carrying the current inequality (<) between signals
-      
+      % New signal carrying the current inequality (<) between signals     
       c = map2(a, b, @lt, '%s < %s');
     end
     
     function c = ne(a, b, handleComparison)
-      % New signal carrying the current non-equality (~=) between signals
-      
+      % New signal carrying the current non-equality (~=) between signals     
       if nargin < 3 || ~handleComparison
         c = map2(a, b, @ne, '%s ~= %s');
       else
@@ -299,14 +488,12 @@ classdef Signal < handle
     end
     
     function c = and(a, b)
-      % New signal carrying the logical AND between signals
-      
+      % New signal carrying the logical AND between signals   
       c = map2(a, b, @and, '%s & %s');
     end
     
     function c = or(a, b)
-      % New signal carrying the logical OR between signals
-      
+      % New signal carrying the logical OR between signals      
       c = map2(a, b, @or, '%s | %s');
     end
     
@@ -321,8 +508,33 @@ classdef Signal < handle
     end
     
     function x = str2num(strSig)
+      % New signal carrying character-to-numeric converted array of the
+      % input signal
       x = map(strSig, @str2num, 'str2num(%s)');
     end
+    
+    function b = round(a,N,type)
+      if nargin < 2
+        b = map(a, @round, 'round(%s)');
+      elseif nargin < 3
+        b = map2(a, N, @round, 'round(%s) to %s digits');
+      else
+        b = mapn(a, N, type, @round, 'round(%s) to %s digits by %s');
+      end
+    end
+    
+    function b = sum(a, dim)
+      if nargin < 2
+        b = map(a, @sum, 'sum(%s)');
+      else
+        b = map2(a, dim, @sum, 'sum(%s) over dim %s');
+      end
+    end
+    
+    function a = colon(i,j)
+      a = map2(i,j, @colon, '%s : %s');
+    end
+      
   end
   
 end

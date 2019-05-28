@@ -38,7 +38,7 @@ classdef Signal < sig.Signal & handle
     end
     
     function y = end(this, k, n)
-      warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this));
+      warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this.Name));
       y = expr.End(k, n);
     end
     
@@ -181,7 +181,7 @@ classdef Signal < sig.Signal & handle
     
     function b = bufferUpTo(this, nSamples)
       
-      % todo: implement as a transfer function
+      % @todo implement as a transfer function
       b = scan(this, sig.scan.buffering(nSamples), []);
       b.Node.FormatSpec = sprintf('%%s.bufferUpTo(%i)', nSamples);
     end
@@ -249,7 +249,8 @@ classdef Signal < sig.Signal & handle
     
     function l = lag(this, n)
       b = buffer(this, n + 1);
-      l = b.map(@(v)v(1), sprintf('%%s.lag(%s)', n));
+      l = b.map(@(v)v(1), sprintf('%%s.lag(%i)', n));
+      l.Node.DisplayInputs = this.Node;
     end
     
     function d = delta(this)

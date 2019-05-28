@@ -1,4 +1,4 @@
-function [t, setgraphic, curser] = playgroundPTB(title, parent)
+function [t, setgraphic] = playgroundPTB(title, parent)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 %equivalent to exp.SignalsExp
@@ -19,35 +19,37 @@ tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 5e-3,...
   'TimerFcn', @process, 'Name', 'MainLoop');
 cp = hw.CursorPosition;
 
-vbox = uiextras.VBox('Parent', parent);
+vbox = uix.VBox('Parent', parent);
 
-%[vc, vcc] = vis.component(vbox);
-% vc.clearColour([0.5 0.5 0.5 1]);
-vc = Screen('OpenWindow', 1, 0, [50,50,850,650], 32);
+% Get number of available screens
+nScreens = Screen('Screens');
+screenNum = iff(max(nScreens) > 1, 1, 0);
+vc = Screen('OpenWindow', screenNum, 0, [0,0,1280,600], 32);
 Screen('FillRect', vc, 255/2);
 Screen('Flip', vc);
 
-btnbox = uiextras.HBox('Parent', vbox);
-vbox.Sizes = 30;
+btnbox = uix.HBox('Parent', vbox);
 btnh = uicontrol('Parent', btnbox, 'Style', 'pushbutton',...
   'String', 'Play', 'Callback', @(~,~)startstop());
 
 sn = sig.Net;
 dt = sn.origin('dt');
 t = dt.scan(@plus, 0);
-curser = sn.origin('curser');
+t.Name = 'time';
 
 tlast = [];
 listhandle = [];
 textureById = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
 layersByName = containers.Map();
 model = vis.init(vc);
-screen = vis.screen([0 0 10], 0, [21.5 16], [0 0 800 600]);        % left screen
-% screens(1) = vis.screen([0 0 9.5], -90, [8 6], [0 0 800 600]);        % left screen
-% screens(2) = vis.screen([0 0 10],  0 , [8 6], [800 0 2*800 600]);    % ahead screen
-% screens(3) = vis.screen([0 0 9.5],  90, [8 6], [2*800  0 3*800 600]); % right screen
-model.screens = screen;
 
+screenDimsCm = [20 25]; %[width_cm heigh_cm]
+pxW = 1280/3;
+pxH = 600;
+screens(1) = vis.screen([0 0 9.5], -90, screenDimsCm, [0 0 pxW pxH]);        % left screen
+screens(2) = vis.screen([0 0 10],  0 , screenDimsCm, [pxW 0 2*pxW pxH]);    % ahead screen
+screens(3) = vis.screen([0 0 9.5],  90, screenDimsCm, [2*pxW  0 3*pxW pxH]); % right screen
+model.screens = screens;
 invalid = false;
 
 setgraphic = @setElements;
@@ -76,8 +78,6 @@ renderCount = 0;
     tnow = GetSecs;
 %     tic
     post(dt, tnow - tlast);
-    post(curser, GetMouse());
-%     post(curser, readAbsolutePosition(cp));
 %     fprintf('%.0f\n', 1000*toc);
     tlast = tnow;
     runSchedule(sn);
@@ -129,7 +129,7 @@ renderCount = 0;
 %       listhandle = [listhandle; layerSig.onValue(@(v)newLayers(fn, v))];
 % %       elems.(fn).post(elems.(fn).Node.CurrValue); % ugly hack to refresh
     end
-    rfgrid.show = true;
+    %rfgrid.show = true;
   end
 
   function newLayerValues(name, l)
