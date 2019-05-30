@@ -308,31 +308,36 @@ classdef Signal < sig.Signal & handle
     end
     
     function tr = applyTransferFun(varargin)
-      % New signal derived by applying a transfer function to input nodes
+      % New signal derived by applying a transfer function to input node(s)
+      % 
+      % This function creates a node from input values (which can be
+      % signals or non-signals), then creates a new signal containing the
+      % new node.
+      % 
+      % Inputs:
+      %   `varargin`: contains one (or more) input values/signals, `sigs`, 
+      %   used to create the output signal; a string, `funName`, of the
+      %   transfer function; an optional function handle, `funArg`, which
+      %   can be applied by the transfer function (e.g. the transfer
+      %   function `mapn` could apply the function handle `@plus`); and an
+      %   optional string `formatSpec`, which is used to format the name of
+      %   the output signal
       %
-      % [tr] = s1.applyTransfer([s2], ..., funName, funArg, formatSpec)
-      % returns a new signal tr whose values result from applying a
-      % transfer function called funName to a variable number of input
-      % signals or constant values. Transfer functions work at a lower
-      % level than transformations like like map or mapn, instead operating
-      % directly with the underlying input nodes and output node,
-      % potentially using both their current *and* new values.
+      % Outputs: `tr`: output signal
       %
-      % This function creates a node with input nodes from each of the
-      % signals s1, s2,... (or for each non-signal values, creates a
-      % 'constant' node with that value). It then returns a sig.node.Signal
-      % tr containing the new node. It also sets the node's FormatSpec
-      % property as formatSpec.
+      % Example: 
+      %   `tr = s1.applyTransfer(s2, funName, funArg, formatSpec)`
+      %   `tr = s1.applyTransfer(s2, 5, funName, funArg, formatSpec)`
       %
-      % The transfer function will also be passed the funArg variable at
-      % each invocation.
+      % *Note: The transfer function will be passed `funArg`, if existing,
+      % at each invocation.
       
-      % destructure arguments:
-      [sigs{1:nargin-3}, funName, funArg, formatSpec] = varargin{:};
-      inps = sig.node.from(sigs); % input signals & values -> nodes
-      node = sig.node.Node(inps, funName, funArg);
+      % destructure input args:
+      [inpVals{1:nargin-3}, funName, funArg, formatSpec] = varargin{:};
+      inpNodes = sig.node.from(inpVals); % get/create nodes from input vals
+      node = sig.node.Node(inpNodes, funName, funArg); % create node for output signal
       node.FormatSpec = formatSpec;
-      tr = sig.node.Signal(node);
+      tr = sig.node.Signal(node); % build new signal from new node
     end
     
     function l = log(this, clockFun)
@@ -447,13 +452,16 @@ classdef Signal < sig.Signal & handle
         x.delta(), @xUpdate,... scan x deltas
         newState,... initial state on arming trigger
         'pars', threshold); % parameters
-      state = state.subscriptable(); % allow field subscribting on state
-      % event signal is derived by monitoring the 'armed' field of state for new
-      % false values (i.e. when the armed trigger is released).
+      state = state.subscriptable(); % allow field subscripting on state
+      
+      % event signal is derived by monitoring the 'armed' field of state
+      % for new false values (i.e. when the armed trigger is released).
       qevt = state.armed.skipRepeats().not().then(true);
       
       % helper functions
+      
       function state = initState(dur)
+        % return initial trigger state
         state = struct('win', dur, 'remaining', dur, 'mvmt', 0, 'armed', true);
       end
       
