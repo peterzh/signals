@@ -1,4 +1,4 @@
-classdef Signals_perftest2 < matlab.perftest.TestCase
+classdef Signals_perftest < matlab.perftest.TestCase
 % Runs performance tests for Signals
 %
 % Performs benchmarking for various operations on signals: 
@@ -6,7 +6,7 @@ classdef Signals_perftest2 < matlab.perftest.TestCase
 % 'map', 'scan', and subscriptable signal ops (via 'test_ops' method)
 %
 % And performs benchmarking for propogations through each signal in 
-% networks of various widths and depths (20 to 1000 nodes spread across 2
+% networks of various widths and depths (30 to 1000 nodes spread across 2
 % to 20 layers) (via 'test_props' method) (*Note: for reference, the 
 % 'advancedChoiceWorld' exp def has 338 nodes over 10 layers)
 %
@@ -42,9 +42,9 @@ classdef Signals_perftest2 < matlab.perftest.TestCase
       @merge, @to, @skipRepeats, @delay, @flattenStruct, @flatten, @log,...
       @subsref}
     % number of total nodes in the network
-    Width = {20 100 350 500 1000}; 
+    NumNodes = {30 120 350 1000}
     % number of layers of nodes in the network after "input layer"
-    Depth = {1 4 9 14 19};
+    Depth = {1 4 9 19}
     % flag for whether or not to only use logical/scalar ops
     OnlyBasicOps = {1 0};
   end
@@ -116,20 +116,20 @@ classdef Signals_perftest2 < matlab.perftest.TestCase
       % @todo: create this test modeled off the above
     end
     
-    function test_networkOps(testCase, OnlyBasicOps, Depth, Width)
+    function test_networkOps(testCase, OnlyBasicOps, NumNodes, Depth)
       % benchmarks operations on a Signals network upon posting to a signal
       % which updates all other signals in the network
       
-      minNodesPerLayer = floor(Width/Depth);
+      minNodesPerLayer = floor(NumNodes/Depth);
       % nodes in the 2nd layer of the network (add "leftover" nodes after
       % even distribution of nodes across all other layers)
-      layer2Nodes = minNodesPerLayer + mod(Width, Depth);
+      layer2Nodes = minNodesPerLayer + mod(NumNodes, Depth);
       % array of number of nodes in each layer
       nodesInLayers = iff(Depth > 1,... 
         [layer2Nodes, minNodesPerLayer*ones(1, Depth-1)], layer2Nodes);
       
       % set-up network to test
-      dependentSigs = cell(Width, Depth); % cell array of all dependent signals
+      dependentSigs = cell(NumNodes, Depth); % cell array of all dependent signals
       % number of ops to sample evenly
       numOps = iff(OnlyBasicOps, length(testCase.BasicOps),... 
         length(testCase.MainOps));
