@@ -31,7 +31,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
   properties (TestParameter)
     % main operations to test (whose results are posted in the paper)
     MainOps = {@nop, @post, @gt, @ge, @lt, @le, @eq,... 
-      @plus, @minus, @times, @rdivide, @onValue, @map, @scan, @identity,... 
+      @plus, @minus, @times, @rdivide, @onValue, @identity, @map, @scan,... 
       @subscriptable}
     % logical/arithmetical subset of operations to test (operations which
     % are computed directly in compiled mexnet)
@@ -72,6 +72,9 @@ classdef Signals_perftest < matlab.perftest.TestCase
         case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
           c = feval(MainOps, testCase.A, testCase.B); %#ok<*NASGU>
           post(testCase.B, 2);
+        % 'identity'
+        case {'identity'}
+          c = feval(MainOps, testCase.A);
         % listener ('onValue') & 'map' ops
         case {'onValue', 'map'}
           f = @plus;
@@ -90,14 +93,14 @@ classdef Signals_perftest < matlab.perftest.TestCase
       
       % test op
       switch func2str(MainOps)
-        case {'nop', 'post', 'identity'}
+        case {'nop', 'post'}
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
               feval(MainOps, testCase.A, 1);
             end
           end
         case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times',...
-            'rdivide', 'onValue', 'map', 'scan'}
+            'rdivide', 'onValue', 'map', 'scan', 'identity'}
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
               post(testCase.A, 1); % this post will trigger the update of signal 'c', defined above
