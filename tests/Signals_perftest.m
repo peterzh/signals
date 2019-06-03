@@ -3,12 +3,13 @@ classdef Signals_perftest < matlab.perftest.TestCase
 %
 % Performs benchmarking for various operations on signals: 
 % nops, assignment ops, logical ops, scalar arithmetic ops, listener ops,
-% 'map', 'scan', and subscriptable signal ops (via 'test_ops' method)
+% and signal methods: `map`, `scan`, `identity`, `subscriptable`, etc...
+% (via `test_mainOps` and `test_signalsOps` methods)
 %
 % And performs benchmarking for propogations through each signal in 
 % networks of various widths and depths (30 to 1000 nodes spread across 2
-% to 20 layers) (via 'test_props' method) (*Note: for reference, the 
-% 'advancedChoiceWorld' exp def has 338 nodes over 10 layers)
+% to 20 layers) (via `test_networkOps` method) (*Note: for reference, the 
+% `docs\examples\advancedChoiceWorld` exp def has 338 nodes over 10 layers)
 %
 % In this class, the 'Net' property is a Signals network, in which the 
 % 'A' & 'B' properties are treated as "input layer" signals from which all 
@@ -62,7 +63,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
     
   methods (Test)
     
-    function test_MainOps(testCase, MainOps)
+    function test_mainOps(testCase, MainOps)
       % benchmarks operations on a single signal without propogations
       
       % set-up op to test
@@ -89,7 +90,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
       
       % test op
       switch func2str(MainOps)
-        case {'nop', 'post'}
+        case {'nop', 'post', 'identity'}
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
               feval(MainOps, testCase.A, 1);
@@ -112,7 +113,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
       
     end
     
-    function test_SignalsOps(testCase, SignalsOps)
+    function test_signalsOps(testCase, SignalsOps)
       % @todo: create this test modeled off the above
     end
     
