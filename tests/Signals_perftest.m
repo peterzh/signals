@@ -45,7 +45,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
     % number of total nodes in the network
     NumNodes = {30 120 350 1000}
     % number of layers of nodes in the network after "input layer"
-    Depth = {1 4 9 19}
+    Depth = {2 5 10 20}
     % flag for whether or not to only use logical/scalar ops
     OnlyBasicOps = {1 0};
   end
@@ -124,46 +124,41 @@ classdef Signals_perftest < matlab.perftest.TestCase
       % benchmarks operations on a Signals network upon posting to a signal
       % which updates all other signals in the network
       
-      minNodesPerLayer = floor(NumNodes/Depth);
-      % nodes in the 2nd layer of the network (add "leftover" nodes after
-      % even distribution of nodes across all other layers)
-      layer2Nodes = minNodesPerLayer + mod(NumNodes, Depth);
-      % array of number of nodes in each layer
-      nodesInLayers = iff(Depth > 1,... 
-        [layer2Nodes, minNodesPerLayer*ones(1, Depth-1)], layer2Nodes);
-      
       % set-up network to test
-      dependentSigs = cell(NumNodes, Depth); % cell array of all dependent signals
+      sigs = cell(NumNodes); % cell array of all signals to be tested
+      sigs{1} = testCase.A;
+      sigs{2} = testCase.B;
+      
       % number of ops to sample evenly
       numOps = iff(OnlyBasicOps, length(testCase.BasicOps),... 
         length(testCase.MainOps));
       nodeNum = 1; % counter
       
-      for layer = 1:Depth
-        for curNode = 1:nodesInLayers(layer)
-          % get each op by equally sampling all ops
-          if OnlyBasicOps % can't use `iff` here b/c we are returning a function handle
-            op = testCase.BasicOps{mod(nodeNum, numOps)+1};
-          else
-            op = testCase.MainOps{mod(nodeNum, numOps)+1};
-          end
-          % create the dependent signal depending on the op
-          switch func2str(op)
-            
-            % for ops that do not create a new signal upon posting 1 to
-            % 'testCase.A', change op to '@identity'
-            case {'nop', 'post', 'subscriptable', 'onValue', 'identity'}
-              op = @identity;
-              dependentSigs{curNode, layer} = feval(op, testCase.A);
-            case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
-              dependentSigs{curNode, layer} = feval(op, testCase.A, testCase.B);
-            case {'map'}
-              dependentSigs{curNode, layer} = feval(op, testCase.A, @(x) plus(1,x));
-            case {'scan'}
-              dependentSigs{curNode, layer} = feval(op, testCase.A, @plus, testCase.B);
-          end
-          nodeNum = nodeNum + 1;
+      for node = 3:NumNodes
+        if OnlyBasicOps % can't use `iff` here b/c we are returning a function handle
+          op = testCase.BasicOps{mod(nodeNum, numOps)+1};
+        else
+          op = testCase.MainOps{mod(nodeNum, numOps)+1};
         end
+        
+        % we'll use this to distribute nodes across layers evenly
+        parentANode = mod((node-3), Depth) + 1; 
+        parentBNode = mod((node-2), Depth) + 1;
+        % create new signal from nodes in previous layer
+        switch func2str(op)  
+          % for ops that do not create a new signal upon posting 1 to
+          % 'testCase.A', change op to '@identity'
+          case {'nop', 'post', 'subscriptable', 'onValue', 'identity'}
+            op = @identity;
+            sigs{node} = feval(op, sigs{parentANode});
+          case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
+            sigs{node} = feval(op, sigs{parentANode}, sigs{parentBNode});
+          case {'map'}
+            sigs{node} = feval(op, sigs{parentANode}, @identity);
+          case {'scan'}
+            sigs{node} = feval(op, sigs{parentANode}, @plus, sigs{parentBNode});
+        end
+        nodeNum = nodeNum + 1;
       end
       
       % create an empty array that will grow
