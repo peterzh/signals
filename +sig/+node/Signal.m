@@ -30,15 +30,6 @@ classdef Signal < sig.Signal & handle
       this.Node.Name = v;
     end
     
-    function [varargout] = nop(varargin)
-      %NOP Does nothing (but can take any number of inputs)
-      % For method call benchmarking
-      if nargout > 0
-        [varargout{1:nargout}] = deal([]);
-      end
-      
-    end
-    
     function s = subscriptable(this)
       node = sig.node.Node(this.Node, 'sig.transfer.identity');
       s = sig.node.SubscriptableSignal(node);

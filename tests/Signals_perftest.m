@@ -25,26 +25,26 @@ classdef Signals_perftest < matlab.perftest.TestCase
     Net % Signals network ('sig.Net' object)
     A % origin signal ('sig.node.OriginSignal' object)
     B % origin signal ('sig.node.OriginSignal' object)
-    Reps = 1000 % number of test repetitions 
+    Reps = 1000 % number of test repetitions
+    MexOps % operations which are run directly in compiled mexnet
   end
   
   properties (TestParameter)
     % main operations to test (whose results are posted in the paper)
-    MainOps = {@nop, @post, @gt, @ge, @lt, @le, @eq,... 
-      @plus, @minus, @times, @rdivide, @onValue, @identity, @map, @scan,... 
-      @subscriptable}
-    % logical/arithmetical subset of operations to test (operations which
-    % are computed directly in compiled mexnet)
-    BasicOps = {@gt, @ge, @lt, @le, @eq,...
-      @plus, @minus, @times, @rdivide}
+    MainOps = {@post, @gt, @ge, @lt, @le, @eq, @plus, @minus, @times, ... 
+      @rdivide, @map, @scan, @subscriptable, @onValue}
+    % logical/arithmetical subset of operations to test
+    BasicOps = {@gt, @ge, @lt, @le, @eq, @plus, @minus, @times, @rdivide}
+    %those operations which are run directly in compiled mexnet
+    mexOpKeys = num2cell([1:6 10:14 30 40])
     % sig.node.Signal method operations which have transfer functions 
     % (those not included are redundant on these included)
     SignalsOps = {@at, @keepWhen, @mapn, @cond, @selectFrom, @indexOfFirst,... 
-      @merge, @to, @skipRepeats, @delay, @flattenStruct, @flatten, @log,...
+      @merge, @to, @skipRepeats, @delay, @identity, @flattenStruct, @flatten, @log,...
       @subsref}
     % number of total nodes in the network
     NumNodes = {30 120 350 1000}
-    % number of layers of nodes in the network after "input layer"
+    % number of layers of nodes in the network
     Depth = {2 5 10 20}
     % flag for whether or not to only use logical/scalar ops
     OnlyBasicOps = {1 0};
@@ -57,6 +57,10 @@ classdef Signals_perftest < matlab.perftest.TestCase
       testCase.Net = sig.Net;
       testCase.A = testCase.Net.origin('A');
       testCase.B = testCase.Net.origin('B');
+      
+      mexOpVals = {@plus, @minus, @times, @mtimes, @rdivide, @mrdrivide,...
+        @gt, @ge, @lt, @le, @eq, @numel, @flattenStruct};
+      testCase.MexOps = containers.Map(testCase.mexOpKeys, mexOpVals);
     end
     
   end
@@ -72,13 +76,10 @@ classdef Signals_perftest < matlab.perftest.TestCase
         case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
           c = feval(MainOps, testCase.A, testCase.B); %#ok<*NASGU>
           post(testCase.B, 2);
-        % 'identity'
-        case {'identity'}
-          c = feval(MainOps, testCase.A);
         % listener ('onValue') & 'map' ops
         case {'onValue', 'map'}
-          f = @plus;
-          c = feval(MainOps, testCase.A, @(x) f(1,x));
+          f = @identity;
+          c = feval(MainOps, testCase.A, f);
         % 'scan'
         case {'scan'}
           f = @plus;
@@ -93,17 +94,10 @@ classdef Signals_perftest < matlab.perftest.TestCase
       
       % test op
       switch func2str(MainOps)
-        case {'nop', 'post'}
+        case {'post'}
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
               feval(MainOps, testCase.A, 1);
-            end
-          end
-        case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times',...
-            'rdivide', 'onValue', 'map', 'scan', 'identity'}
-          while (testCase.keepMeasuring)
-            for i = 1:testCase.Reps
-              post(testCase.A, 1); % this post will trigger the update of signal 'c', defined above
             end
           end
         case {'subscriptable'}
@@ -111,7 +105,13 @@ classdef Signals_perftest < matlab.perftest.TestCase
             for i = 1:testCase.Reps
               post(testCase.A, s); % this post will trigger the update of signal 'c_A', defined above
             end
-          end
+          end  
+        otherwise
+          while (testCase.keepMeasuring)
+            for i = 1:testCase.Reps
+              post(testCase.A, 1); % this post will trigger the update of signal 'c', defined above
+            end
+          end        
       end
       
     end
@@ -142,21 +142,20 @@ classdef Signals_perftest < matlab.perftest.TestCase
         end
         
         % we'll use this to distribute nodes across layers evenly
-        parentANode = mod((node-3), Depth) + 1; 
-        parentBNode = mod((node-2), Depth) + 1;
+        parentNode = mod((node-3), Depth) + 1; 
         % create new signal from nodes in previous layer
         switch func2str(op)  
           % for ops that do not create a new signal upon posting 1 to
-          % 'testCase.A', change op to '@identity'
-          case {'nop', 'post', 'subscriptable', 'onValue', 'identity'}
-            op = @identity;
-            sigs{node} = feval(op, sigs{parentANode});
+          % 'testCase.A', change op to '@gt'
+          case {'post', 'subscriptable', 'onValue'}
+            op = @gt;
+            sigs{node} = feval(op, sigs{parentNode}, sigs{2});
           case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
-            sigs{node} = feval(op, sigs{parentANode}, sigs{parentBNode});
+            sigs{node} = feval(op, sigs{parentNode}, sigs{2});
           case {'map'}
-            sigs{node} = feval(op, sigs{parentANode}, @identity);
+            sigs{node} = feval(op, sigs{parentNode}, @identity);
           case {'scan'}
-            sigs{node} = feval(op, sigs{parentANode}, @plus, sigs{parentBNode});
+            sigs{node} = feval(op, sigs{parentNode}, @plus, sigs{2});
         end
         nodeNum = nodeNum + 1;
       end
