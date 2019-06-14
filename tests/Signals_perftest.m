@@ -76,8 +76,8 @@ classdef Signals_perftest < matlab.perftest.TestCase
         case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
           c = feval(MainOps, testCase.A, testCase.B); %#ok<*NASGU>
           post(testCase.B, 2);
-        % listener ('onValue') & 'map' ops
-        case {'onValue', 'map'}
+        % 'map'
+        case {'map'}
           f = @identity;
           c = feval(MainOps, testCase.A, f);
         % 'scan'
@@ -90,6 +90,9 @@ classdef Signals_perftest < matlab.perftest.TestCase
           s = struct('A', 1);
           c = feval(MainOps, testCase.A);
           c_A = c.A;
+        case {'onValue'}
+          f = @(v) nop(v);
+          c = feval(MainOps, testCase.A, f);
       end
       
       % test op
