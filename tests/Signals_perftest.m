@@ -143,7 +143,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
         
         % we'll use this to distribute nodes across layers evenly
         if mod((node-3), Depth) == 0
-          parentNode = sigs{2};
+          parentNode = 2;
         else
           parentNode = node - 1;
         end
