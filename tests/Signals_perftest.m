@@ -142,20 +142,23 @@ classdef Signals_perftest < matlab.perftest.TestCase
         end
         
         % we'll use this to distribute nodes across layers evenly
-        parentNode = mod((node-3), Depth) + 1; 
-        % create new signal from nodes in previous layer
+        if mod((node-3), Depth) == 0
+          parentNode = sigs{2};
+        else
+          parentNode = node - 1;
+        end
         switch func2str(op)  
           % for ops that do not create a new signal upon posting 1 to
           % 'testCase.A', change op to '@gt'
           case {'post', 'subscriptable', 'onValue'}
             op = @gt;
-            sigs{node} = feval(op, sigs{parentNode}, sigs{2});
+            sigs{node} = feval(op, sigs{parentNode}, sigs{1});
           case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
-            sigs{node} = feval(op, sigs{parentNode}, sigs{2});
+            sigs{node} = feval(op, sigs{parentNode}, sigs{1});
           case {'map'}
             sigs{node} = feval(op, sigs{parentNode}, @identity);
           case {'scan'}
-            sigs{node} = feval(op, sigs{parentNode}, @plus, sigs{2});
+            sigs{node} = feval(op, sigs{parentNode}, @plus, sigs{1});
         end
         nodeNum = nodeNum + 1;
       end
@@ -172,9 +175,9 @@ classdef Signals_perftest < matlab.perftest.TestCase
       
       
       % test network (i.e. propogations through the network)
-      post(testCase.B, 2);
+      post(sigs{1}, 2);
       while (testCase.keepMeasuring)
-          post(testCase.A, 1);
+          post(sigs{2}, 1);
       end
       
       % grow an array every time `A` posts 
