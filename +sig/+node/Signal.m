@@ -318,16 +318,15 @@ classdef Signal < sig.Signal & handle
       %   `varargin`: contains one (or more) input values/signals, `sigs`, 
       %   used to create the output signal; a string, `funName`, of the
       %   transfer function; an optional function handle, `funArg`, which
-      %   can be applied by the transfer function (e.g. the transfer
-      %   function `mapn` could apply the function handle `@plus`); and an
-      %   optional string `formatSpec`, which is used to format the name of
-      %   the output signal
+      %   can be applied by the transfer function, and an optional string
+      %   `formatSpec`, which is used to format the name of the output
+      %   signal
       %
       % Outputs: `tr`: output signal
       %
-      % Example: 
-      %   `tr = s1.applyTransfer(s2, funName, funArg, formatSpec)`
-      %   `tr = s1.applyTransfer(s2, 5, funName, funArg, formatSpec)`
+      % Examples: 
+      %   tr = s1.applyTransfer(s2, 'mapn', @plus)
+      %   tr = s1.applyTransfer(s2, 5, 'mapn', @plus, '%s.mapn(%s, %s)')
       %
       % *Note: The transfer function will be passed `funArg`, if existing,
       % at each invocation.
