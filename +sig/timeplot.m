@@ -1,32 +1,32 @@
 function axh = timeplot(varargin)
-%SIG.TIMEPLOT Plots input Signals against time
-% Creates a subplot for each Signal input and plots the values of that
-% Signal as they update.  If a StructRef or Registry is provided, each
-% field is plotted separately.  The Name field or field name is used to
-% identify the Signals, however if these are empty, the name of the input
-% variable is used instead.
+%SIG.TIMEPLOT Plots signals over time
+% Creates a subplot for each signal input and plots its values as it
+% updates. If a StructRef or Registry is provided, each field is plotted 
+% as an individual signal. Each signal's "Name" field is used as its 
+% identification; however, if it is empty, the variable name is used
+% instead.
 %
-% Clicking on each subplot will cycle through the three plot modes.  The
+% Clicking on each subplot will cycle through the three plot modes. The
 % default mode (0) creates a stair plot with each value update marked with
-% an x.  Mode 1 plots each value as a discrete point.  Mode 2 plots a
-% simple line, with now markers to indicate value updates.  Note, if a
-% Signal takes a vector or matrix as its value, the mode is switched to 1
-% and the size of the array is added as an text annotation.  If the value
-% is a charecter array, the mode is switched to 1 and the value is plotted
+% an "x". Mode 1 plots each value as a discrete point. Mode 2 plots a
+% simple line, with "now" markers to indicate value updates. Note, if a
+% signal takes a vector or matrix as its value, the mode is switched to 1
+% and the size of the array is added as a text annotation. If the value
+% is a character array, the mode is switched to 1 and the value is plotted
 % as a text annotation.
 %
 % Inputs:
-%   One or more Signals objects or StructRef (sub-)classes.
+%   One or more Signals or StructRef (including subclass) objects.
 %
 % Optional name-value pairs:
-%   'parent' - Figure handle for creating plots.  If none is
+%   'parent' - Figure handle for creating plots. If none is
 %     provided, a new figure is created.
 %   'tWin' - Length of time window to plot in seconds (default 5)
-%   'mode' - Plotting mode, either 0, 1 or 2.  May be single value to set
+%   'mode' - Plotting mode, either 0, 1 or 2. May be a single value to set
 %   all plots, or an array the length of input Signals.  
 %
 % Outputs:
-%   axh - A list of axes handles, one for each plot
+%   'axh' - A list of axes handles, one for each subplot.
 %
 % Example:
 %   axh = sig.timeplot(x, y, z, t);
@@ -40,43 +40,46 @@ function axh = timeplot(varargin)
 % TODO Deal with strings, arrays, structures, cell arrays
 
 %% Process inputs
-% Find the 'parent' named value
-[present, value, idx] = namedArg(varargin, 'parent');
-if present
-  figh = value;
-  varargin(idx:idx+1) = []; % Remove from var list
-else % If no handle provided, create new figure
-  figh = figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w');
+
+% set defaults for potential name-value paired input args
+argsStruct.figh = ...
+  figure('Name', 'LivePlot', 'NumberTitle', 'off', 'Color', 'w');
+argsStruct.tWin = 5;
+argsStruct.mode = 0;
+firstName = find(cellfun(@ischar, varargin), 1); % look for name-value paired args
+if ~isempty(firstName) % if there are name-value pairs
+  pairedArgs = reshape(varargin(firstName:end),2,[]); % get paired args
+  % if the name-value pairs don't match up, throw error
+  if ~all(cellfun(@ischar, (pairedArgs(1,:)))) ||...
+      ~all(cellfun(@isnumeric, (pairedArgs(2,:)))) ||...
+      mod(length(varargin(firstName:end)),2)
+    error('Error matching name-value paired input args');
+  end
+  
+  % for the specified input args, change default input args to new values
+  for pair = pairedArgs
+    argName = pair{1};
+    if any(strcmpi(argName, fieldnames(argsStruct)))
+      argsStruct.(argName) = pair{2};
+    end
+  end
 end
-% set figure position to be lower right-hand corner
-g = groot;
-scrnSz = g.ScreenSize(3:4);
-figh.Position = [scrnSz(1)-550, 50, 500, 700];
-% Find 'mode' named value
-[present, value, idx] = namedArg(varargin, 'mode');
-if present
-  mode = value;
-  varargin(idx:idx+1) = []; % Remove from var list
-else % Default mode is 0
-  mode = 0;
-end
-% Find 'tWin' named value
-[present, value, idx] = namedArg(varargin, 'tWin');
-if present
-  tWin = value;
-  varargin(idx:idx+1) = [];  % Remove from var list
-else % Default time window is 5 seconds
-  tWin = 5;
-end
+mode = argsStruct.mode;
+tWin = argsStruct.tWin;
+figh = argsStruct.figh;
+
+varargin = varargin(1:firstName-1); % get only the signal input args
 % Clear the figure
 clf(figh);
+
+%% Prep signals to plot
 
 % Initialize cell array to store all signals and their names
 signals = cell(length(varargin),1);
 names = cell(length(varargin),1);
 for i = 1:length(varargin)
   s = varargin{i};
-  % Get the name of the signal.  If Name is empty, use the variable name
+  % Get the name of the signal. If Name is empty, use the variable name
   name = iff(isempty(s.Name), inputname(i), s.Name);
   switch class(s)
     case {'sig.Registry', 'StructRef'}
@@ -124,6 +127,8 @@ axh = matlab.graphics.axis.Axes.empty(n,0);
 if numel(mode) == 1
   mode = repmat(mode, n, 1);
 end
+
+%% Create signal subplots
 
 for i = 1:n
   % For each Signal, create a subplot

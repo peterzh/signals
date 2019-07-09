@@ -387,6 +387,7 @@ classdef ExpTest < handle
         global GL GLU AGL %#ok<*TLEV,NUSED> initialize vars needed by MOGL subroutines
         
         % initialize PTB Screen
+        Screen('Preference', 'WindowShieldingLevel', 0); % move PTB Screen to background
         nScreens = Screen('Screens');
         screenNum = iff(nScreens(end) >= 2, 1, 0);
         obj.ScreenH = Screen('OpenWindow', screenNum, 0, [0,0,960,400], 32); %1280, 600
