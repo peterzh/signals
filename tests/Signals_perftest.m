@@ -1,131 +1,176 @@
 classdef Signals_perftest < matlab.perftest.TestCase
 % Runs performance tests for Signals
 %
-% Performs benchmarking for various operations on signals: 
-% nops, assignment ops, logical ops, scalar arithmetic ops, listener ops,
-% and signal methods: `map`, `scan`, `identity`, `subscriptable`, etc...
-% (via `test_mainOps` and `test_signalsOps` methods)
+% Performs benchmarking for updating a signal via various operations (via
+% `test_MexOps` and `test_SignalOps`), and performs benchmarking for 
+% updating each signal in networks of various widths and depths (30 to 
+% 1000 nodes spread across 2 to 20 layers, via `test_network` method). 
+% (*Note: for reference, the `docs\examples\advancedChoiceWorld` exp def 
+% has 338 nodes over 10 layers).
 %
-% And performs benchmarking for propogations through each signal in 
-% networks of various widths and depths (30 to 1000 nodes spread across 2
-% to 20 layers) (via `test_networkOps` method) (*Note: for reference, the 
-% `docs\examples\advancedChoiceWorld` exp def has 338 nodes over 10 layers)
-%
-% In this class, the 'Net' property is a Signals network, in which the 
-% 'A' & 'B' properties are treated as "input layer" signals from which all 
-% other signals are defined.
+% In this class, the `Net` property is a Signals network, in which the 
+% `A` & `B` properties are treated as "input layer" origin signals from 
+% which all other signals are created.
 %   
 % Example - display the mean measured time for running each test:
-%   results = runperf('Signals_perftest2.m');
+%   results = runperf('Signals_perftest.m');
 %   fullTableResults = vertcat(results.Samples);
 %   meanTimeByTestTable = varfun(@mean, fullTableResults,...
 %     'InputVariables', 'MeasuredTime', 'GroupingVariables', 'Name')
+%
+% @todo: cases for `delay` and `flatten` need to be added to `test_SignalOps`
   
-  properties
-    Net % Signals network ('sig.Net' object)
-    A % origin signal ('sig.node.OriginSignal' object)
-    B % origin signal ('sig.node.OriginSignal' object)
-    Reps = 1000 % number of test repetitions
-    MexOps % operations which are run directly in compiled mexnet
+  properties 
+    
+    % Signals network (`sig.Net` object)
+    Net
+    % Origin signal (`sig.node.OriginSignal` object)
+    A
+    % Origin signal (`sig.node.OriginSignal` object)
+    B
+    % Number of test repetitions
+    Reps = 1000
+    % Operations which are run directly in compiled mexnet
+    % (`Containers.Map` object with keys as numeric op codes and values as
+    % signal methods)
+    MexOps  
+    
   end
   
   properties (TestParameter)
-    % main operations to test (whose results are posted in the paper)
-    MainOps = {@post, @gt, @ge, @lt, @le, @eq, @plus, @minus, @times, ... 
-      @rdivide, @map, @scan, @subscriptable, @onValue}
-    % logical/arithmetical subset of operations to test
-    BasicOps = {@gt, @ge, @lt, @le, @eq, @plus, @minus, @times, @rdivide}
-    %those operations which are run directly in compiled mexnet
-    mexOpKeys = num2cell([1:6 10:14 30 40])
+    
+    % The numeric values corresponding to the op code in
+    % `sig.node.transfererOpCode` for those operations which are run 
+    % in the compiled mexnet. 
+    MexOpKey = num2cell([1:6 10:14 30 40])
     % sig.node.Signal method operations which have transfer functions 
-    % (those not included are redundant on these included)
-    SignalsOps = {@at, @keepWhen, @mapn, @cond, @selectFrom, @indexOfFirst,... 
-      @merge, @to, @skipRepeats, @delay, @identity, @flattenStruct, @flatten, @log,...
-      @subsref}
-    % number of total nodes in the network
+    % (in +sig/+transfer). Methods not included are redundant on these.
+    SignalOp = {@subscriptable, @at, @keepWhen, @map, @mapn, @scan,... 
+      @selectFrom, @indexOfFirst, @merge, @to, @skipRepeats, @delay, ...
+      @identity, @flatten, @log, @subsref}
+    % Number of total nodes in the network
     NumNodes = {30 120 350 1000}
-    % number of layers of nodes in the network
+    % Number of layers of nodes in the network
     Depth = {2 5 10 20}
-    % flag for whether or not to only use logical/scalar ops
-    OnlyBasicOps = {1 0};
+    % Flag for whether or not to only test MexOps in `test_network`
+    OnlyMexOps = {0 1}
   end
   
   methods (TestMethodSetup)
     
     function createNetwork(testCase)
-      % creates the signals network in which we will run the tests
+      % Creates the signals network in which we will run the tests
+      
       testCase.Net = sig.Net;
       testCase.A = testCase.Net.origin('A');
-      testCase.B = testCase.Net.origin('B');
-      
-      mexOpVals = {@plus, @minus, @times, @mtimes, @rdivide, @mrdrivide,...
-        @gt, @ge, @lt, @le, @eq, @numel, @flattenStruct};
-      testCase.MexOps = containers.Map(testCase.mexOpKeys, mexOpVals);
+      testCase.B = testCase.Net.origin('B');      
+      % The operations which are run in the compiled mexnet 
+      MexOpVal = {@plus, @minus, @times, @mtimes, @rdivide, @mrdrivide,...
+        @gt, @ge, @lt, @le, @eq, @numel, @flattenStruct};  
+      % Containers.Map object for identifying MexOpVals by their MexOpKeys
+      testCase.MexOps = containers.Map(testCase.MexOpKey, MexOpVal);
     end
     
   end
     
   methods (Test)
     
-    function test_mainOps(testCase, MainOps)
-      % benchmarks operations on a single signal without propogations
+    function test_MexOps(testCase, MexOpKey)
+      % Benchmarks updating a single signal with mex operations.
+      %
+      % There are two "switch" blocks: in the first, we create a signal 
+      % from the operation we wish to test, and in the second we test the 
+      % update of that signal for that operation.
       
-      % set-up op to test
-      switch func2str(MainOps)
-        % logical and scalar ops
-        case {'gt', 'ge', 'lt', 'le', 'eq', 'plus', 'minus', 'times', 'rdivide'}
-          c = feval(MainOps, testCase.A, testCase.B); %#ok<*NASGU>
+      % create signal `c` from op
+      switch MexOpKey
+        
+        % logical & scalar arithmetic operations
+        case {1,2,3,5,10,11,12,13,14,30}
+          % create signal `c` from op:
+          c = feval(testCase.MexOps(MexOpKey), testCase.A, testCase.B); %#ok<*NASGU>
           post(testCase.B, 2);
-        % 'map'
-        case {'map'}
-          f = @identity;
-          c = feval(MainOps, testCase.A, f);
-        % 'scan'
-        case {'scan'}
-          f = @plus;
-          c = feval(MainOps, testCase.A, f, testCase.B);
-          post(testCase.B, 0);
-        % 'subscriptable'
-        case {'subscriptable'}
-          s = struct('A', 1);
-          c = feval(MainOps, testCase.A);
-          c_A = c.A;
-        case {'onValue'}
-          f = @(v) nop(v);
-          c = feval(MainOps, testCase.A, f);
+          
+        % matrix arithmetic
+        case {4,6}
+          c = feval(testCase.MexOps(MexOpKey), testCase.A, testCase.B);
+          post(testCase.B, magic(2));
+          
+        % `flattenStruct`
+        case {40}
+          c = feval(testCase.MexOps(MexOpKey), testCase.B);
+          s = struct('a', testCase.A);
+          post(testCase.B, s);
+          
       end
       
-      % test op
-      switch func2str(MainOps)
-        case {'post'}
+      % test time it takes for op to update signal `c`      
+      switch mexOpKey
+        
+        % matrix arithmetic
+        case {4,6}
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
-              feval(MainOps, testCase.A, 1);
+              post(testCase.A, magic(2));
             end
           end
-        case {'subscriptable'}
-          while (testCase.keepMeasuring)
-            for i = 1:testCase.Reps
-              post(testCase.A, s); % this post will trigger the update of signal 'c_A', defined above
-            end
-          end  
+          
         otherwise
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
-              post(testCase.A, 1); % this post will trigger the update of signal 'c', defined above
+              post(testCase.A, 1);
             end
-          end        
+          end
+      end
+      
+    end      
+   
+    function test_SignalOps(testCase, SignalOp)
+      % Benchmarks updating a single signal with signal methods
+      %
+      % In the "switch" block, we create a signal from the signal method
+      % we wish to test, and in the "while" loop we we test the update of 
+      % that signal for that method.
+      
+      % create signal `c` from method
+      switch func2str(SignalOp)
+        
+            % methods that create a signal from only 1 input
+            case{'skipRepeats', 'identity', 'log'}
+              c = feval(SignalOp, testCase.A);
+              
+            % methods that can create a signal from only 2 inputs
+            case {'at', 'keepWhen', 'selectFrom', 'indexOfFirst', 'merge', 'to',  }
+              c = feval(SignalOp, testCase.A, testCase.B);
+              post(testCase.B, 2);
+              
+            case {'subscriptable'}
+              s = struct('a', 1);
+              c = feval(SignalOp, testCase.A);
+              c_a = c.a;
+              
+            case {'subsref'}
+              c = feval(SignalOp, testCase.A, 2);
+
+            case {'map', 'mapn'}
+              c = feval(SignalOp, testCase.A, @identity);
+              
+            case {'scan'}
+              c = feval(SignalOp, @plus, 0);
+
+      end
+      
+      % test time it takes for method to update `c`:
+      while (testCase.keepMeasuring)
+        for i = 1:testCase.Reps
+          post(testCase.A, 1);
+        end
       end
       
     end
     
-    function test_signalsOps(testCase, SignalsOps)
-      % @todo: create this test modeled off the above
-    end
-    
-    function test_networkOps(testCase, OnlyBasicOps, NumNodes, Depth)
-      % benchmarks operations on a Signals network upon posting to a signal
-      % which updates all other signals in the network
+    function test_network(testCase, NumNodes, Depth, OnlyMexOps)
+      % benchmarks updating all signals in networks of various sizes
       
       % set-up network to test
       sigs = cell(NumNodes); % cell array of all signals to be tested
@@ -133,26 +178,24 @@ classdef Signals_perftest < matlab.perftest.TestCase
       sigs{2} = testCase.B;
       
       % number of ops to sample evenly
-      numOps = iff(OnlyBasicOps, length(testCase.BasicOps),... 
+      numOps = iff(OnlyMexOps, length(testCase.BasicOps),... 
         length(testCase.MainOps));
       nodeNum = 1; % counter
       
       for node = 3:NumNodes
-        if OnlyBasicOps % can't use `iff` here b/c we are returning a function handle
+        % can't use `iff` here b/c we are returning a function handle
+        if OnlyBasicOps
           op = testCase.BasicOps{mod(nodeNum, numOps)+1};
         else
           op = testCase.MainOps{mod(nodeNum, numOps)+1};
         end
         
         % we'll use this to distribute nodes across layers evenly
-        if mod((node-3), Depth) == 0
-          parentNode = 2;
-        else
-          parentNode = node - 1;
-        end
+        parentNode = iff(mod((node-3), Depth) == 0, 2, node-1);
+        
         switch func2str(op)  
           % for ops that do not create a new signal upon posting 1 to
-          % 'testCase.A', change op to '@gt'
+          % `testCase.A`, change op to `@gt`
           case {'post', 'subscriptable', 'onValue'}
             op = @gt;
             sigs{node} = feval(op, sigs{parentNode}, sigs{1});
@@ -175,7 +218,6 @@ classdef Signals_perftest < matlab.perftest.TestCase
       % @fixme: currently the code below causes a MATLAB crash,
       % presumably b/c 'store' function is called repeatedly too quickly
       %growArrayListener = onValue(testCase.A, @store);
-      
       
       % test network (i.e. propogations through the network)
       post(sigs{1}, 2);

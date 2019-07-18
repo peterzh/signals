@@ -286,21 +286,22 @@ classdef Signal < sig.Signal & handle
     end
     
     function fs = flattenStruct(this)
-      % Use a struct with signal fields as a blueprint to wire up signals
-      % as inputs to this target so that their values will set the field
-      % values directly in the target's struct value all done in mexnet
-      % according to the transfer opcode
+      % Returns a signal `fs` whose value is a struct containing 
+      % "flattened" fields for the signal fields in the struct that 
+      % `this` has as its value. 
+      %
+      % Uses a signal (whose value is a struct with signal fields) as a 
+      % blueprint to wire up signals as inputs to this target. The values
+      % of these signal fields will be directly set as the target signal's
+      % struct field values. This is done in mexnet according to the 
+      % transfer opCode.
+      
       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', [], '%s.flattenStruct()');
-%       state = StructRef;
-%       state.unappliedInputChanges = false;
-%       state.inputsToSubsref = containers.Map(...
-%         'KeyType', 'uint64', 'ValueType', 'any');
-%       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', state,...
-%         '%s.flattenStruct()');
+
     end
 
     function fs = flatten(this)
-      % all done in mexnet according to the transfer opcode
+
       state = StructRef;
       state.unappliedInputChanges = false;
       fs = applyTransferFun(this, 'sig.transfer.flatten', state,...
@@ -310,9 +311,16 @@ classdef Signal < sig.Signal & handle
     function tr = applyTransferFun(varargin)
       % New signal derived by applying a transfer function to input node(s)
       % 
-      % This function creates a node from input values (which can be
-      % signals or non-signals), then creates a new signal containing the
-      % new node.
+      % This function creates a node from the nodes of input values (these 
+      % input values can be signals or non-signals), then creates a new 
+      % signal from the new node.
+      %
+      % Transfer functions work at a lower	level than transformations like 
+      % `map` or `mapn`, instead operating directly with the underlying 
+      % input nodes and output node,potentially using both their current 
+      % *and* new values.
+      %
+      % [tr] = s1.applyTransferFun([s2], ..., funName, funArg, formatSpec)
       % 
       % Inputs:
       %   `varargin`: contains one (or more) input values/signals, `sigs`, 
@@ -325,18 +333,18 @@ classdef Signal < sig.Signal & handle
       % Outputs: `tr`: output signal
       %
       % Examples: 
-      %   tr = s1.applyTransfer(s2, 'mapn', @plus)
-      %   tr = s1.applyTransfer(s2, 5, 'mapn', @plus, '%s.mapn(%s, %s)')
+      %   tr = s1.applyTransferFun(s2, 'mapn', @plus)
+      %   tr = s1.applyTransferFun(s2, 5, 'mapn', @plus, '%s.mapn(%s, %s)')
       %
       % *Note: The transfer function will be passed `funArg`, if existing,
       % at each invocation.
-      
-      % destructure input args:
-      [inpVals{1:nargin-3}, funName, funArg, formatSpec] = varargin{:};
-      inpNodes = sig.node.from(inpVals); % get/create nodes from input vals
+            
+      [inpVals{1:nargin-3}, funName, funArg, formatSpec] = varargin{:}; % destructure input args
+      inpNodes = sig.node.from(inpVals); % get/create nodes from/for input vals
       node = sig.node.Node(inpNodes, funName, funArg); % create node for output signal
       node.FormatSpec = formatSpec;
       tr = sig.node.Signal(node); % build new signal from new node
+      
     end
     
     function l = log(this, clockFun)
@@ -423,23 +431,23 @@ classdef Signal < sig.Signal & handle
     end
     
     function qevt = setEpochTrigger(newPeriod, t, x, threshold)
-      % returns a signal that is triggered ('qevt') when another signal
-      % ('x') doesn't change over some time period signified by a third
-      % signal ('newPeriod')
+      % returns a signal that is triggered (`qevt`) when another signal
+      % (`x`) doesn't change over some time period signified by a third
+      % signal (`newPeriod`)
       %
       % Inputs:
-      %   'newPeriod' - a signal containing the period of time over which
-      %   to check if signal 'x' has had its value changed more than
-      %   'threshold'
-      %   't' - a signal for time-keeping
-      %   'x' - a signal that triggers 'qevt' when its value doesn't change
-      %   by more than 'threshold' over 'newPeriod'
-      %   'threshold' - a numeric value that sets the maximum amount 'x'
-      %   can change by within 'newPeriod' to trigger 'qevt'
+      %   `newPeriod` - a signal containing the period of time over which
+      %   to check if signal `x` has had its value changed more than
+      %   `threshold`
+      %   `t` - a signal for time-keeping
+      %   `x` - a signal that triggers `qevt` when its value doesn't change
+      %   by more than `threshold` over `newPeriod`
+      %   `threshold` - a numeric value that sets the maximum amount `x`
+      %   can change by within `newPeriod` to trigger `qevt`
       %
       % Outputs:
-      %   'qevt' - a signal that is triggered when 'x' changes by less than
-      %   'threshold' over 'newPeriod'
+      %   `qevt` - a signal that is triggered when `x` changes by less than
+      %   `threshold` over `newPeriod`
       
       if nargin < 4
         threshold = 0;
