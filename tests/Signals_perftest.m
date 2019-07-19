@@ -43,7 +43,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
     MexOpKey = num2cell([1:6 10:14 30 40])
     % sig.node.Signal method operations which have transfer functions 
     % (in +sig/+transfer). Methods not included are redundant on these.
-    SignalOp = {@subscriptable, @at, @keepWhen, @map, @mapn, @scan,... 
+    SignalOps = {@subscriptable, @at, @keepWhen, @map, @mapn, @scan,... 
       @selectFrom, @indexOfFirst, @merge, @to, @skipRepeats, @identity,... 
       @log, @subsref}
     % Number of total nodes in the network
@@ -62,7 +62,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
       testCase.A = testCase.Net.origin('A');
       testCase.B = testCase.Net.origin('B');      
       % The operations which are run in the compiled mexnet 
-      MexOpVal = {@plus, @minus, @times, @mtimes, @rdivide, @mrdrivide,...
+      MexOpVal = {@plus, @minus, @times, @mtimes, @rdivide, @mrdivide,...
         @gt, @ge, @lt, @le, @eq, @numel, @flattenStruct};  
       % Containers.Map object for identifying MexOpVals by their MexOpKeys
       testCase.MexOps = containers.Map(testCase.MexOpKey, MexOpVal);
@@ -99,7 +99,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
       end
       
       % test time it takes for op to update signal `c`      
-      switch mexOpKey        
+      switch MexOpKey        
         % matrix arithmetic
         case {4,6}
           while (testCase.keepMeasuring)
@@ -116,7 +116,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
       end      
     end      
    
-    function test_SignalOps(testCase, SignalOp)
+    function test_SignalOps(testCase, SignalOps)
       % Benchmarks updating a single signal with signal methods
       %
       % There are two `switch` blocks: in the first, we create a signal 
@@ -124,28 +124,28 @@ classdef Signals_perftest < matlab.perftest.TestCase
       % update of that signal for that method.
       
       % create signal `c` from method
-      switch func2str(SignalOp)        
+      switch func2str(SignalOps)        
             % methods that create a signal from only 1 input
             case{'skipRepeats', 'identity', 'log'}
-              c = feval(SignalOp, testCase.A);              
+              c = feval(SignalOps, testCase.A);              
             % methods that can create a signal from only 2 inputs
             case {'at', 'keepWhen', 'selectFrom', 'indexOfFirst', 'merge', 'to'}
-              c = feval(SignalOp, testCase.A, testCase.B);
+              c = feval(SignalOps, testCase.A, testCase.B);
               post(testCase.B, 2);              
             case {'subscriptable'}
               s = struct('a', 1);
-              c = feval(SignalOp, testCase.A);
+              c = feval(SignalOps, testCase.A);
               c_a = c.a;              
             case {'subsref'}
               c = testCase.A(1);
             case {'map', 'mapn'}
-              c = feval(SignalOp, testCase.A, @identity);              
+              c = feval(SignalOps, testCase.A, @identity);              
             case {'scan'}
-              c = feval(SignalOp, @plus, 0);
+              c = feval(SignalOps, testCase.A, @plus, 0);
       end
       
       % test time it takes for method to update `c`:
-      switch func2str(SignalOp)        
+      switch func2str(SignalOps)        
         case {'subscriptable'}
           % special case: have to post a struct
           while (testCase.keepMeasuring)
@@ -166,13 +166,13 @@ classdef Signals_perftest < matlab.perftest.TestCase
       % benchmarks updating all signals in networks of various sizes
       
       % set-up network to test
-      sigs = cell(NumNodes); % cell array of all signals to be tested
+      sigs = cell(NumNodes, 1); % cell array of all signals to be tested
       sigs{1} = testCase.A;
       sigs{2} = testCase.B;
       
       % set ops as only MexOps if OnlyMexOps, else all ops
-      ops = iff(OnlyMexOps, testCase.MexOps(values),... 
-        [testCase.MexOps(values), SignalsOps]);  
+      ops = iff(OnlyMexOps, values(testCase.MexOps),... 
+        [values(testCase.MexOps), testCase.SignalOps]);  
       numOps = length(ops); % number of ops to sample evenly
       nodeNum = 1; % counter
       
@@ -185,11 +185,11 @@ classdef Signals_perftest < matlab.perftest.TestCase
         switch func2str(op)  
           % for ops that do not create a new signal upon posting 1 to
           % `testCase.A`, change op to `@gt`
-          case {'subscriptable', 'flattenStruct'}
+          case {'subscriptable', 'flattenStruct', 'log'}
             op = @gt;
             sigs{node} = feval(op, sigs{parentNode}, sigs{1});
           % for ops that create a signal for only one input
-          case {'skipRepeats', 'identity', 'log', 'numel'}
+          case {'skipRepeats', 'identity', 'numel'}
             sigs{node} = feval(op, sigs{parentNode});
           case {'subsref'}
             sigs{node} = sigs{parentNode}(1);
