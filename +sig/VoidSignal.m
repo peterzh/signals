@@ -123,7 +123,7 @@ classdef VoidSignal < sig.Signal
       s = this;
     end
     
-    function c = iff(this, that, theother)
+    function c = iff(this, thenThis, elseThis)
       c = sig.VoidSignal.instance(0);
     end
     
@@ -137,6 +137,10 @@ classdef VoidSignal < sig.Signal
     
     function s = size(this, dim)
       s = this;
+    end
+    
+    function qevt = setEpochTrigger(newPeriod, t, x, threshold)
+      qevt = newPeriod;
     end
     
     function [varargout] = subsref(a, s)
