@@ -96,14 +96,14 @@ classdef Signal < sig.Signal & handle
       seed = varargin{end};
       elems = varargin(1:2:end-1);
       funcs = varargin(2:2:end-1);
-      %% formatting
+      % formatting
       funStrs = mapToCell(@toStr, funcs);
       elemStrs = mapToCell(@(e)'%s', elems);
       formatSpec = ['%s.scan(' strJoin(reshape([elemStrs; funStrs], 1, []), ', ') ')'];
       if ~isempty(pars)
         formatSpec = [formatSpec '[' strJoin(mapToCell(@(e)'%s', pars), ', ') ']'];
       end
-      %% derive the scanning signal
+      % derive the scanning signal
       inps = sig.node.from([elems {seed} pars]); % input signals & values -> nodes
       node = sig.node.Node(inps, 'sig.transfer.scan', funcs);
       node.FormatSpec = formatSpec;
@@ -286,21 +286,22 @@ classdef Signal < sig.Signal & handle
     end
     
     function fs = flattenStruct(this)
-      % Use a struct with signal fields as a blueprint to wire up signals
-      % as inputs to this target so that their values will set the field
-      % values directly in the target's struct value all done in mexnet
-      % according to the transfer opcode
+      % Returns a signal `fs` whose value is a struct containing 
+      % "flattened" fields for the signal fields in the struct that 
+      % `this` has as its value. 
+      %
+      % Uses a signal (whose value is a struct with signal fields) as a 
+      % blueprint to wire up signals as inputs to this target. The values
+      % of these signal fields will be directly set as the target signal's
+      % struct field values. This is done in mexnet according to the 
+      % transfer opCode.
+      
       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', [], '%s.flattenStruct()');
-%       state = StructRef;
-%       state.unappliedInputChanges = false;
-%       state.inputsToSubsref = containers.Map(...
-%         'KeyType', 'uint64', 'ValueType', 'any');
-%       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', state,...
-%         '%s.flattenStruct()');
+
     end
 
     function fs = flatten(this)
-      % all done in mexnet according to the transfer opcode
+
       state = StructRef;
       state.unappliedInputChanges = false;
       fs = applyTransferFun(this, 'sig.transfer.flatten', state,...
@@ -308,31 +309,42 @@ classdef Signal < sig.Signal & handle
     end
     
     function tr = applyTransferFun(varargin)
-      % New signal derived by applying a transfer function to input nodes
+      % New signal derived by applying a transfer function to input node(s)
+      % 
+      % This function creates a node from the nodes of input values (these 
+      % input values can be signals or non-signals), then creates a new 
+      % signal from the new node.
       %
-      % [tr] = s1.applyTransfer([s2], ..., funName, funArg, formatSpec)
-      % returns a new signal tr whose values result from applying a
-      % transfer function called funName to a variable number of input
-      % signals or constant values. Transfer functions work at a lower
-      % level than transformations like like map or mapn, instead operating
-      % directly with the underlying input nodes and output node,
-      % potentially using both their current *and* new values.
+      % Transfer functions work at a lower level than transformations like 
+      % `map` or `mapn`, instead operating directly with the underlying 
+      % input nodes and output node,potentially using both their current 
+      % *and* new values.
       %
-      % This function creates a node with input nodes from each of the
-      % signals s1, s2,... (or for each non-signal values, creates a
-      % 'constant' node with that value). It then returns a sig.node.Signal
-      % tr containing the new node. It also sets the node's FormatSpec
-      % property as formatSpec.
+      % [tr] = s1.applyTransferFun([s2], ..., funName, funArg, formatSpec)
+      % 
+      % Inputs:
+      %   `varargin`: contains one (or more) input values/signals, `sigs`, 
+      %   used to create the output signal; a string, `funName`, of the
+      %   transfer function; an optional function handle, `funArg`, which
+      %   can be applied by the transfer function, and an optional string
+      %   `formatSpec`, which is used to format the name of the output
+      %   signal
       %
-      % The transfer function will also be passed the funArg variable at
-      % each invocation.
-      
-      % destructure arguments:
-      [sigs{1:nargin-3}, funName, funArg, formatSpec] = varargin{:};
-      inps = sig.node.from(sigs); % input signals & values -> nodes
-      node = sig.node.Node(inps, funName, funArg);
+      % Outputs: `tr`: output signal
+      %
+      % Examples: 
+      %   tr = s1.applyTransferFun(s2, 'mapn', @plus)
+      %   tr = s1.applyTransferFun(s2, 5, 'mapn', @plus, '%s.mapn(%s, %s)')
+      %
+      % *Note: The transfer function will be passed `funArg`, if existing,
+      % at each invocation.
+            
+      [inpVals{1:nargin-3}, funName, funArg, formatSpec] = varargin{:}; % destructure input args
+      inpNodes = sig.node.from(inpVals); % get/create nodes from/for input vals
+      node = sig.node.Node(inpNodes, funName, funArg); % create node for output signal
       node.FormatSpec = formatSpec;
-      tr = sig.node.Signal(node);
+      tr = sig.node.Signal(node); % build new signal from new node
+      
     end
     
     function l = log(this, clockFun)
@@ -416,6 +428,72 @@ classdef Signal < sig.Signal & handle
       for ii = 1:n
         callbacks{ii}(newValue);
       end
+    end
+    
+    function qevt = setEpochTrigger(newPeriod, t, x, threshold)
+      % returns a signal that is triggered (`qevt`) when another signal
+      % (`x`) doesn't change over some time period signified by a third
+      % signal (`newPeriod`)
+      %
+      % Inputs:
+      %   `newPeriod` - a signal containing the period of time over which
+      %   to check if signal `x` has had its value changed more than
+      %   `threshold`
+      %   `t` - a signal for time-keeping
+      %   `x` - a signal that triggers `qevt` when its value doesn't change
+      %   by more than `threshold` over `newPeriod`
+      %   `threshold` - a numeric value that sets the maximum amount `x`
+      %   can change by within `newPeriod` to trigger `qevt`
+      %
+      % Outputs:
+      %   `qevt` - a signal that is triggered when `x` changes by less than
+      %   `threshold` over `newPeriod`
+      
+      if nargin < 4
+        threshold = 0;
+      end
+      
+      newState = newPeriod.map(@initState);
+      
+      state = scan(t.delta(), @tUpdate,... scan time increments
+        x.delta(), @xUpdate,... scan x deltas
+        newState,... initial state on arming trigger
+        'pars', threshold); % parameters
+      state = state.subscriptable(); % allow field subscripting on state
+      
+      % event signal is derived by monitoring the 'armed' field of state
+      % for new false values (i.e. when the armed trigger is released).
+      qevt = state.armed.skipRepeats().not().then(true);
+      
+      % helper functions
+      
+      function state = initState(dur)
+        % return initial trigger state
+        state = struct('win', dur, 'remaining', dur, 'mvmt', 0, 'armed', true);
+      end
+      
+      function state = tUpdate(state, dt, ~)
+        % update trigger state based on a time increment
+        if state.armed % decrement time remaining until quiescent period met
+          state.remaining = max(state.remaining - dt, 0);
+          if state.remaining == 0 % time's up, trigger can be released
+            state.armed = false; % state is now released
+          end
+        end
+      end
+      
+      function state = xUpdate(state, dx, thresh)
+        % update trigger state based on a delta in the signal that must stay below
+        % threshold
+        if state.armed
+          state.mvmt = state.mvmt + abs(dx); % accumulate the delta
+          if state.mvmt > thresh % reached threshold, so reset
+            state.mvmt = 0;
+            state.remaining = state.win;
+          end
+        end
+      end
+      
     end
     
     function n = node(this)

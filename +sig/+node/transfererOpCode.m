@@ -10,8 +10,6 @@ switch transFun
   case {'sig.transfer.mapn' 'sig.transfer.map'}
     if isa(transArg, 'function_handle')
       switch func2str(transArg)
-        case 'numel'
-          code = 30;
         case 'plus'
           code = 1; % +
         case 'minus'
@@ -25,15 +23,17 @@ switch transFun
         case 'mrdivide'
           code = 6; % /
         case 'gt'
-          code = 10;% >
+          code = 10; % >
         case 'ge'
-          code = 11;% >=
+          code = 11; % >=
         case 'lt'
-          code = 12;% <
+          code = 12; % <
         case 'le'
-          code = 13;% <=
+          code = 13; % <=
         case 'eq'
-          code = 14;% ==
+          code = 14; % ==
+        case 'numel'
+          code = 30;
       end
     end
   case 'sig.transfer.flattenStruct'

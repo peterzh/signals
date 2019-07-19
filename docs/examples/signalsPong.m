@@ -91,7 +91,7 @@ wheel = inputs.wheel;
   end
 
 % get cursor's initial y-position
-cursorInitialY = events.expStart.map(true).map(@(~) getYPos);
+cursorInitialY = events.expStart.map(@(~) getYPos);
 
 %% Update world state
 
@@ -249,7 +249,7 @@ anyScored = playerScore | cpuScore;
 events.endTrial = anyScored.then(1);
 
 % define game end (when player or cpu score reaches target score)
-endGame = playerScore == targetScore | cpuScore == targetScore;
+endGame = (playerScore == targetScore) | (cpuScore == targetScore);
 events.expStop = endGame.then(1).delay(0.1);
 
 % output to the 'ExpTestPanel' logging display on a score and at game end
