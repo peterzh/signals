@@ -315,7 +315,7 @@ classdef Signal < sig.Signal & handle
       % input values can be signals or non-signals), then creates a new 
       % signal from the new node.
       %
-      % Transfer functions work at a lower	level than transformations like 
+      % Transfer functions work at a lower level than transformations like 
       % `map` or `mapn`, instead operating directly with the underlying 
       % input nodes and output node,potentially using both their current 
       % *and* new values.
