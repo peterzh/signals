@@ -18,8 +18,6 @@ classdef Signals_perftest < matlab.perftest.TestCase
 %   meanTimeByTestTable = varfun(@mean, fullTableResults,...
 %     'InputVariables', 'MeasuredTime', 'GroupingVariables', 'Name')
 %
-% @todo: `delay` and `flatten` need to be added to `SignalOp`, and special 
-% cases for them need to be added to `test_SignalOps`
   
   properties     
     % Signals network (`sig.Net` object)
@@ -33,7 +31,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
     % Operations which are run directly in compiled mexnet
     % (`Containers.Map` object with keys as numeric op codes and values as
     % signal methods)
-    MexOps      
+    MexOps
   end
   
   properties (TestParameter)    
@@ -44,8 +42,8 @@ classdef Signals_perftest < matlab.perftest.TestCase
     % sig.node.Signal method operations which have transfer functions 
     % (in +sig/+transfer). Methods not included are redundant on these.
     SignalOps = {@subscriptable, @at, @keepWhen, @map, @mapn, @scan,... 
-      @selectFrom, @indexOfFirst, @merge, @to, @skipRepeats, @identity,... 
-      @log, @subsref}
+      @selectFrom, @indexOfFirst, @merge, @to, @skipRepeats, @delay,... 
+      @identity, @flatten, @log, @subsref}
     % Number of total nodes in the network
     NumNodes = {30 120 350 1000}
     % Number of layers of nodes in the network
@@ -124,24 +122,29 @@ classdef Signals_perftest < matlab.perftest.TestCase
       % update of that signal for that method.
       
       % create signal `c` from method
-      switch func2str(SignalOps)        
-            % methods that create a signal from only 1 input
-            case{'skipRepeats', 'identity', 'log'}
-              c = feval(SignalOps, testCase.A);              
-            % methods that can create a signal from only 2 inputs
-            case {'at', 'keepWhen', 'selectFrom', 'indexOfFirst', 'merge', 'to'}
-              c = feval(SignalOps, testCase.A, testCase.B);
-              post(testCase.B, 2);              
-            case {'subscriptable'}
-              s = struct('a', 1);
-              c = feval(SignalOps, testCase.A);
-              c_a = c.a;              
-            case {'subsref'}
-              c = testCase.A(1);
-            case {'map', 'mapn'}
-              c = feval(SignalOps, testCase.A, @identity);              
-            case {'scan'}
-              c = feval(SignalOps, testCase.A, @plus, 0);
+      switch func2str(SignalOps)
+        % methods that create a signal from only 1 input
+        case{'skipRepeats', 'identity', 'log'}
+          c = feval(SignalOps, testCase.A);
+          % methods that can create a signal from only 2 inputs
+        case {'at', 'keepWhen', 'selectFrom', 'indexOfFirst', 'merge',...
+            'to', 'delay'}
+          c = feval(SignalOps, testCase.A, testCase.B);
+          post(testCase.B, 0);
+        case {'subscriptable'}
+          s = struct('a', 1);
+          c = feval(SignalOps, testCase.A);
+          c_a = c.a;
+        case {'subsref'}
+          c = testCase.A(1);
+        case {'map', 'mapn'}
+          c = feval(SignalOps, testCase.A, @identity);
+        case {'scan'}
+          c = feval(SignalOps, testCase.A, @plus, 0);
+        case {'flatten'}
+          s = testCase.Net.subscriptableOrigin('s'); % create a subscriptable signal
+          post(testCase.B, 0);
+          s_flat = feval(SignalOps, s.field);
       end
       
       % test time it takes for method to update `c`:
@@ -152,7 +155,21 @@ classdef Signals_perftest < matlab.perftest.TestCase
             for i = 1:testCase.Reps
               post(testCase.A, s);
             end
-          end         
+          end
+        case {'delay'}
+          % special case: have to use `runSchedule`     
+          while (testCase.keepMeasuring)
+            for i = 1:testCase.Reps
+              testCase.Net.runSchedule();
+            end
+          end
+        case {'flatten'}
+          % special case: have to assign a signal to `s_flat`
+          while (testCase.keepMeasuring)
+            for i = 1:testCase.Reps
+              s.field = testCase.B;
+            end
+          end
         otherwise
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
@@ -185,7 +202,7 @@ classdef Signals_perftest < matlab.perftest.TestCase
         switch func2str(op)  
           % for ops that do not create a new signal upon posting 1 to
           % `testCase.A`, change op to `@gt`
-          case {'subscriptable', 'flattenStruct', 'log'}
+          case {'subscriptable', 'flattenStruct', 'log', 'flatten', 'delay'}
             op = @gt;
             sigs{node} = feval(op, sigs{parentNode}, sigs{1});
           % for ops that create a signal for only one input
