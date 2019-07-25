@@ -286,10 +286,12 @@ classdef Signal < sig.Signal & handle
     end
     
     function fs = flatten(this)
-      % Returns a signal `fs` whose value is a "flattened" version of 
-      % `this`'s value. `this` is a subscriptable signal field whose value 
-      % is another signal. In other words, `flatten` "flattens" `this`'s 
-      % value - a signal - down to the value it holds.
+      % Flattens a nested signal down to its value.
+      % 
+      % Returns a signal `fs` whose value is a flattened version of 
+      % `this`'s value: if `this` is a signal whose value is another 
+      % signal, `s`, `fs` will take the value that `s` holds, rather than 
+      % taking the value of `s` itself.
       
       state = StructRef;
       state.unappliedInputChanges = false;
@@ -298,19 +300,18 @@ classdef Signal < sig.Signal & handle
     end
     
     function fs = flattenStruct(this)
+      % Flattens nested signal fields down to their values.
+      %
       % Returns a signal `fs` whose value is a struct containing 
-      % "flattened" field values for the signal fields in `this`. In other
-      % words, `flattenStruct` "flattens" signal fields down to the values 
-      % they hold. (`this` can be a subscriptable signal, or a signal whose 
-      % value is a struct containing some signal fields). 
+      % flattened values for the signal fields in `this`: if `this` is a 
+      % subscriptable signal or a signal whose value is a struct containing
+      % some signal fields, `fs` takes the value those signal fields hold, 
+      % rather than taking the value of the signal fields themselves.
       %
       % `fs` uses `this` as a blueprint to wire up signals as inputs to
       % itself. The values of the signal fields in `this` will be directly 
       % set as `fs`'s struct field values. This is done in mexnet according
       % to the transfer opCode.
-      %
-      % Like `flatten`, but works on `this` directly, rather than `this`'s 
-      % signal fields.
       
       fs = applyTransferFun(this, 'sig.transfer.flattenStruct', [], '%s.flattenStruct()');
 

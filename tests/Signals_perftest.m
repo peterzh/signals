@@ -142,9 +142,8 @@ classdef Signals_perftest < matlab.perftest.TestCase
         case {'scan'}
           c = feval(SignalOps, testCase.A, @plus, 0);
         case {'flatten'}
-          s = testCase.Net.subscriptableOrigin('s'); % create a subscriptable signal
-          post(testCase.B, 0);
-          s_flat = feval(SignalOps, s.field);
+          b_flat = feval(SignalOps, testCase.B);
+          testCase.B.post(testCase.A);
       end
       
       % test time it takes for method to update `c`:
@@ -160,11 +159,12 @@ classdef Signals_perftest < matlab.perftest.TestCase
           % special case: have to use `runSchedule`     
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
+              post(testCase.A, 1);
               testCase.Net.runSchedule();
             end
           end
         case {'flatten'}
-          % special case: have to assign a signal to `s_flat`
+          % special case: have to assign a signal to `s_field` to update `s_flat`
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
               s.field = testCase.B;
