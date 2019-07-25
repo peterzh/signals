@@ -163,13 +163,6 @@ classdef Signals_perftest < matlab.perftest.TestCase
               testCase.Net.runSchedule();
             end
           end
-        case {'flatten'}
-          % special case: have to assign a signal to `s_field` to update `s_flat`
-          while (testCase.keepMeasuring)
-            for i = 1:testCase.Reps
-              s.field = testCase.B;
-            end
-          end
         otherwise
           while (testCase.keepMeasuring)
             for i = 1:testCase.Reps
