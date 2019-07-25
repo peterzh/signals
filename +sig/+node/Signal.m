@@ -285,27 +285,36 @@ classdef Signal < sig.Signal & handle
       id.Node.DisplayInputs = this.Node.DisplayInputs;
     end
     
-    function fs = flattenStruct(this)
-      % Returns a signal `fs` whose value is a struct containing 
-      % "flattened" fields for the signal fields in the struct that 
-      % `this` has as its value. 
-      %
-      % Uses a signal (whose value is a struct with signal fields) as a 
-      % blueprint to wire up signals as inputs to this target. The values
-      % of these signal fields will be directly set as the target signal's
-      % struct field values. This is done in mexnet according to the 
-      % transfer opCode.
-      
-      fs = applyTransferFun(this, 'sig.transfer.flattenStruct', [], '%s.flattenStruct()');
-
-    end
-
     function fs = flatten(this)
-
+      % Flattens a nested signal down to its value.
+      % 
+      % Returns a signal `fs` whose value is a flattened version of 
+      % `this`'s value: if `this` is a signal whose value is another 
+      % signal, `s`, `fs` will take the value that `s` holds, rather than 
+      % taking the value of `s` itself.
+      
       state = StructRef;
       state.unappliedInputChanges = false;
       fs = applyTransferFun(this, 'sig.transfer.flatten', state,...
         '%s.flatten()');
+    end
+    
+    function fs = flattenStruct(this)
+      % Flattens nested signal fields down to their values.
+      %
+      % Returns a signal `fs` whose value is a struct containing 
+      % flattened values for the signal fields in `this`: if `this` is a 
+      % subscriptable signal or a signal whose value is a struct containing
+      % some signal fields, `fs` takes the value those signal fields hold, 
+      % rather than taking the value of the signal fields themselves.
+      %
+      % `fs` uses `this` as a blueprint to wire up signals as inputs to
+      % itself. The values of the signal fields in `this` will be directly 
+      % set as `fs`'s struct field values. This is done in mexnet according
+      % to the transfer opCode.
+      
+      fs = applyTransferFun(this, 'sig.transfer.flattenStruct', [], '%s.flattenStruct()');
+
     end
     
     function tr = applyTransferFun(varargin)
@@ -317,18 +326,20 @@ classdef Signal < sig.Signal & handle
       %
       % Transfer functions work at a lower level than transformations like 
       % `map` or `mapn`, instead operating directly with the underlying 
-      % input nodes and output node,potentially using both their current 
+      % input nodes and output node, potentially using both their current 
       % *and* new values.
       %
       % [tr] = s1.applyTransferFun([s2], ..., funName, funArg, formatSpec)
       % 
       % Inputs:
-      %   `varargin`: contains one (or more) input values/signals, `sigs`, 
-      %   used to create the output signal; a string, `funName`, of the
-      %   transfer function; an optional function handle, `funArg`, which
-      %   can be applied by the transfer function, and an optional string
-      %   `formatSpec`, which is used to format the name of the output
-      %   signal
+      %   `s2`: an input value/signal (there can be multiple as separate 
+      %   args)
+      %   `funName`: a string of the name of the transfer function to be 
+      %   applied 
+      %   `funArg`: an optional function handle which can be applied by the
+      %   transfer function
+      %   `formatSpec`: an optional string which is used to format the name 
+      %   of the output signal
       %
       % Outputs: `tr`: output signal
       %
