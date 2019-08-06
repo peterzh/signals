@@ -6,6 +6,9 @@ addSignalsJava();
 global AGL GL GLU %#ok<NUSED>
 persistent defdir lastParams;
 
+% Check that paths are set up
+assert(~isempty(which('dat.paths')), ...
+    'Error: dat.paths not found. Please ensure that a paths file exists for your setup. A template can be found at docs/setup/paths_template')
 
 if isempty(defdir)
   defdir = getOr(dat.paths, 'expDefinitions'); %FIXME If we decide to keep Signals independent of Rigbox this should change
