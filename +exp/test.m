@@ -8,6 +8,7 @@ persistent defdir lastParams;
 
 % Check that paths are set up
 assert(~isempty(which('dat.paths')), ...
+    'signals:test:copyPaths',...
     'Error: dat.paths not found. Please ensure that a paths file exists for your setup. A template can be found at docs/setup/paths_template')
 
 if isempty(defdir)
