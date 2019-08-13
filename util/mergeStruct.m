@@ -1,6 +1,10 @@
 function s = mergeStruct(dst, src)
-%MERGESTRUCT Summary of this function goes here
-%   Detailed explanation goes here
+%MERGESTRUCT Combines two structures into one scalar structure
+%   s = MERGESTRUCTS(struct1, struct2)
+%
+%   If there are any repeated fields, the values from the second input are
+%   used.
+%
 
 srcfields = fieldnames(src);
 dstfields = fieldnames(dst);
