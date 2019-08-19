@@ -54,14 +54,15 @@ classdef Signal < sig.Signal & handle
       f = applyTransferFun(what, when, 'sig.transfer.keepWhen', [], '%s.keepWhen(%s)');
     end
     
-    function m = map(this, f, varargin)
-      if numel(varargin) > 0
-        formatSpec = varargin{1};
-      else
-        formatSpec = sprintf('%%s.map(%s)', toStr(f));
-      end
-      if ~isa(f, 'function_handle') % always map to a value
-        f = fun.always(f);
+    function m = map(this, f, formatSpec)
+      if nargin < 3; formatSpec = sprintf('%%s.map(%s)', toStr(f)); end
+      if isa(f, 'sig.Signal')
+        m = this.map(true).then(f);
+        m.Node.DisplayInputs = this.Node;
+        m.Node.FormatSpec = formatSpec;
+        return
+      elseif ~isa(f, 'function_handle')
+        f = fun.always(f); % always map to a value
       end
       m = applyTransferFun(this, 'sig.transfer.map', f, formatSpec);
     end

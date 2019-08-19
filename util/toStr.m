@@ -9,6 +9,8 @@ elseif isempty(v)
 elseif isobject(v)
   if any(strcmp(methods(v), 'str'))
     s = str(v);
+  elseif any(strcmp(properties(v), 'Name'))
+    s = v.Name;
   else
     s = class(v);
   end
