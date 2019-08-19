@@ -83,7 +83,8 @@ classdef Signals_test < matlab.unittest.TestCase
       isEqualY = isequal(expectedY, actualY);
       testCase.verifyTrue(isEqualX && isEqualY, 'Failed to assign expected outputs')
       % Verify Name property
-      testCase.verifyMatches(X.Name, 'mapn\(\w+, \w+, @meshgrid\)', 'Unexpected Name')
+      expected = 'mapn\(\w+, \w+, @meshgrid\)';
+      testCase.verifyMatches(X.Name, expected, 'Unexpected Name')
       testCase.verifyMatches(Y.Name, '.*[2]', 'Unexpected Name')
       
       % Test transfer function directly
@@ -122,8 +123,9 @@ classdef Signals_test < matlab.unittest.TestCase
       testCase.verifyEqual(actual, [1 n], ...
         'Unexpected value for 1 input, 1 output map of size')
       % Verify Name property
-      testCase.verifyMatches(sz_m.Name, 'size\(\w+\) over dim \d+', 'Unexpected Name')
-      testCase.verifyMatches(sz_n.Name, 'size\(\w+\) over dim \d+', 'Unexpected Name')
+      expected = 'size\(\w+\) over dim \d+';
+      testCase.verifyMatches(sz_m.Name, expected, 'Unexpected Name')
+      testCase.verifyMatches(sz_n.Name, expected, 'Unexpected Name')
       
      % 2 input, 1 output
       [sz] = size(a, 2);
@@ -131,19 +133,98 @@ classdef Signals_test < matlab.unittest.TestCase
       testCase.verifyEqual(sz.Node.CurrValue, n, ...
         'Unexpected value for map of size along specified dimention')
       
-      % 2 inpust, 2 outputs
-      [~, sz] = size(a, 2); %#ok<ASGLU>
+      % 2 inputs, 2 outputs
+      [~, sz] = size(a, 2);  %#ok<*ASGLU>
       testCase.verifyError(@()a.post(1:n), 'MATLAB:maxlhs', ...
         'Unexpected error identifier')
     end
+    
+    function test_colon(testCase)
+      % Test for the colon method
+      [a, b, c] = deal(testCase.A, testCase.B, testCase.C);
+      i = 3; j = 14; k = 0.5;
+      
+      % Test two inputs
+      s = a:b;
+      a.post(i), b.post(j)
+      testCase.verifyEqual(s.Node.CurrValue, i:j, 'Failed on two input')
+      testCase.verifyMatches(s.Name, '\w+ : \w+', 'Unexpected Name')
+      
+      % Test three inputs
+      s = a:c:b;
+      c.post(k)
+      testCase.verifyEqual(s.Node.CurrValue, i:k:j, 'Failed on three input')
+      testCase.verifyMatches(s.Name, '\w+ : \w+ : \w+', 'Unexpected Name')
+    end
+    
     function test_min(testCase)
       % Test for the min method
+      [a, b] = deal(testCase.A, testCase.B);
+      
+      [M,I] = min(a);
+      a.post(magic(3))
+      testCase.verifyEqual(M.Node.CurrValue, [3,1,2], ...
+        'Failed to return minimum values')
+      testCase.verifyEqual(I.Node.CurrValue, [2,1,3], ...
+        'Failed to return indicies')
+      testCase.verifyMatches(M.Name, 'min\(\w+\)', 'Unexpected Name')
+      
+      [M,I] = min(a,[],b);
+      expected = 'min\(\w+\) over dim \w+';
+      testCase.verifyMatches(M.Name, expected, 'Unexpected Name')
+      post(b,2)
+      testCase.verifyEqual(M.Node.CurrValue, [1;3;2], ...
+        'Failed to return minimum values')
+      testCase.verifyEqual(I.Node.CurrValue, [2;1;3], ...
+        'Failed to return indicies')
+      
+      clear('I')
+      M = min(a,b);
+      testCase.verifyMatches(M.Name, 'min\(\w+,\w+\)', 'Unexpected Name')
+      post(a,magic(2)), post(b,2)
+      testCase.verifyEqual(M.Node.CurrValue, [1,2;2,2], ...
+        'Failed to return minimum values')
     end
+    
     function test_max(testCase)
       % Test for the max method
+      [a, b] = deal(testCase.A, testCase.B);
+      
+      [M,I] = max(a);
+      a.post(magic(3))
+      testCase.verifyEqual(M.Node.CurrValue, [8,9,7], ...
+        'Failed to return maximum values')
+      testCase.verifyEqual(I.Node.CurrValue, [1,3,2], ...
+        'Failed to return indicies')
+      testCase.verifyMatches(M.Name, 'max\(\w+\)', 'Unexpected Name')
+      
+      [M,I] = max(a,[],b);
+      expected = 'max\(\w+\) over dim \w+';
+      testCase.verifyMatches(M.Name, expected, 'Unexpected Name')
+      post(b,2)
+      testCase.verifyEqual(M.Node.CurrValue, [8;7;9], ...
+        'Failed to return maximum values')
+      testCase.verifyEqual(I.Node.CurrValue, [1;3;2], ...
+        'Failed to return indicies')
+      
+      clear('I')
+      M = max(a,b);
+      testCase.verifyMatches(M.Name, 'max\(\w+,\w+\)', 'Unexpected Name')
+      post(a,magic(2)), post(b,2)
+      testCase.verifyEqual(M.Node.CurrValue, [2,3;4,2], ...
+        'Failed to return maximum values')
     end
+    
     function test_exp(testCase)
       % Test for the exp method
+      a = testCase.A;
+      b = exp(a);
+      e = exp(1);
+      
+      testCase.verifyMatches(b.Name, 'exp\(\w+\)', 'Unexpected Name')
+      a.post(1)
+      testCase.verifyEqual(b.Node.CurrValue, e)
     end
+    
   end
 end

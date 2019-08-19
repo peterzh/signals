@@ -76,9 +76,12 @@ classdef Signal < sig.Signal & handle
       if isa(varargin{end}, 'function_handle')
         [sigs{1:nargin-1}, f] = varargin{:};
         formatSpec = sprintf(['mapn(' repmat('%%s, ', 1, numel(sigs)) '%s)'], toStr(f));
-        formatSpec = strcat(formatSpec, [{''}, strcat('[',num2cellstr(2:nargout), ']')]);
       else
         [sigs{1:nargin-2}, f, formatSpec] = varargin{:};
+      end
+      % Deal with formatSpec of multiple output args
+      if nargout > 1 && (ischar(formatSpec) || numel(formatSpec) == 1)
+        formatSpec = strcat(formatSpec, [{''}, strcat('[',num2cellstr(2:nargout), ']')]);
       end
       varargout = cell(1,nargout);
       formatSpec = iff(iscell(formatSpec), formatSpec, @(){formatSpec});

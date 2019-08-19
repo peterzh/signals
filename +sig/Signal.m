@@ -427,7 +427,7 @@ classdef Signal < handle
     
     function a = exp(x)
       % New signal carrying the element-wise exponential of 'a'
-      a = map(x, @power, 'exp(%s)');
+      a = map(x, @exp, 'exp(%s)');
     end
     
     function c = mod(a, b)
@@ -536,27 +536,29 @@ classdef Signal < handle
       elseif nargin < 3
         [varargout{1:nargout}] = mapn(A, B, @min, 'min(%s,%s)');
       else
-        [varargout{1:nargout}] = mapn(A, dim, @min, 'min(%s) over dim %s');
+        [varargout{1:nargout}] = mapn(A, B, dim, @min, 'min(%s) over dim %s');
+        for i = 1:nargout; varargout{i}.Node.DisplayInputs(2) = []; end
       end
     end
     
     function varargout = max(A,B,dim)
       % [M,I] = max(A,B,dim)
-      nout = nargout;
-      nargStr = [{''}, strcat('[',int2str((2:nout)'), ']')];
-      specFcn = @(str)iff(nout > 1, @()strcat(str,nargStr), str);
       if nargin < 2
-        [varargout{1:nargout}] = mapn(A, @max, specFcn('max(%s)'));
+        [varargout{1:nargout}] = mapn(A, @max, 'max(%s)');
       elseif nargin < 3
-        [varargout{1:nargout}] = mapn(A, B, @max, specFcn('max(%s,%s)'));
+        [varargout{1:nargout}] = mapn(A, B, @max, 'max(%s,%s)');
       else
-        formatSpec = specFcn('max(%s) over dim %s');
-        [varargout{1:nargout}] = mapn(A, dim, @max, formatSpec);
+        [varargout{1:nargout}] = mapn(A, B, dim, @max, 'max(%s) over dim %s');
+        for i = 1:nargout; varargout{i}.Node.DisplayInputs(2) = []; end
       end
     end
     
-    function a = colon(i,j)
-      a = map2(i,j, @colon, '%s : %s');
+    function a = colon(i,j,k)
+      if nargin < 3
+        a = map2(i,j, @colon, '%s : %s');
+      else
+        a = mapn(i,j,k, @colon, '%s : %s : %s');
+      end
     end
       
   end
