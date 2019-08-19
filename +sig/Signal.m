@@ -1,5 +1,5 @@
 classdef Signal < handle
-  % SIG.SIGNAL A class defining operations on signals.
+  % SIG.SIGNAL Interface class for Signals.
   %   This class contains the methods for connecting signals within a
   %   network. These methods create a new signal or a TidyHandle object 
   %   (which acts as a listener for a signal). The abstract methods are
@@ -127,49 +127,42 @@ classdef Signal < handle
     
     tr = setTrigger(arm, release)
     
-    % 'ds = s1.map(f, formatSpec)' returns a dependent signal 'ds' which
-    % takes the value resulting from mapping function 'f' onto the value 
-    % in 's1' (i.e. 'f(s1)') whenever 's1' takes a value. If 'f' is not a
-    % function, 'map' acts like 'at': 'ds' simply takes the value of 'f' 
-    % whenever 's1' takes a value.
+    % ds = s.map(f, [formatSpec]) returns a signal which takes the value
+    % resulting from mapping function f onto the value in s (i.e. f(s)). If
+    % f is not a function, f is mapped to ds whenever s takes a value.
     %
-    % Example:
+    % Examples:
     %   f = @(x) x.^2; % the function to be mapped
-    %   ds6 = os1.map(f);
-    %   ds6Out = output(ds6); 
-    %   os1.post([1 2 3]); % '[1 4 9]' will be displayed
+    %   ds = s.map(f); % ds = s^2
+    %   m = s.map(pi); % m = pi whenever s updates
     
     m = map(this, f, varargin)
     
-    % 'ds = s1.map2(s2, f, formatSpec)' returns a dependent signal 'ds'
-    % which takes the value resulting from "mapping" the function 'f' onto
-    % the values in 's1' and 's2' (i.e. 'f(s1, s2)') whenever 's1' or 's2'
-    % takes a value. If 'f' is not a function, 'ds' simply takes the value 
-    % of 'f' whenever 's1' or 's2' takes a value.
+    % ds = s.map2(s2, f, [formatSpec]) returns a dependent signal ds which
+    % takes the value resulting from applying the function f to the values
+    % in s and s2 (i.e. f(s1, s2)).
     %
     % Example:
     %   f = @(x,y) x.*y + x; % the function to be mapped
-    %   ds7 = os1.map2(os2, f);
-    %   ds7Out = output(ds7);
-    %   os2.post([4 5 6]);
-    %   os1.post([1 2 3]); % '[5 12 21]' will be displayed
+    %   ds = s.map2(s2, f); % ds = s*s2 + s
     
     m = map2(this, other, f, varargin)
     
-    % 'ds = s1.mapn(s2..., sN, f, formatSpec)' is an extension of 'map2'. 
-    % The dependent signal 'ds' takes the value resulting from mapping 
-    % function 'f' onto the values of an arbitrary 'n' number of other 
-    % signals (i.e. 'f(s2,..., sN)') whenever any of 's1...sN' takes a
-    % value. If 'f' is not a function, 'ds' simply takes the value of 'f' 
-    % whenever any of 's2...sN' takes a value.
+    % [ds1,...,dsN] = s1.mapn(s2..., sN, f, [formatSpec]) maps a variable
+    % number of inputs to outputs through a function, f. The n dependent
+    % signals (ds1-N) are assigned the positional output args of f in
+    % order, i.e. [ds1,...,dsN] = f(s1,..., sN).
     %
-    % Example:
+    % Examples:
+    %   % Derive Signal ds by mapping s1-s3 through anonymous function, f:
     %   f = @(x,y,z) x+y-z;
-    %   ds8 = os1.mapn(os2, os3, f);
-    %   ds8Out = output(ds8);
-    %   os1.post(1);
-    %   os2.post(2);
-    %   os3.post(3); % '0' will be displayed
+    %   ds = s.mapn(s2, s3, f); % ds = s + s2 - s3
+    %
+    %   % Assign the value 5 any time s1-3 update (similar to s.map(5))
+    %   [ds1, ds2] = s1.mapn(s2, s3, @(varargin)deal(5)); 
+    %
+    %   % Derive 2 new signals by applying value of xx to meshgrid:
+    %   [X, Y] = xx.mapn(@meshgrid);
     %
     % See also SIG.SIGNAL.MAP2
     
@@ -432,6 +425,11 @@ classdef Signal < handle
       c = map2(a, b, @power, '%s.^%s');
     end
     
+    function a = exp(x)
+      % New signal carrying the element-wise exponential of 'a'
+      a = map(x, @power, 'exp(%s)');
+    end
+    
     function c = mod(a, b)
       % New signal carrying the modulo operation between signals
       c = map2(a, b, @mod, '%s %% %s');
@@ -528,6 +526,32 @@ classdef Signal < handle
         b = map(a, @sum, 'sum(%s)');
       else
         b = map2(a, dim, @sum, 'sum(%s) over dim %s');
+      end
+    end
+    
+    function varargout = min(A,B,dim)
+      % [M,I] = min(A,B,dim)
+      if nargin < 2
+        [varargout{1:nargout}] = mapn(A, @min, 'min(%s)');
+      elseif nargin < 3
+        [varargout{1:nargout}] = mapn(A, B, @min, 'min(%s,%s)');
+      else
+        [varargout{1:nargout}] = mapn(A, dim, @min, 'min(%s) over dim %s');
+      end
+    end
+    
+    function varargout = max(A,B,dim)
+      % [M,I] = max(A,B,dim)
+      nout = nargout;
+      nargStr = [{''}, strcat('[',int2str((2:nout)'), ']')];
+      specFcn = @(str)iff(nout > 1, @()strcat(str,nargStr), str);
+      if nargin < 2
+        [varargout{1:nargout}] = mapn(A, @max, specFcn('max(%s)'));
+      elseif nargin < 3
+        [varargout{1:nargout}] = mapn(A, B, @max, specFcn('max(%s,%s)'));
+      else
+        formatSpec = specFcn('max(%s) over dim %s');
+        [varargout{1:nargout}] = mapn(A, dim, @max, formatSpec);
       end
     end
     
