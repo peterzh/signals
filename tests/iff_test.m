@@ -8,8 +8,8 @@ assert(~iff(x > 0, false, true), 'Failed to return correct consequent')
 
 %% Test 2: predicate function
 % Test behaviour when predicate is a function handle
-f = fun.always(5);
-assert(iff(f > 5, false, true), 'Failed to evaluate function predicate')
+f = fun.always(false);
+assert(iff(f, false, true), 'Failed to evaluate function predicate')
 
 %% Test 3: function handle evaluation
 % Test the evaluation of function handles by iff

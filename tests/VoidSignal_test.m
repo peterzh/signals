@@ -90,9 +90,20 @@ classdef VoidSignal_test < matlab.unittest.TestCase
     
     function test_newInstance(testCase)
       % Test that calling the constructor returns the same Void instance
+      testCase.addTeardown(@()refresh)
       old = testCase.Instance;
       new = sig.void;
-      testCase.verifyTrue(old == new, 'Failed to return identical instance')
+      testCase.verifyTrue(builtin('isequal',old,new), 'Failed to return identical instance')
+      
+      % Extra careful test
+      delete(new)
+      testCase.verifyTrue(~isvalid(old), 'Failed to return identical instance')
+      
+      function refresh()
+        clear('VoidSignal')
+        testCase.Instance = sig.void;
+        assert(isvalid(testCase.Instance))
+      end
     end
 
   end
