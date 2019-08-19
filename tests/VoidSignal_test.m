@@ -87,6 +87,14 @@ classdef VoidSignal_test < matlab.unittest.TestCase
           sprintf('subsref "%s" failed to return void signal', sref))
       end
     end
+    
+    function test_newInstance(testCase)
+      % Test that calling the constructor returns the same Void instance
+      old = testCase.Instance;
+      new = sig.void;
+      testCase.verifyTrue(old == new, 'Failed to return identical instance')
+    end
+
   end
   
 end
