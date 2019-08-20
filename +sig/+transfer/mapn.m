@@ -48,9 +48,16 @@ if any(wvset)
   % canonical line: call map function with latest inputs. new output(s) are
   % result from map
   out = cell(1,outnum);
-  [out{:}] = f(inpvals{:});
-  val = out{end};
-  valset = true;
+  try
+    [out{:}] = f(inpvals{:});
+    val = out{end};
+    valset = true;
+  catch ex
+    msg = sprintf('Net: %i, Nodes: [%s] to %i', net, num2str(inputs), node);
+    sigEx = SigException('transfer:error', msg, node, inputs, inpvals);
+    ex = ex.addCause(sigEx);
+    rethrow(ex)
+  end
 else % no inputs have a working value -> no output
   val = [];
   valset = false;

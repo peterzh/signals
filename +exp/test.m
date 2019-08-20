@@ -74,6 +74,10 @@ leftbox.Sizes = [-1 100];
 [t, setElems] = sig.playgroundPTB(expdefname, ctrlgrid);
 % mainsplit.Sizes = [700 -1]; 
 net = t.Node.Net;
+% attach our error handler function to timer
+tmr = timerfind('Name', 'MainLoop');
+assert(numel(tmr) == 1, 'Multiple timers running')
+tmr.ErrorFcn = errorHandler;
 % inputs & outputs
 curser = net.origin('curser');
 
@@ -149,6 +153,12 @@ sig.timeplot(t, evts, 'parent', sigsFig, 'mode', 0, 'tWin', 60);
  
   function toggleWheelInput(src, ~)
     
+  end
+
+  function errorHandler(~, ~)
+    exception = MException.last;
+    disp(ex.cause{1})
+    info = nodeInfo(evts);
   end
 
 end

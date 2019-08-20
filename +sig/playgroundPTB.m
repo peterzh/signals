@@ -17,7 +17,7 @@ set(bui.parentFigure(parent), 'DeleteFcn', @cleanup);
 
 tmr = timer('ExecutionMode', 'fixedSpacing', 'Period', 5e-3,...
   'TimerFcn', @process, 'Name', 'MainLoop');
-cp = hw.CursorPosition;
+% cp = hw.CursorPosition;
 
 vbox = uix.VBox('Parent', parent);
 
@@ -76,9 +76,13 @@ renderCount = 0;
 
   function process(~,~)
     tnow = GetSecs;
-%     tic
-    post(dt, tnow - tlast);
-%     fprintf('%.0f\n', 1000*toc);
+    %     tic
+    try
+      post(dt, tnow - tlast);
+    catch ex
+      
+    end
+    %     fprintf('%.0f\n', 1000*toc);
     tlast = tnow;
     runSchedule(sn);
     if invalid
