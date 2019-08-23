@@ -1,18 +1,18 @@
 classdef Signal < handle
   % SIG.SIGNAL Interface class for Signals.
   %   This class contains the methods for connecting signals within a
-  %   network. These methods create a new signal or a TidyHandle object 
-  %   (which acts as a listener for a signal). The abstract methods are
-  %   mostly functional/reactive programming methods. The concrete methods
-  %   are mostly overloaded builtin MATLAB functions. The principle 
-  %   subclass to this is SIG.NODE.SIGNAL.
+  %   network. These methods create a new signal or a TidyHandle object (a
+  %   listener for Signals events). The abstract methods are mostly
+  %   functional/reactive programming methods. The concrete methods are
+  %   mostly overloaded builtin MATLAB functions. The principle subclass to
+  %   this is SIG.NODE.SIGNAL.
   %
-  %   Running Example: 
+  %   Example: 
   %     create a Signals network and three origin signals
   %     net = sig.Net;
-  %     os1 = net.origin('os1'); 
-  %     os2 = net.origin('os2'); 
-  %     os3 = net.origin('os3'); 
+  %     os1 = net.origin('input 1'); 
+  %     os2 = net.origin('input 2'); 
+  %     os3 = net.origin('input 3');
   %
   % See also SIG.NODE.SIGNAL, SIG.NET
   %
@@ -37,13 +37,13 @@ classdef Signal < handle
 
     h = onValue(this, fun)
     
-    % 'th = s1.output' returns a TidyHandle object 'th' which displays the
-    % output of the signal 's1' whenever it takes a value (equivalent to 
-    % 'th = s1.onValue(@disp)').
+    % 'th = output(s)' returns a TidyHandle listener which displays the
+    % output of signal 's' whenever it takes a value (equivalent to 
+    % 'th = s.onValue(@disp)').
     % 
     % Example:
-    %   dispValShort = os1.output;
-    %   os1.post(1); % '1' will be displayed
+    %   dispValShort = s.output;
+    %   s.post('hello world'); % 'hello world' will be displayed
     %
     % See also SIG.SIGNAL.ONVALUE
     
@@ -430,6 +430,16 @@ classdef Signal < handle
       a = map(x, @exp, 'exp(%s)');
     end
     
+    function b = sqrt(a)
+      % New signal carrying the square root of 'a'
+      b = map(a, @sqrt, [char(8730), '(%s)']); % Square root symbol
+    end
+    
+    function e = erf(x)
+      % New signal carrying the error function of 'a'
+      e = map(x, @erf, 'erf(%s)');
+    end
+    
     function c = mod(a, b)
       % New signal carrying the modulo operation between signals
       c = map2(a, b, @mod, '%s %% %s');
@@ -512,6 +522,7 @@ classdef Signal < handle
     end
     
     function b = round(a,N,type)
+      % New signals carrying the result of rounding 'a' to 'N' digits
       if nargin < 2
         b = map(a, @round, 'round(%s)');
       elseif nargin < 3
@@ -522,6 +533,8 @@ classdef Signal < handle
     end
     
     function b = sum(a, dim)
+      % New signal carrying the sum of all array elements in 'a' across
+      % dimention 'dim'
       if nargin < 2
         b = map(a, @sum, 'sum(%s)');
       else
@@ -530,7 +543,7 @@ classdef Signal < handle
     end
     
     function varargout = min(A,B,dim)
-      % [M,I] = min(A,B,dim)
+      % [M,I] = min(A,B,dim) New signal carrying the min value of inputs.
       if nargin < 2
         [varargout{1:nargout}] = mapn(A, @min, 'min(%s)');
       elseif nargin < 3
@@ -542,7 +555,8 @@ classdef Signal < handle
     end
     
     function varargout = max(A,B,dim)
-      % [M,I] = max(A,B,dim)
+      % [M,I] = max(A,B,dim) New signal carrying the max value of its
+      % inputs
       if nargin < 2
         [varargout{1:nargout}] = mapn(A, @max, 'max(%s)');
       elseif nargin < 3
@@ -550,6 +564,29 @@ classdef Signal < handle
       else
         [varargout{1:nargout}] = mapn(A, B, dim, @max, 'max(%s) over dim %s');
         for i = 1:nargout; varargout{i}.Node.DisplayInputs(2) = []; end
+      end
+    end
+    
+    function b = fliplr(a)
+      % New signal carrying 'a' with its rows flipped in the left-right
+      % direction
+      b = map(a, @fliplr, 'fliplr(%s)');
+    end
+
+    function b = flipud(a)
+      % New signal carrying 'a' with its rows flipped in the up-down
+      % direction
+      b = map(a, @flipud, 'flipud(%s)');
+    end
+
+
+    function b = rot90(a, k)
+      % New signal carrying 'a' rotated 90 degrees counter-clockwise 'k'
+      % times
+      if nargin < 2
+        b = map(a, @rot90, 'rot90(%s)');
+      else
+        b = map2(a, k, @rot90, 'rot90(%s) %s times');
       end
     end
     

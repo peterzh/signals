@@ -139,6 +139,25 @@ classdef Signals_test < matlab.unittest.TestCase
         'Unexpected error identifier')
     end
     
+    function test_output(testCase)
+      % Test for the output method
+      a = testCase.A;
+      h = output(a);
+      
+      testCase.verifyTrue(isa(h, 'TidyHandle'), ...
+        sprintf('Expected TidyHandle but %s was returned instead', class(h)))
+      
+      % Test output
+      val = randi(10000);
+      out = strtrim(evalc('a.post(val)'));
+      testCase.verifyEqual(out, num2str(val), 'Unexpected output')
+      
+      % Test cleanup
+      clear('h')
+      out = strtrim(evalc('a.post(val)'));
+      testCase.verifyEmpty(out, 'Output persists after removing listener')
+    end
+    
     function test_colon(testCase)
       % Test for the colon method
       [a, b, c] = deal(testCase.A, testCase.B, testCase.C);
@@ -223,6 +242,131 @@ classdef Signals_test < matlab.unittest.TestCase
       
       testCase.verifyMatches(b.Name, 'exp\(\w+\)', 'Unexpected Name')
       a.post(1)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_erf(testCase)
+      % Test for the exp method
+      a = testCase.A;
+      b = erf(a); % our method to test
+      x = [-0.5 0 1 0.72]; % values to test
+      e = erf(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'erf\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_sqrt(testCase)
+      % Test for the sqrt method
+      a = testCase.A;
+      b = sqrt(a); % our method to test
+      x = -2:2; % values to test
+      e = sqrt(x); % expected output
+      
+      rootSym = char(hex2dec('221A'));
+      testCase.verifyMatches(b.Name, [rootSym,'\(\w+\)'], 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_fliplr(testCase)
+      % Test for the fliplr method
+      a = testCase.A;
+      b = fliplr(a); % our method to test
+      x = magic(6); % values to test
+      e = fliplr(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'fliplr\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_flipud(testCase)
+      % Test for the fliplr method
+      a = testCase.A;
+      b = flipud(a); % our method to test
+      x = magic(6); % values to test
+      e = flipud(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'flipud\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_rot90(testCase)
+      % Test for the fliplr method
+      a = testCase.A;
+      b = rot90(a); % our method to test
+      x = magic(6); % values to test
+      e = rot90(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'rot90\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+      % test second input
+      b = rot90(a,4);
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, x)
+    end
+    
+    function test_floor(testCase)
+      % Test for the floor method
+      a = testCase.A;
+      b = floor(a); % our method to test
+      x = 12 + rand; % value to test
+      e = floor(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'floor\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_abs(testCase)
+      % Test for the floor method
+      a = testCase.A;
+      b = abs(a); % our method to test
+      x = -4:4; % values to test
+      e = abs(x); % expected output
+      
+      testCase.verifyMatches(b.Name, '|\w+|', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_sign(testCase)
+      % Test for the sign method
+      a = testCase.A;
+      b = sign(a); % our method to test
+      x = -4:4; % values to test
+      e = sign(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'sgn\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_sin(testCase)
+      % Test for the sin method
+      a = testCase.A;
+      b = sin(a); % our method to test
+      x = -pi:0.01:pi; % values to test
+      e = sin(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'sin\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_cos(testCase)
+      % Test for the cos method
+      a = testCase.A;
+      b = cos(a); % our method to test
+      x = -pi:0.01:pi; % values to test
+      e = cos(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'cos\(\w+\)', 'Unexpected Name')
+      a.post(x)
       testCase.verifyEqual(b.Node.CurrValue, e)
     end
     

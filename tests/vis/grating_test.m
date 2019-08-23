@@ -15,6 +15,7 @@
 % preconditions:
 net = sig.Net;
 t = net.origin('t');
+ex = struct('identifier', '', 'message', '');
 
 %% Test 1: no window
 
@@ -42,10 +43,10 @@ parsStruct.elemSigma = [20 20];
 post(pars, parsStruct);
 
 % assert elem's colour, sigma, and layer values
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]))
 % all vectors in 'layers' struct should be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue.maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue.maxColour, [0 0 0 1]'))
 
 % d)
 % change parsStruct values to column vectors, and re-assert
@@ -53,10 +54,10 @@ parsStruct.elemColour = [0 0 0]';
 parsStruct.elemSigma = [20 20]';
 post(pars, parsStruct);
 
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'))
 % all vectors in 'layers' struct should still be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue.maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue.maxColour, [0 0 0 1]'))
 
 %% Test 2: sinusoid grating
 
@@ -83,10 +84,10 @@ parsStruct.elemSigma = [20 20];
 post(pars, parsStruct);
 
 % assert elem's colour, sigma, and layer values
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]))
 % all vectors in 'layers' struct should be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'))
 
 % d)
 % change parsStruct values to column vectors, and re-assert
@@ -94,22 +95,22 @@ parsStruct.elemColour = [0 0 0]';
 parsStruct.elemSigma = [20 20]';
 post(pars, parsStruct);
 
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'))
 % all vectors in 'layers' struct should still be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'))
 
 %% Test 3: squarewave grating
 
 % a)
 grating = 'squarewave';
 elem = vis.grating(t, grating);
-assert(isobject(elem));
+assert(isobject(elem))
 
 % b)
 visStim = StructRef;
 visStim.elem = elem;
-assert(isobject(visStim));
+assert(isobject(visStim))
 
 % c)
 pars = net.subscriptableOrigin('pars');
@@ -124,10 +125,10 @@ parsStruct.elemSigma = [20 20];
 post(pars, parsStruct);
 
 % assert elem's colour, sigma, and layer values
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]))
 % all vectors in 'layers' struct should be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'))
 
 % d)
 % change parsStruct values to column vectors, and re-assert
@@ -135,22 +136,22 @@ parsStruct.elemColour = [0 0 0]';
 parsStruct.elemSigma = [20 20]';
 post(pars, parsStruct);
 
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'))
 % all vectors in 'layers' struct should still be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'))
 
 %% Test 4: gaussian window
 
 % a)
 grating = 'sinusoid'; window = 'gaussian';
 elem = vis.grating(t, grating, window);
-assert(isobject(elem));
+assert(isobject(elem))
 
 % b)
 visStim = StructRef;
 visStim.elem = elem;
-assert(isobject(visStim));
+assert(isobject(visStim))
 
 % c)
 pars = net.subscriptableOrigin('pars');
@@ -165,10 +166,10 @@ parsStruct.elemSigma = [20 20];
 post(pars, parsStruct);
 
 % assert elem's colour, sigma, and layer values
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]))
 % all vectors in 'layers' struct should be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'))
 
 % d)
 % change parsStruct values to column vectors, and re-assert
@@ -176,20 +177,20 @@ parsStruct.elemColour = [0 0 0]';
 parsStruct.elemSigma = [20 20]';
 post(pars, parsStruct);
 
-assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'));
-assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'));
+assert(isequal(elem.Node.CurrValue.colour.Node.CurrValue, [0 0 0]'))
+assert(isequal(elem.Node.CurrValue.sigma.Node.CurrValue, [20 20]'))
 % all vectors in 'layers' struct should still be column vectors
-assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'));
+assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]'))
 
 %% Test 5: impossible grating
 
 grating = 'n/a';
 
 try 
-  vis.grating(t,grating)
+  vis.grating(t,grating);
 catch ex
-  assert(strcmpi(ex.identifier, 'grating:error'));
 end
+assert(strcmpi(ex.identifier, 'grating:error'))
 
 %% Test 6: impossible window
 
@@ -197,7 +198,7 @@ grating = 'sinusoid';
 window = 'n/a';
 
 try 
-  vis.grating(t,grating)
+  vis.grating(t,grating);
 catch ex
-  assert(strcmpi(ex.identifier, 'window:error'));
 end
+assert(strcmpi(ex.identifier, 'window:error'))
