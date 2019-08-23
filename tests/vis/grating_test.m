@@ -19,6 +19,13 @@ ex = struct('identifier', '', 'message', '');
 
 %% Test 1: no window
 
+% Test defaults
+elem = vis.grating(t);
+assert(strcmp(elem.Name, 'gabor'), 'Unexpected element name')
+assert(strcmp(elem.Node.CurrValue.grating, 'sinusoid'), 'Unexpected grating type default')
+assert(strcmp(elem.Node.CurrValue.window, 'gaussian'), 'Unexpected window default')
+assert(all(structfun(@isempty, elem.Node.CurrValue) == false), 'Undefined default parameters')
+
 % a)
 grating = 'sinusoid';
 window = 'none';
@@ -187,7 +194,7 @@ assert(isequal(elem.Node.CurrValue.layers.Node.CurrValue(2).maxColour, [0 0 0 1]
 grating = 'n/a';
 
 try 
-  vis.grating(t,grating);
+  vis.grating(t, grating);
 catch ex
 end
 assert(strcmpi(ex.identifier, 'grating:error'))
@@ -198,7 +205,7 @@ grating = 'sinusoid';
 window = 'n/a';
 
 try 
-  vis.grating(t,grating);
+  vis.grating(t, grating, window);
 catch ex
 end
 assert(strcmpi(ex.identifier, 'window:error'))
