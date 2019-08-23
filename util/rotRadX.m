@@ -1,6 +1,10 @@
 function R = rotRadX(rad)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% ROTRADX Returns transform matrix for rotating a given amount in radians
+% along x-axis
+%   Returns a 4x4 transformation matrix for performing rotation of rad
+%   radians along the x-axis in hetrogrneous coordinates.
+%
+% See also VIS.PLANEPROJECTION, VIS.DRAW
 
 R = [
   1 0 0 0
