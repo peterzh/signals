@@ -212,6 +212,9 @@ Y = X.^3 ./ 2;
 % For a full list see doc sig.Signal.  NB: Sometimes due to limitations of
 % syntax, it's necessary to do away with syntactic sugar.  It is therefore
 % worth remembering the basic functions, i.e. not(), plus(), times(), etc.
+idx==N.then(true); % Ambiguous statement: actually idx == (N.then(true))
+then(idx==N, true); % Works
+idx.eq(N).then(true); % Works, same as above
 
 %% (Take a moment to clear your workspace)
 % For the below sections to read more clearly, let's clear all these nodes
@@ -1063,4 +1066,4 @@ s = a.scan(f, [], 'pars', b, c); % b and c values used in f when a updates
 %
 % v1.1.0
 
-%#ok<*NOPTS,*CLALL,*NASGU>
+%#ok<*NOPTS,*CLALL,*NASGU,*EQEFF>
