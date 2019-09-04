@@ -38,7 +38,6 @@ classdef Signal < sig.Signal & handle
     end
     
     function y = end(this, k, n)
-      warning('FYI, end being called on sig.node.Signal ''%s''', toStr(this.Name));
       y = expr.End(k, n);
     end
     
@@ -55,14 +54,15 @@ classdef Signal < sig.Signal & handle
       f = applyTransferFun(what, when, 'sig.transfer.keepWhen', [], '%s.keepWhen(%s)');
     end
     
-    function m = map(this, f, varargin)
-      if numel(varargin) > 0
-        formatSpec = varargin{1};
-      else
-        formatSpec = sprintf('%%s.map(%s)', toStr(f));
-      end
-      if ~isa(f, 'function_handle') % always map to a value
-        f = fun.always(f);
+    function m = map(this, f, formatSpec)
+      if nargin < 3; formatSpec = sprintf('%%s.map(%s)', toStr(f)); end
+      if isa(f, 'sig.Signal')
+        m = this.map(true).then(f);
+        m.Node.DisplayInputs = this.Node;
+        m.Node.FormatSpec = formatSpec;
+        return
+      elseif ~isa(f, 'function_handle')
+        f = fun.always(f); % always map to a value
       end
       m = applyTransferFun(this, 'sig.transfer.map', f, formatSpec);
     end
@@ -71,7 +71,7 @@ classdef Signal < sig.Signal & handle
       m = mapn(sig1, sig2, f, varargin{:});
     end
     
-    function m = mapn(varargin)
+    function varargout = mapn(varargin)
       % destructure varargin
       if isa(varargin{end}, 'function_handle')
         [sigs{1:nargin-1}, f] = varargin{:};
@@ -79,7 +79,16 @@ classdef Signal < sig.Signal & handle
       else
         [sigs{1:nargin-2}, f, formatSpec] = varargin{:};
       end
-      m = applyTransferFun(sigs{:}, 'sig.transfer.mapn', f, formatSpec);
+      % Deal with formatSpec of multiple output args
+      if nargout > 1 && (ischar(formatSpec) || numel(formatSpec) == 1)
+        formatSpec = strcat(formatSpec, [{''}, strcat('[',num2cellstr(2:nargout), ']')]);
+      end
+      varargout = cell(1,nargout);
+      formatSpec = iff(iscell(formatSpec), formatSpec, @(){formatSpec});
+      for i = 1:nargout
+        [varargout{i}] = applyTransferFun(...
+          sigs{:}, 'sig.transfer.mapn', {f,i}, formatSpec{i});
+      end
     end
     
     function sc = scan(varargin)
@@ -117,30 +126,6 @@ classdef Signal < sig.Signal & handle
         sc.Node.CurrValue = seed;
       end
     end
-    
-%     function sc = scanAsArgs(this, f, seed, formatSpec)
-%       if nargin < 4
-%         argsStr = strJoin(repmat({'%%s'}, 1, numel(sigs)), ', ');
-%         formatSpec = sprintf(['scanAsArgs({' argsStr  '}, %s, %s)'],...
-%           toStr(f), toStr(seed));
-%       end
-%       sNode = sig.node.Node(this.Node, 'sig.transfer.scanAsArgs', f);
-%       sNode.FormatSpec = formatSpec;
-%       sNode.CurrValue = seed;
-%       sc = sig.node.Signal(sNode);
-%     end
-    
-%     function sc = scanAsArgs(this, f, seed, formatSpec)
-%       if nargin < 4
-%         argsStr = strJoin(repmat({'%%s'}, 1, numel(sigs)), ', ');
-%         formatSpec = sprintf(['scanAsArgs({' argsStr  '}, %s, %s)'],...
-%           toStr(f), toStr(seed));
-%       end
-%       sNode = sig.node.Node(this.Node, 'sig.transfer.scanAsArgs', f);
-%       sNode.FormatSpec = formatSpec;
-%       sNode.CurrValue = seed;
-%       sc = sig.node.Signal(sNode);
-%     end
 
     function r = iff(pred, trueVal, falseVal)
       if nargin > 2
@@ -400,16 +385,32 @@ classdef Signal < sig.Signal & handle
       h = onValue(this, @disp);
     end
     
-    function s = size(x, dim)
-      if nargin > 1
-        s = map2(x, dim, @size);
+    function varargout = size(varargin)
+      % [sz1,...,szN] = size(x) or szdim = size(x,dim) returns the size of
+      % signal x, optionally over dimension dim.
+      if nargout > 1
+        formatSpec = strcat({'size(%s) over dim '}, int2str((1:nargout)'));
+      elseif nargin > 1
+        formatSpec = 'size(%s) over dim %s';
       else
-        s = map(x, @size);
+        formatSpec = 'size(%s)';
+      end
+      
+      if nargin == 1 && nargout == 1
+        varargout{1} = map(varargin{1}, @size, formatSpec);
+      else
+        [varargout{1:nargout}] = mapn(varargin{:}, @size, formatSpec);
+        if nargout > 1
+          % Replace the first Signal with one that calls size(x,1),
+          % ensuring value is not [m n] as is the default when size is
+          % called with one output argument
+          formatSpec = [formatSpec{1}(1:end-1),'%s'];
+          [varargout{1}] = mapn(varargin{1}, 1, @size, formatSpec);
+        end
       end
     end
     
     function [varargout] = subsref(a, s)
-      b = a;
       for ii = 1:length(s)
         switch s(ii).type
           case '.'

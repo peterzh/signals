@@ -1,6 +1,6 @@
 function layer = emptyLayer(n)
 %VIS.EMPTYLAYER Template texture layer for rendering in Signals
-%  Returns a struct of paramters and their defaults used by VIS.DRAW to
+%  Returns a struct of parameters and their defaults used by VIS.DRAW to
 %  load a visual stimulus layer.  If n > 1 a non-scalar struct is returned
 %  of length n (default 1).
 %
