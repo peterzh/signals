@@ -80,16 +80,11 @@ classdef Signal < handle
     
     s = at(this, when)
     
-    % 'ds = s1.keepWhen(s2)' returns a dependent signal 'ds' which takes
-    % the value of 's1' whenever 's1' takes a value, given that 's2' holds
-    % a truthy value.
+    % 'ds = what.keepWhen(when)' returns a dependent signal 'ds' which takes
+    % the value of 'what' whenever 'when' evaluates true.
     %
     % Example:
-    %   ds3 = os1.keepWhen(os2);
-    %   ds3Out = output(ds3);
-    %   os1.post(1); % nothing will be displayed
-    %   os2.post(true); 
-    %   os1.post(0); % '0' will be displayed
+    %   ds = s1.keepWhen(s2 > 1); % when s2 > 1, ds == s1
     
     s = keepWhen(what, when)
     

@@ -25,7 +25,7 @@ classdef Signals_test < matlab.unittest.TestCase
   methods (Test)
     function testMap(testCase)
       % Tests for map method
-      a = testCase.A;
+      [a, c] = deal(testCase.A, testCase.C);
       
       % Test mapping of signal through MATLAB function
       b = a.map(@fliplr);
@@ -55,6 +55,16 @@ classdef Signals_test < matlab.unittest.TestCase
       [val, valset] = sig.transfer.map(args{:});
       testCase.verifyTrue(valset, 'Expected ''valset'' to be true')
       testCase.verifyEqual(val, v, 'Failed to re-evaluate function')
+      
+      % Test mapping one Signal to another:
+      b = a.map(c);
+      c.post(arr)
+      testCase.verifyEmpty(b.Node.CurrValue, ...
+        'Expected dependent Signal to be empty')
+      a.post(0)
+      testCase.verifyEqual(b.Node.CurrValue,arr, ...
+        'Unexpected output when mapping Signal')
+      testCase.verifyMatches(b.Name, '\w+\.map\(\w+\)', 'Unexpected Name')
     end
     
     function testMapn(testCase)
@@ -368,6 +378,47 @@ classdef Signals_test < matlab.unittest.TestCase
       testCase.verifyMatches(b.Name, 'cos\(\w+\)', 'Unexpected Name')
       a.post(x)
       testCase.verifyEqual(b.Node.CurrValue, e)
+    end
+    
+    function test_keepWhen(testCase)
+      % Test for the keepWhen method
+      [a, b] = deal(testCase.A, testCase.B);
+      s = a.keepWhen(b);
+      testCase.verifyMatches(s.Name, '\w.keepWhen(\w+\)', 'Unexpected Name')
+      
+      % Post a truthy value to b
+      affectedIdxs = submit(testCase.net, b.Node.Id, true);
+      changed = applyNodes(testCase.net, affectedIdxs);
+      % Check only b's node affected
+      testCase.verifyTrue(isequal(affectedIdxs, changed, b.Node.Id), ...
+        'Unexpected nodes affected when predicate signal true')
+      
+      % Post a value to signal a
+      v = rand;
+      affectedIdxs = submit(testCase.net, a.Node.Id, v);
+      changed = applyNodes(testCase.net, affectedIdxs);
+      % Check a and s nodes changed
+      testCase.verifyTrue(isequal(affectedIdxs, changed, [a.Node.Id;s.Node.Id]), ...
+        'Unexpected network behaviour upon posting value to signal a')
+      testCase.verifyTrue(isequal(v, a.Node.CurrValue, s.Node.CurrValue), ...
+        'Unexpected values of signals a and s')
+      
+      % Post a non-truthy value to b
+      affectedIdxs = submit(testCase.net, b.Node.Id, false);
+      changed = applyNodes(testCase.net, affectedIdxs);
+      % Check only b's node affected
+      testCase.verifyTrue(isequal(affectedIdxs, changed, b.Node.Id), ...
+        'Unexpected nodes affected when predicate signal false')
+      
+      % Post a value to signal a
+      v = rand;
+      affectedIdxs = submit(testCase.net, a.Node.Id, v);
+      changed = applyNodes(testCase.net, affectedIdxs);
+      % Check only a's node affected
+      testCase.verifyTrue(isequal(affectedIdxs, changed, a.Node.Id), ...
+        'Unexpected network behaviour upon posting value to signal a')
+      testCase.verifyTrue(v == a.Node.CurrValue && s.Node.CurrValue ~= v, ...
+        'Unexpected values of signals a and s')
     end
     
   end
