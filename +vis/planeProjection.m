@@ -1,9 +1,10 @@
 function P = planeProjection(centre, dims, viewAngle)
-%UNTITLED2 Summary of this function goes here
+%PLANEPROJECTION Plane projection transformation matrix
 %   P = PLANEPROJECTION(centre, dims, viewAngle) returns a projection
 %   matrix given a flat screen projection, where the screen has 'centre',
 %   (x,y,z) relative to plane orthogonal from viewing point, 'dims' in
-%   physical units, and 'viewAngle', (azi,elv) from view along orthogonal.
+%   physical units (cm), and 'viewAngle' (rad), (azi,elv) from view along
+%   orthogonal.
 
 %% Build view rotation matrices
 Raz = rotRadY(viewAngle(1));
