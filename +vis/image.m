@@ -10,18 +10,22 @@ function elem = image(t, sourceImage, alpha)
 %    'sourceImage' - Either a standard image file, or path to a '.mat' file
 %      containing an image represented as a numeric array, or a signal 
 %      whose value is an image represtented as a numeric array.
-%    'alpha' - the alpha value(s) for the image.  Can be a single value or
-%      array the size of 'sourceImage.'  If no alpha value is provided and
-%      sourceImage is a char
+%    'alpha' - the alpha value(s) for the image (optional).  Can be a
+%      single value or array the size of 'sourceImage.'  If no alpha value
+%      is provided and sourceImage is a char the image will be opaque.
+%      This input overrides the source image's values if it has any.
 %
 %  Outputs:
 %    'elem' - a subscriptable signal containing fields which parametrize
 %      the stimulus, and a field containing the processed texture layer. 
 %      Any of the fields may be a signal.
 %
-%  Stimulus parameters (fields belonging to 'elem'):
+%  Stimulus parameters:
 %    'sourceImage' - see above
-%    'window' - see above
+%    'window' - If 'gaussian' or 'gauss', a Gaussian window is applied over
+%      the image.  Default is 'none'.
+%    'sigma' - the size of the gaussian window in visual degrees [w h].
+%      Default [5 5].
 %    'azimuth' - the azimuth of the image (position of the centre pixel in 
 %      visual degrees).  Default 0
 %    'altitude' - the altitude of the image (position of the centre pixel 
@@ -34,8 +38,6 @@ function elem = image(t, sourceImage, alpha)
 %      over the entire visual field. Default false
 %    'show' - a logical indicating whether or not the stimulus is visible.
 %      Default false
-%    'sigma' - the size of the gaussian window in visual degrees [w h].
-%      Default [5 5]
 %
 %  NB: If loading multiple visual elements with different image paths,
 %  ensure that the images themselves have unique filenames.

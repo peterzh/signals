@@ -12,15 +12,16 @@ aspectRatio = winw/winh;
 % load the shader
 shadir = fileparts(mfilename('fullpath'));
 glsl = LoadGLSLProgramFromFiles(fullfile(shadir, 'slimshady'), 1);
-assert(strcmp(gluErrorString, 'no error'));
+assert(strcmp(gluErrorString, 'no error'), ...
+  'signals:vis:init:shaderLoadFail', 'Failed to load the shader');
 
-% location indices to shader variables
+% location indices to shader variables: allows us to set the variables used
+% by the shader later on, using glUniform() (see vis.draw).
 texIdx = glGetUniformLocation(glsl, 'myTextureSampler');
 vertexPosIdx = glGetAttribLocation(glsl, 'vertexPos');
 uvIdx = glGetAttribLocation(glsl, 'vertexUV');
 % colourIdx = glGetAttribLocation(glsl, 'vertexColor');
 modelIdx = glGetUniformLocation(glsl, 'model');
-% viewIdx = glGetUniformLocation(glsl, 'view');
 % posIdx = glGetUniformLocation(glsl, 'pos');
 viewIdx = glGetUniformLocation(glsl, 'view');
 projectionIdx = glGetUniformLocation(glsl, 'projection');

@@ -6,18 +6,18 @@ if ischar(v)
   s = v;
 elseif isempty(v)
   s = '[]';
+elseif isstring(v)
+  s = char(v);
 elseif isobject(v)
   if any(strcmp(methods(v), 'str'))
     s = str(v);
+  elseif any(strcmp(properties(v), 'Name'))
+    s = v.Name;
   else
     s = class(v);
   end
 elseif isnumeric(v)
-  if numel(v) == 1
-    s = num2str(v);
-  else
-    s = num2str(v);
-  end
+  s = num2str(v);
 elseif islogical(v)
   if numel(v) == 1
     if v

@@ -10,7 +10,7 @@ classdef Value < expr.Expr
   methods
     function obj = Value(val)
       obj.Val = val;
-      if ~isempty(which('mupadmex'))
+      if exist('mupadmex','file') == 3
         if isscalar(val)
           obj.StrRepr = strrep(mupadmex(' ', val, 3), 'pi', char(960));
         else
