@@ -8,3 +8,4 @@
 - Signals can map to other signals `a1b9eb`
 - Tests for methods and utilities `e016f0`, `3621b1`, `1fb3cd`
 - Fix for checking functions in path on new MATLAB versions `e3cb05`
+- Added help files for mexnet `ba51d1`
