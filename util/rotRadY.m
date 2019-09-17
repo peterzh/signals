@@ -1,6 +1,10 @@
 function R = rotRadY(rad)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% ROTRADY Returns transform matrix for rotating a given amount in radians
+% along y-axis
+%   Returns a 4x4 transformation matrix for performing rotation of rad
+%   radians along the y-axis in hetrogrneous coordinates.
+%
+% See also VIS.PLANEPROJECTION, VIS.DRAW
 
 R = [
   cos(rad) 0 sin(rad) 0
