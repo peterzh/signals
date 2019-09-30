@@ -54,7 +54,8 @@ if any(wvset)
     valset = true;
   catch ex
     msg = sprintf('Net: %i, Nodes: [%s] to %i', net, num2str(inputs), node);
-    sigEx = SigException('transfer:error', msg, node, inputs, inpvals);
+    sigEx = sig.Exception('transfer:mapn:error', ...
+      msg, net, node, inputs, inpvals, f);
     ex = ex.addCause(sigEx);
     rethrow(ex)
   end

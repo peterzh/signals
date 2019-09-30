@@ -2,6 +2,10 @@ classdef Net < handle
   %sig.Net A network that can contain sig.node.Node's.
   %   A network that contains and manages sig.node.Node's.
   
+  properties
+    Debug matlab.lang.OnOffSwitchState = 'on'
+  end
+  
   properties (Transient)
     % A structure holding node ids, the values they should take and the
     % delay before they are applied.  Used for delayed posting of values.
@@ -11,6 +15,8 @@ classdef Net < handle
   
   properties (SetAccess = private, Transient)
     Id
+    NodeName
+    NodeLine
   end
   
   events
@@ -24,6 +30,8 @@ classdef Net < handle
       end
       this.Id = createNetwork(size);
       this.Schedule = struct('nodeid', {}, 'value', {}, 'when', {});
+      this.NodeLine = containers.Map('KeyType', 'int32', 'ValueType', 'int32');
+      this.NodeName = containers.Map('KeyType', 'int32', 'ValueType', 'char');
     end
     
     function runSchedule(this)
@@ -54,7 +62,7 @@ classdef Net < handle
         for ti = 1:numel(dueTasks)
           dt = GetSecs - dueTasks(ti).when;
           affectedIdxs = submit(this.Id, dueTasks(ti).nodeid, dueTasks(ti).value);
-          changed = applyNodes(this.Id, affectedIdxs);
+          applyNodes(this.Id, affectedIdxs);
         end
       end
     end

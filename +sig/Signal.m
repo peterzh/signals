@@ -10,8 +10,8 @@ classdef Signal < handle
   %   Example: 
   %     create a Signals network and three origin signals
   %     net = sig.Net;
-  %     os1 = net.origin('input 1'); 
-  %     os2 = net.origin('input 2'); 
+  %     os1 = net.origin('input 1');
+  %     os2 = net.origin('input 2');
   %     os3 = net.origin('input 3');
   %
   % See also SIG.NODE.SIGNAL, SIG.NET

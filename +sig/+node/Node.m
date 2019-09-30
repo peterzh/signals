@@ -18,7 +18,6 @@ classdef Node < handle
   properties (SetAccess = private, Transient)
     NetId
     Id
-    OnValueCallbacks = {}
   end
   
   properties (Dependent)
