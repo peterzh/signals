@@ -123,7 +123,6 @@
 %   Set working node value, apply transfer function and queue downstream
 %   nodes
 %   Called by sqTransact()
-
 %% FAQ
 % Q: Why did you choose C (Matrix API) over C++ (Data API)?
 %
