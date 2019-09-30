@@ -1,6 +1,12 @@
 classdef advancedChoiceWorldExpPanel < eui.ExpPanel
-    %eui.SqueakExpPanel Basic UI control for monitoring an experiment
-    %   TODO
+    % UI control for monitoring advancedChoiceWorld
+    %   A UI panel that plots experiment updates specific to the
+    %   advancedChoiceWorld signals experiment definition.  Plots a
+    %   psychometric curve for each of the three response types, along with
+    %   a simulation of the current stimulus window and stimulus position
+    %   with respect to the response thresholds.
+    %
+    % See also eui.SqueakExpPanel
     %
     % Part of Rigbox
     
