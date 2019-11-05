@@ -585,6 +585,22 @@ classdef Signal < handle
       end
     end
     
+    function b = any(a, dim)
+      if nargin < 2
+        b = map(a, @any, 'any(%s)');
+      else
+        b = map2(a, dim, @any, 'any(%s) over dim %s');
+      end
+    end
+    
+    function b = all(a, dim)
+      if nargin < 2
+        b = map(a, @all, 'all(%s)');
+      else
+        b = map2(a, dim, @all, 'all(%s) over dim %s');
+      end
+    end
+    
     function a = colon(i,j,k)
       if nargin < 3
         a = map2(i,j, @colon, '%s : %s');
