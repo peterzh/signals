@@ -103,8 +103,6 @@ renderCount = 0;
       close('LivePlot')
     catch
     end
-    t.end(t.Node.Id, 1)
-    dt.end(dt.Node.Id, 1)
     % delete gl textures
     listhandle = [];
     tex = cell2mat(textureById.values);
@@ -166,6 +164,5 @@ renderCount = 0;
 %       invalid = true;
 %     end
   end
-
 end
 

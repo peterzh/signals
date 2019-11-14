@@ -566,7 +566,6 @@ classdef Signal < sig.Signal & handle
   
   methods (Static)
     function y = end(k, n)
-      % FIXME End object printed to promp: missing ';' somewhere
       y = expr.End(k, n);
     end
   end

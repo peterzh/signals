@@ -22,6 +22,8 @@ Contains example exp defs and standalone experiment scripts:
 
 - 'advancedChoiceWorld': This exp def runs a 2 Alternate Unforced Choice version of the Burgess Steering Wheel Task.
 
+- 'imageWorld': This demonstrates a passive image presentation experiment.  The original image dataset is not included.
+
 - 'mouseTheremin': This function maps the current horizontal cursor position to a given
 frequency, and as the mouse is moved the frequency changes much like a
 theremin. 
