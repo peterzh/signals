@@ -1,7 +1,10 @@
 function s = sequence(seq, interval, delay)
   persistent net schedule nodes n
   if nargin < 3; delay = 2; end
-  if isempty(net); net = sig.Net; end
+  if isempty(net) 
+    net = sig.Net;
+    net.Debug = 'on';
+  end
   if isempty(nodes)
     nodes = net.origin('nodes'); 
     nNodes = nodes.scan(@plus, 0);

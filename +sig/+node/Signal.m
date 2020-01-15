@@ -25,6 +25,7 @@ classdef Signal < sig.Signal & handle
       % Debugging registry
       if node.Net.Debug
         stack = dbstack('-completenames');
+        % TODO Need more robust way of searching stack
         defIdx = find(strcmp({stack.name},'fileFunction/call')) - 1;
         ln = iff(isempty(defIdx), 0, @() stack(defIdx).line);
         node.Net.NodeLine(node.Id) = ln;

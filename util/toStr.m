@@ -1,6 +1,23 @@
-function s = toStr(v)
+function s = toStr(v, inline)
 %UNTITLED6 Summary of this function goes here
 %   Detailed explanation goes here
+
+if nargin > 1 && inline == true && ~isstruct(v)
+  % Format the string to fit on a single line
+  if (~isvector(v) && ~isscalar(v)) || numel(v) > 5
+    s = sprintf('%ix%i %s', size(v,1), size(v,2), class(v));
+    return
+  elseif ~isscalar(v)
+    if iscolumn(v)
+      s = ['[' strrep(toStr(v, 0),' ', '; ') ']'];
+      return
+    elseif isrow(v) && isnumeric(v)
+      s = ['[' toStr(v, 0) ']'];
+      return
+    end
+  end
+end
+
 
 if ischar(v)
   s = v;
@@ -37,7 +54,6 @@ elseif isa(v, 'function_handle')
     s = ['@' s];
   end
 end
-
 
 end
 

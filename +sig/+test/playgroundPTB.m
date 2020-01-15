@@ -33,6 +33,7 @@ btnh = uicontrol('Parent', btnbox, 'Style', 'pushbutton',...
   'String', 'Play', 'Callback', @(~,~)startstop());
 
 sn = sig.Net;
+sn.Debug = 'on';
 dt = sn.origin('dt');
 t = dt.scan(@plus, 0);
 t.Name = 'time';

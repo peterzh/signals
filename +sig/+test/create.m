@@ -3,6 +3,7 @@ function varargout = create(net)
 % TODO Document sig.test.create
 if nargin < 1
   net = sig.Net;
+  net.Debug = 'on';
 end
 
 varargout = cell(1,nargout);
