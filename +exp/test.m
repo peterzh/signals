@@ -8,7 +8,6 @@ function test(expdef)
 import sig.test.playgroundPTB
 import sig.test.timeplot
 addSignalsJava();
-global AGL GL GLU %#ok<NUSED>
 persistent defdir lastParams;
 
 % Check that paths are set up
@@ -81,7 +80,7 @@ leftbox.Sizes = [-1 100];
 % leftbox.Sizes = [-1 30 25];
 % parslist = addlistener(parsEditor, 'Changed', @appl);
 %% experiment framework
-[t, setElems] = playgroundPTB(expdefname, ctrlgrid);
+[t, setElems] = playgroundPTB(ctrlgrid);
 % mainsplit.Sizes = [700 -1]; 
 net = t.Node.Net;
 % inputs & outputs

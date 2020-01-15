@@ -18,13 +18,14 @@ sf = 0.2; %spatial frequency, cyc/deg
 winlen = 10; % length of histogram window, frames
 
 %% Figure window
+% TODO Document section
 gr = groot;
 scrnSz = gr.ScreenSize([3,4]);
 figPos = [scrnSz(1)-560, scrnSz(2)-780, 560 700];
 figh = figure('Name', 'Press ctrl on horizontal grating',...
   'Position', figPos, 'NumberTitle', 'off');
 vbox = uiextras.VBox('Parent', figh);
-[t, setElemsFun] = sig.playgroundPTB([], vbox);
+[t, setElemsFun] = sig.playgroundPTB(vbox);
 sigbox = t.Node.Net;
 axh = axes('Parent', vbox, 'NextPlot', 'replacechildren', 'XTick', oris);
 xlabel(axh, 'Orientation');

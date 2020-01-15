@@ -11,8 +11,8 @@ classdef Node < handle
   end
   
   properties (SetAccess = immutable)
-    Net % Parent network
-    Inputs % Array of input nodes
+    Net sig.Net % Parent network
+    Inputs sig.node.Node % Array of input nodes
   end
   
   properties (SetAccess = private, Transient)

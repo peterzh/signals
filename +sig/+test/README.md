@@ -1,5 +1,5 @@
-## +Sig:
-The +sig package contains most of the classes and functions for implementing Signals logic in MATLAB.
+## +test:
+The +test sub-package contains functions for playing with Signals outside of a real experiment.  These functions are useful for quickly creating origin signals, visual stimuli and live plots.
        
 ### Examples
 Create a new Signals network and add some signals to the network
@@ -24,21 +24,25 @@ Show a visual stimulus using command prompt
 ```matlab
 import sig.test.playgroundPTB
 import sig.test.timeplot
-[t, setgraphic] = playgroundPTB();
-vs = StructRef;
+PsychDebugWindowConfiguration
 
-grating = vis.grating(t); % we want a gabor grating patch
+[t, setgraphic] = playgroundPTB();
+vs = StructRef; % Structure to hold our visual elements
+
+grating = vis.grating(t); % we want a Gabor grating patch
 grating.phase = 2*pi*t*3; % with its phase cycling at 3Hz
 grating.show = true;
 vs.grating = grating;
-setgraphic(vs);
+setgraphic(vs); % render
 ```
 
 ## Contents:
 
-Below is a summery of folders contained.  For a full list of functions and classes see `Contents.m`.
+Below is a summery of functions contained.
 
-- `+test/`    - Functions for testing and plotting Signals via the Command.
-- `+node/`    - Implementation of Signals as Node objects.
-- `+scan/`    - Functions suppoting the Signals scan method.
-- `transfer/` - Transfer functions for implementing various Signals methods.
+- `create`        - Returns a set of origin signals
+- `sequence`      - Creates a sequence signal from an array
+- `playground`    - <DEPRECATED> Use playgroundPTB
+- `playgroundPTB` - Creates a stimulus window for playing with Signals
+- `plot`          - Plot values of two signals against each other
+- `timeplot`      - Plot values of signals against time

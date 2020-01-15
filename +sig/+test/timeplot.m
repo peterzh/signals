@@ -1,5 +1,5 @@
 function axh = timeplot(varargin)
-%SIG.TIMEPLOT Plots input Signals against time
+%SIG.TIMEPLOT Plots values of Signals against time
 % Creates a subplot for each Signal input and plots the values of that
 % Signal as they update.  If a StructRef or Registry is provided, each
 % field is plotted separately.  The Name field or field name is used to
