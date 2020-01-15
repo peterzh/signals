@@ -25,7 +25,7 @@ classdef Net < handle
   
   properties (SetAccess = private, Transient)
     % The unique network identifier.
-    Id uint32
+    Id double
     % The names of the network's nodes mapped to their ids; for debugging
     % purposes.
     NodeName

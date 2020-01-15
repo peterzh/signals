@@ -16,8 +16,8 @@ classdef Node < handle
   end
   
   properties (SetAccess = private, Transient)
-    NetId
-    Id
+    NetId double
+    Id double
   end
   
   properties (Dependent)
