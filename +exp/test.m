@@ -1,5 +1,5 @@
 function test(expdef)
-%EXP.TEST Run Signals experiment that have trial structure
+%EXP.TEST Run Signals experiment definition
 %   TODO Document
 %   Input: Handle to experiment definition function
 %   FIXME If we decide to keep Signals independent of Rigbox paths file
@@ -77,7 +77,6 @@ ctrlgrid.ColumnSizes = [-1 -1];
 ctrlgrid.RowSizes = [30 20*ones(1, 3)];
 
 leftbox.Sizes = [-1 100];
-% leftbox.Sizes = [-1 30 25];
 % parslist = addlistener(parsEditor, 'Changed', @appl);
 %% experiment framework
 [t, setElems] = playgroundPTB(ctrlgrid);

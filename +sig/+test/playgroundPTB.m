@@ -32,7 +32,7 @@ InitializeMatlabOpenGL
 
 % Process input
 % If no parent figure is given, create one
-if nargin < 2
+if nargin < 1
   parent = figure(...
     'Name', 'Signals playground', ...
     'NumberTitle', 'off',...
@@ -54,10 +54,8 @@ nScreens = Screen('Screens');
 screenNum = iff(max(nScreens) > 1, 1, 0);
 % Create a new PsychToolbox window with a default size
 screenDims = [0,0,1280,600]; % Dimentions in px of PTB window
-vc = Screen('OpenWindow', screenNum, 0, screenDims, 32);
-% Make the background middle grey
-Screen('FillRect', vc, 255/2);
-Screen('Flip', vc);
+colour = 255/2; % Make the background middle grey
+vc = Screen('OpenWindow', screenNum, colour, screenDims);
 
 % Create a play button for starting and stopping the 'Main loop' timer
 vbox = uix.VBox('Parent', parent);
