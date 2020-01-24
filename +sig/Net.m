@@ -13,7 +13,7 @@ classdef Net < handle
   properties
     % Debug mode.  When true the names and function line numbers are
     % recorded when new nodes are added to the network.
-    Debug matlab.lang.OnOffSwitchState = 'on' % TODO Turn off
+    Debug matlab.lang.OnOffSwitchState = 'off'
   end
   
   properties (Transient)
