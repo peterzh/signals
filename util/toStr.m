@@ -29,7 +29,7 @@ function s = toStr(v, inline)
 %         '30   5  34  12  14  16'
 %         ' 4  36  29  13  18  11'
 %
-%     % Represent a matrix as char vector
+%     % Represent a numeric vector as char vector
 %     toStr((1:5)', true)
 % 
 %     ans =
@@ -38,11 +38,11 @@ function s = toStr(v, inline)
 % 
 
 
-if nargin > 1 && inline == true && ~isstruct(v)
+if nargin > 1 && inline == true && ~isstruct(v) && ~isscalar(v)
   % Format the string to fit on a single line
-  if (~isvector(v) && ~isscalar(v)) || numel(v) > 5
+  if ~isvector(v) || numel(v) > 5
     s = sprintf('%ix%i %s', size(v,1), size(v,2), class(v));
-  elseif ~isscalar(v)
+  else % process small row and column vectors
     if iscolumn(v)
       if isnumeric(v)
         s = sprintf('%.4g; ', v); 

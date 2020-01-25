@@ -9,6 +9,7 @@ classdef Signals_test < matlab.unittest.TestCase
   methods (TestClassSetup)
     function createNetwork(testCase)
       testCase.net = sig.Net;
+      testCase.addTeardown(@delete, testCase.net)
     end
   end
   
