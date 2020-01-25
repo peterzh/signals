@@ -127,12 +127,12 @@ classdef advancedChoiceWorldExpPanel < eui.SignalsExpPanel
           
           % pull out the things we need to keep
           trNum = updates(strcmp(allNames, 'events.trialNum')).value;
-
+          %assert(trNum==obj.Block.numCompletedTrials+1, 'trial number doesn''t match');
           if ~(trNum==obj.Block.numCompletedTrials+1)
             fprintf(1, 'trial number mismatch: %d, %d\n', trNum, obj.Block.numCompletedTrials+1);
             obj.Block.numCompletedTrials = trNum-1;
           end
-          % FIXME Should use eui.ExpPanel/mergeTrialData for this
+          
           obj.Block.trial(trNum).repeatNum = ...
             updates(strcmp(allNames, 'events.repeatNum')).value;
           
@@ -257,8 +257,22 @@ classdef advancedChoiceWorldExpPanel < eui.SignalsExpPanel
                 set(obj.ScreenAxes, 'XLim', -az+[-135 135]); 
               end
               
-            case {'events.trialNum', 'events.repeatNum', 'events.totalReward'}
+            case 'events.trialNum'
+              set(obj.TrialCountLabel, ...
+                'String', num2str(updates(ui).value));
               
+            case 'events.totalReward'
+              if ~isKey(obj.LabelsMap, signame)
+                obj.LabelsMap(signame) = obj.addInfoField(signame, '');
+              end
+              % data are sent as uint8, so chars over 255 are
+              % misrepresented.  Here we restore the mu symbol.
+              str = strrep(updates(ui).value, char(255), char(956));
+              set(obj.LabelsMap(signame), 'String', str, 'UserData', clock,...
+                'ForegroundColor', obj.RecentColour);
+              
+            otherwise
+              % For any custom updates, simply display them
               if ~isKey(obj.LabelsMap, signame)
                 obj.LabelsMap(signame) = obj.addInfoField(signame, '');
               end
@@ -349,4 +363,3 @@ classdef advancedChoiceWorldExpPanel < eui.SignalsExpPanel
   end
   
 end
-
