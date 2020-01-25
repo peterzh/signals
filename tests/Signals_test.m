@@ -9,6 +9,7 @@ classdef Signals_test < matlab.unittest.TestCase
   methods (TestClassSetup)
     function createNetwork(testCase)
       testCase.net = sig.Net;
+      testCase.addTeardown(@delete, testCase.net)
     end
   end
   
@@ -293,7 +294,7 @@ classdef Signals_test < matlab.unittest.TestCase
     end
     
     function test_flipud(testCase)
-      % Test for the fliplr method
+      % Test for the flipud method
       a = testCase.A;
       b = flipud(a); % our method to test
       x = magic(6); % values to test
@@ -305,7 +306,7 @@ classdef Signals_test < matlab.unittest.TestCase
     end
     
     function test_rot90(testCase)
-      % Test for the fliplr method
+      % Test for the rot90 method
       a = testCase.A;
       b = rot90(a); % our method to test
       x = magic(6); % values to test
@@ -318,6 +319,38 @@ classdef Signals_test < matlab.unittest.TestCase
       b = rot90(a,4);
       a.post(x)
       testCase.verifyEqual(b.Node.CurrValue, x)
+    end
+    
+    function test_any(testCase)
+      % Test for the any method
+      a = testCase.A;
+      b = any(a); % our method to test
+      x = eye(6); % values to test
+      e = any(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'any\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+      % test second input
+      b = any(a,'all');
+      a.post(x)
+      testCase.verifyTrue(b.Node.CurrValue)
+    end
+    
+    function test_all(testCase)
+      % Test for the all method
+      a = testCase.A;
+      b = all(a); % our method to test
+      x = eye(6); % values to test
+      e = all(x); % expected output
+      
+      testCase.verifyMatches(b.Name, 'all\(\w+\)', 'Unexpected Name')
+      a.post(x)
+      testCase.verifyEqual(b.Node.CurrValue, e)
+      % test second input
+      b = all(a,'all');
+      a.post(x)
+      testCase.verifyFalse(b.Node.CurrValue)
     end
     
     function test_floor(testCase)
