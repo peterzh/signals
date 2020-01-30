@@ -7,7 +7,7 @@ function [layer, img] = circLayer(pos, dims, orientation)
 %    pos - texture offset defined as [azimuth altitude] in visual degrees
 %    dims - dimentions of circle/ellipse as [major axis, minor axis] in 
 %      visual degrees.  If scalar is given, this is taken to be the
-%      diameter of the circle
+%      diameter of the circle. Currently this can not be a Signal.
 %    orientation - orientation of texture in degrees
 %
 %  Outputs:
@@ -37,7 +37,8 @@ y = round(dims(2) * (0.9^(dims(2)-23)+1));
 [xx, yy] = meshgrid(colon(1,radius), colon(1,y));
 dd = sqrt(xx.^2 + yy.^2);
 img = taper(dd) + taper(-dd) - 1; % Border anti-aliasing
-img = single([rot90(img,2), flipud(img); fliplr(img), img]); % Put quarters together
+img = [rot90(img,2), flipud(img); fliplr(img), img]; % Put quarters together
+img = iff(isa(img, 'sig.Signal'), @()img.map(@single), @()single(img));
   function y = taper(x)
     % Applies a tapering function to the matrix x
     %  Creates a normalized image containing a curve of a given radius and

@@ -3,7 +3,11 @@ function elem = grating(t, grating, window)
 %  Produces a visual element for parameterizing the presentation of a
 %  grating. Produces a grating that can be either sinusoidal or
 %  square-wave, and may be windowed by a Gaussian stencil, producing a
+<<<<<<< HEAD
 %  Gabor patch, or a Square stencil.
+=======
+%  Gabor patch.
+>>>>>>> 602468e79dddf91a8776cf35762cb330f9c4b8e8
 %
 %  Inputs:
 %    't' - The "time" signal. Used to obtain the Signals network ID.
@@ -12,7 +16,11 @@ function elem = grating(t, grating, window)
 %    'grating' - A char array defining the nature of the grating. Options
 %      are 'sinusoid' (default) or 'squarewave'.
 %    'window' - A char array defining the type of windowing applied.
+<<<<<<< HEAD
 %      Options are 'gaussian' (default) or 'square', or 'none'.
+=======
+%      Options are 'gaussian' (default) or 'none'.
+>>>>>>> 602468e79dddf91a8776cf35762cb330f9c4b8e8
 %
 %  Outputs:
 %    'elem' - a subscriptable signal containing fields which parametrize
@@ -27,7 +35,11 @@ function elem = grating(t, grating, window)
 %    'altitude' - the altitude of the image (position of the centre pixel
 %     in visual degrees). Default 0
 %    'sigma' - if window is Gaussian, the size of the window in visual
+<<<<<<< HEAD
 %      degrees. If window is Square, the size of the rectangle.
+=======
+%      degrees. If window is rectangular, the size of the rectangle.
+>>>>>>> 602468e79dddf91a8776cf35762cb330f9c4b8e8
 %      Must be an array of the form [width height]. Default [10 10]
 %    'phase' - the phase of the grating in visual degrees.  Default 0
 %    'spatialFreq' - the spatial frequency of the grating in cycles per

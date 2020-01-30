@@ -1,8 +1,10 @@
-function r = uni(pars)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-
-r = pars(1) + (pars(end) - pars(1))*rand;
-
-end
+function r = uni(bounds, sz)
+%RND.UNI Samples from a continuous uniform distribution
+%   Returns sample(s), r, from a uniform distribution between given bounds.
+%   An array of samples are returned of the size given by `sz`.  By
+%   default a single value returned.
+%
+% See also RND.EXP, RND.SAMPLE
+if nargin < 2; sz = [1,1]; end
+r = bounds(1) + (bounds(end) - bounds(1))*rand(sz);
 
